@@ -2,9 +2,30 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 
 const Post = {
-    getAll: async () => {
-        const result = await pool.query('SELECT * FROM posts ORDER BY created_at DESC');
-        return result.rows;
+    getAll: async (page, limit) => {
+        const offset = (page - 1) * limit;
+        
+        const countResult = await pool.query('SELECT COUNT(*) FROM posts');
+        const totalItems = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalItems / limit);
+
+        const dataQuery = `
+            SELECT * 
+            FROM posts 
+            ORDER BY created_at DESC 
+            LIMIT $1 OFFSET $2
+        `;
+        const result = await pool.query(dataQuery, [limit, offset]);
+        
+        return {
+            data: result.rows,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage: page,
+                limit
+            }
+        };
     },
    getById: async (id) => {
         // Lấy bài viết KÈM THEO tên của Admin (Tác giả)

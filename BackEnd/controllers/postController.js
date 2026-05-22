@@ -2,8 +2,13 @@ const Post = require('../models/postModel');
 const Comment = require('../models/commentModel');
 
 const getAllPosts = async (req, res) => {
-    try { res.status(200).json(await Post.getAll()); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        res.status(200).json(await Post.getAll(page, limit));
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
 };
 
 const getPostById = async (req, res) => {

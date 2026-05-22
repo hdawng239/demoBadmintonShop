@@ -1,17 +1,32 @@
 const pool = require('../config/db');
 
 const Review = {
-    // Lấy tất cả đánh giá của một sản phẩm cụ thể
-    getByProductId: async (productId) => {
+    getByProductId: async (productId, page, limit) => {
+        const offset = (page - 1) * limit;
+        
+        const countResult = await pool.query('SELECT COUNT(*) FROM reviews WHERE product_id = $1', [productId]);
+        const totalItems = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalItems / limit);
+
         const query = `
             SELECT r.id, r.rating, r.comment, r.created_at, u.full_name as reviewer_name
             FROM reviews r
             LEFT JOIN users u ON r.user_id = u.id
             WHERE r.product_id = $1
             ORDER BY r.created_at DESC
+            LIMIT $2 OFFSET $3
         `;
-        const result = await pool.query(query, [productId]);
-        return result.rows;
+        const result = await pool.query(query, [productId, limit, offset]);
+        
+        return {
+            data: result.rows,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage: page,
+                limit
+            }
+        };
     },
     
     // Tạo đánh giá mới

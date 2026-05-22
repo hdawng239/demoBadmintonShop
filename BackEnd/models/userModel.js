@@ -2,10 +2,30 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 
 const User = {
-    getAll: async () => {
-        // Lấy tất cả user nhưng tuyệt đối KHÔNG lấy cột password_hash ra ngoài
-        const result = await pool.query('SELECT id, full_name, email, role, phone, address, created_at FROM users ORDER BY id ASC');
-        return result.rows;
+    getAll: async (page, limit) => {
+        const offset = (page - 1) * limit;
+
+        const countResult = await pool.query('SELECT COUNT(*) FROM users');
+        const totalItems = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalItems / limit);
+
+        const dataQuery = `
+            SELECT id, full_name, email, role, phone, address, created_at 
+            FROM users 
+            ORDER BY id ASC 
+            LIMIT $1 OFFSET $2
+        `;
+        const result = await pool.query(dataQuery, [limit, offset]);
+
+        return {
+            data: result.rows,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage: page,
+                limit
+            }
+        };
     },
     getById: async (id) => {
         const result = await pool.query('SELECT id, full_name, email, role, phone, address, created_at FROM users WHERE id = $1', [id]);

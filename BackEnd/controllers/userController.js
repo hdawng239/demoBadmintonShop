@@ -4,8 +4,10 @@ const AuthService = require('../services/authService');
 
 const getAllUsers = async (req, res) => {
     try {
-        const users = await User.getAll();
-        res.status(200).json(users);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const usersData = await User.getAll(page, limit);
+        res.status(200).json(usersData);
     } catch (error) {
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }

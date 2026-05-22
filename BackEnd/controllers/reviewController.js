@@ -2,8 +2,10 @@ const Review = require('../models/reviewModel');
 
 const getProductReviews = async (req, res) => {
     try {
-        const reviews = await Review.getByProductId(req.params.productId);
-        res.status(200).json(reviews);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const reviewsData = await Review.getByProductId(req.params.productId, page, limit);
+        res.status(200).json(reviewsData);
     } catch (error) {
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }

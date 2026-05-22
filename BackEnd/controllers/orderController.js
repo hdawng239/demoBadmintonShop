@@ -2,8 +2,10 @@ const Order = require('../models/orderModel');
 
 const getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.getAll();
-        res.status(200).json(orders);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const ordersData = await Order.getAll(page, limit);
+        res.status(200).json(ordersData);
     } catch (error) {
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }
