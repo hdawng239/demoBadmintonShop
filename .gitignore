@@ -1,0 +1,6 @@
+# Ignore Backend dependencies and secrets
+BackEnd/node_modules/
+
+# Ignore operational systems files
+.DS_Store
+Thumbs.db
