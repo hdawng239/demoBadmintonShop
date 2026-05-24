@@ -1,24 +1,46 @@
 const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const Product = {
-    getAll: async (page, limit) => {
+    getAll: async (page, limit, categoryId, brandId, keyword) => {
         // Tính số bản ghi cần bỏ qua (Offset)
-        // Ví dụ: page = 2, limit = 10 -> offset = (2-1)*10 = 10 (bỏ qua 10 ông đầu, lấy từ ông số 11)
         const offset = (page - 1) * limit;
 
-        // Lệnh 1: Lấy đúng số lượng sản phẩm của trang đó (Kèm JOIN tên Hãng và Danh mục cho chi tiết)
+        let whereClauses = [];
+        let queryParams = [];
+        
+        // Thêm điều kiện lọc vào mảng
+        if (categoryId) {
+            whereClauses.push(`p.category_id = $${whereClauses.length + 1}`);
+            queryParams.push(categoryId);
+        }
+        if (brandId) {
+            whereClauses.push(`p.brand_id = $${whereClauses.length + 1}`);
+            queryParams.push(brandId);
+        }
+        if (keyword) {
+            whereClauses.push(`p.name ILIKE $${whereClauses.length + 1}`);
+            queryParams.push(`%${keyword}%`);
+        }
+        
+        const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        // Lệnh 1: Lấy đúng số lượng sản phẩm của trang đó
         const dataQuery = `
             SELECT p.*, b.name AS brand_name, c.name AS category_name 
             FROM products p
             LEFT JOIN brands b ON p.brand_id = b.id
             LEFT JOIN categories c ON p.category_id = c.id
+            ${whereString}
             ORDER BY p.id ASC
-            LIMIT $1 OFFSET $2
+            LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
         `;
-        const dataResult = await pool.query(dataQuery, [limit, offset]);
+        
+        const dataParams = [...queryParams, limit, offset];
+        const dataResult = await pool.query(dataQuery, dataParams);
 
-        // Lệnh 2: Đếm tổng số sản phẩm đang có trong DB để Frontend tính số lượng nút bấm chuyển trang
-        const countResult = await pool.query('SELECT COUNT(*) FROM products');
+        // Lệnh 2: Đếm tổng số sản phẩm
+        const countQuery = `SELECT COUNT(*) FROM products p ${whereString}`;
+        const countResult = await pool.query(countQuery, queryParams);
         const totalItems = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalItems / limit);
 
@@ -40,7 +62,15 @@ const Product = {
             WHERE p.id = $1
         `;
         const result = await pool.query(query, [id]);
-        return result.rows[0];
+        const product = result.rows[0];
+        
+        if (product) {
+            const variantQuery = `SELECT * FROM product_variants WHERE product_id = $1 ORDER BY id ASC`;
+            const varResult = await pool.query(variantQuery, [id]);
+            product.variants = varResult.rows;
+        }
+        
+        return product;
     },
     create: async (data) => {
         const { category_id, brand_id, name, base_price, description, technical_specs, is_active } = data;

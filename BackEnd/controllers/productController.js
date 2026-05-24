@@ -6,8 +6,13 @@ const getAllProducts = async (req, res) => {
         // Nếu khách không truyền (?page=1&limit=10) thì tự động mặc định là trang 1, mỗi trang lấy 10 món.
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        
+        // Nhận thêm tham số lọc
+        const categoryId = req.query.categoryId || null;
+        const brandId = req.query.brandId || null;
+        const keyword = req.query.keyword || null;
 
-        const paginationResult = await Product.getAll(page, limit);
+        const paginationResult = await Product.getAll(page, limit, categoryId, brandId, keyword);
         res.status(200).json(paginationResult);
     } catch (error) {
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });

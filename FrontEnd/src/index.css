@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #f25822; /* Theo tone màu cam của ShopVNB */
+  --color-primary-hover: #d84b1a;
+  --color-dark: #222222;
+  --color-gray-bg: #f8f9fa;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #ffffff;
+  color: #333333;
+}
+
+/* Hiệu ứng mượt mà khi hover */
+.transition-all-300 {
+  transition: all 0.3s ease-in-out;
+}

@@ -27,7 +27,7 @@ const Post = {
             }
         };
     },
-   getById: async (id) => {
+    getById: async (id) => {
         // Lấy bài viết KÈM THEO tên của Admin (Tác giả)
         const postQuery = `
             SELECT p.*, u.full_name AS author_name 
@@ -36,21 +36,7 @@ const Post = {
             WHERE p.id = $1
         `;
         const result = await pool.query(postQuery, [id]);
-        const post = result.rows[0];
-        
-        if (post) {
-            // Lấy danh sách bình luận KÈM THEO tên của User bình luận
-            const commentQuery = `
-                SELECT c.*, u.full_name AS commenter_name 
-                FROM post_comments c
-                LEFT JOIN users u ON c.user_id = u.id
-                WHERE c.post_id = $1 
-                ORDER BY c.created_at DESC
-            `;
-            const comments = await pool.query(commentQuery, [id]);
-            post.comments = comments.rows;
-        }
-        return post;
+        return result.rows[0];
     },
     create: async (data) => {
         const { author_id, title, slug, content, thumbnail_url } = data;

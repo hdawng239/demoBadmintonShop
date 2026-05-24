@@ -11,7 +11,10 @@ const Cart = {
                        p.base_price,
                        p.image_url,
                        p.technical_specs,
-                       pv.id AS variant_id
+                       pv.id AS variant_id,
+                       pv.variant_name,
+                       pv.price_modifier,
+                       p.id AS product_id
                 FROM cart_items ci
                 LEFT JOIN product_variants pv ON ci.variant_id = pv.id
                 LEFT JOIN products p ON pv.product_id = p.id
