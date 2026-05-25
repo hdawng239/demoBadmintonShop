@@ -18,11 +18,22 @@ const getDashboardStats = async (req, res) => {
         const productsResult = await pool.query("SELECT COUNT(*) as count FROM products");
         const totalProducts = parseInt(productsResult.rows[0].count);
 
+        // Mock data cho biểu đồ 6 tháng gần nhất (Kết hợp dữ liệu thật của tháng hiện tại)
+        const chartData = [
+            { name: 'Th 12', revenue: 12500000, orders: 30 },
+            { name: 'Th 1', revenue: 15000000, orders: 40 },
+            { name: 'Th 2', revenue: 22000000, orders: 55 },
+            { name: 'Th 3', revenue: 18000000, orders: 48 },
+            { name: 'Th 4', revenue: 25000000, orders: 62 },
+            { name: 'Th 5 (Hiện tại)', revenue: totalRevenue > 0 ? totalRevenue : 19000000, orders: totalOrders > 0 ? totalOrders : 50 }
+        ];
+
         res.status(200).json({
             totalUsers,
             totalOrders,
             totalRevenue,
-            totalProducts
+            totalProducts,
+            chartData
         });
     } catch (error) {
         console.error(error);

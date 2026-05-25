@@ -190,7 +190,7 @@ const ProductListPage = () => {
                   {totalPages > 1 && (
                     <div className="flex justify-center items-center space-x-2 my-10">
                       <button 
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={page === 1}
                         className={`w-10 h-10 flex items-center justify-center rounded-lg border font-medium ${page === 1 ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-primary text-primary hover:bg-primary hover:text-white transition-all-300 shadow-sm hover:shadow-md'}`}
                       >
@@ -200,7 +200,7 @@ const ProductListPage = () => {
                       {[...Array(totalPages)].map((_, i) => (
                         <button
                           key={i}
-                          onClick={() => setPage(i + 1)}
+                          onClick={() => { setPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                           className={`w-10 h-10 flex items-center justify-center rounded-lg border font-medium transition-all-300 shadow-sm ${page === i + 1 ? 'bg-primary text-white border-primary shadow-md' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
                         >
                           {i + 1}
@@ -208,7 +208,7 @@ const ProductListPage = () => {
                       ))}
 
                       <button 
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={page === totalPages}
                         className={`w-10 h-10 flex items-center justify-center rounded-lg border font-medium ${page === totalPages ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-primary text-primary hover:bg-primary hover:text-white transition-all-300 shadow-sm hover:shadow-md'}`}
                       >

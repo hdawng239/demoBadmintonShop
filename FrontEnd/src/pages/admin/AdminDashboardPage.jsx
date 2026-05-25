@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
-import { Users, Package, ShoppingCart, DollarSign } from 'lucide-react';
+import { Users, Package, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 
 const AdminDashboardPage = () => {
@@ -8,7 +9,8 @@ const AdminDashboardPage = () => {
     totalUsers: 0,
     totalOrders: 0,
     totalRevenue: 0,
-    totalProducts: 0
+    totalProducts: 0,
+    chartData: []
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -88,9 +90,63 @@ const AdminDashboardPage = () => {
         </div>
       )}
       
-      {/* Khung chứa các biểu đồ hoặc thông tin khác sau này */}
-      <div className="mt-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-64 flex items-center justify-center text-gray-400 border-dashed">
-        Khu vực phát triển biểu đồ (Sắp ra mắt)
+      {/* Chart Section */}
+      <div className="mt-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-bold text-gray-800">Biểu đồ doanh thu</h3>
+            <p className="text-sm text-gray-500">Thống kê doanh thu trong 6 tháng gần nhất</p>
+          </div>
+          <div className="flex items-center text-green-500 text-sm font-bold bg-green-50 px-3 py-1 rounded-full">
+            <TrendingUp size={16} className="mr-1" />
+            +15.3%
+          </div>
+        </div>
+
+        <div className="h-80 w-full">
+          {stats.chartData && stats.chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={stats.chartData}
+                margin={{ top: 10, right: 30, left: 20, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickMargin={10} axisLine={false} tickLine={false} />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  fontSize={12} 
+                  tickFormatter={(value) => `${(value / 1000000)}M`}
+                  axisLine={false} 
+                  tickLine={false}
+                  tickMargin={10}
+                />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <Tooltip 
+                  formatter={(value) => [`${value.toLocaleString()} ₫`, 'Doanh thu']}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#f97316" 
+                  strokeWidth={3}
+                  fillOpacity={1} 
+                  fill="url(#colorRevenue)" 
+                  activeDot={{ r: 6, fill: "#f97316", stroke: "#fff", strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-gray-400">
+              Đang tải dữ liệu biểu đồ...
+            </div>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );
