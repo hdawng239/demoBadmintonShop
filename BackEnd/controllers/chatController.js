@@ -24,7 +24,7 @@ Thông tin cơ bản về NaviShop để bạn lấy tư liệu trả lời khá
 Giọng văn: Xưng "em" và gọi khách là "bạn" hoặc "anh/chị". Trả lời ngắn gọn, súc tích, có dùng emoji hợp lý để tạo sự thân thiện.`;
 
 const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.5-flash",
+    model: "gemini-3.1-flash",
     systemInstruction: systemInstruction 
 });
 
