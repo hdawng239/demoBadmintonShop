@@ -17,7 +17,7 @@ const AdminCategoryPage = () => {
   const fetchCategories = async (page = 1) => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/categories?page=${page}&limit=10`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/categories?page=${page}&limit=10`);
       if (res.data.data) {
         setCategories(res.data.data);
         setPagination(res.data.pagination);
@@ -56,11 +56,11 @@ const AdminCategoryPage = () => {
       const payload = { ...formData, parent_id: formData.parent_id || null };
       
       if (formData.id) {
-        await axios.put(`http://localhost:5000/api/categories/${formData.id}`, payload, {
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/categories/${formData.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post(`http://localhost:5000/api/categories`, payload, {
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/categories`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -75,7 +75,7 @@ const AdminCategoryPage = () => {
     if (!window.confirm("Cảnh báo: Bạn có chắc chắn muốn xóa danh mục này?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/categories/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/categories/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchCategories(currentPage);

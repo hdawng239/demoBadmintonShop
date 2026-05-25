@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Đổi port cho khớp với Backend của bạn
-const API_URL = 'https://demobadmintonshop-production.up.railway.app/api/products';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/products`;
 
 export const productService = {
     // Lấy danh sách sản phẩm có phân trang và lọc

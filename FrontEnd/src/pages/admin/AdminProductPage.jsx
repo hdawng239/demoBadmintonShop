@@ -24,9 +24,9 @@ const AdminProductPage = () => {
     setIsLoading(true);
     try {
       const [prodRes, catRes, brandRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/products?page=${page}&limit=10`),
-        axios.get('http://localhost:5000/api/categories'),
-        axios.get('http://localhost:5000/api/brands')
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/products?page=${page}&limit=10`),
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/categories`),
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/brands`)
       ]);
       
       if (prodRes.data.products) {
@@ -61,7 +61,7 @@ const AdminProductPage = () => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/products/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/products/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData(currentPage);
@@ -94,11 +94,11 @@ const AdminProductPage = () => {
       delete payload.weight_g;
 
       if (editProduct) {
-        await axios.put(`http://localhost:5000/api/products/${editProduct.id}`, payload, {
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/products/${editProduct.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post('http://localhost:5000/api/products', payload, {
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/products`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

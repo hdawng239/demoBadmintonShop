@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
 import axios from 'axios';
 import { cartService } from '../services/cartService';
+import { ghnService } from '../services/ghnService';
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -48,9 +49,9 @@ const CheckoutPage = () => {
 
   const fetchProvinces = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/ghn/provinces');
-      if (res.data && res.data.data) {
-        setProvinces(res.data.data);
+      const resData = await ghnService.getProvinces();
+      if (resData && resData.data) {
+        setProvinces(resData.data);
       }
     } catch (error) {
       console.error("Lỗi lấy tỉnh thành:", error);
@@ -67,9 +68,9 @@ const CheckoutPage = () => {
     
     if (provinceId) {
       try {
-        const res = await axios.post('http://localhost:5000/api/ghn/districts', { province_id: parseInt(provinceId) });
-        if (res.data && res.data.data) {
-          setDistricts(res.data.data);
+        const resData = await ghnService.getDistricts(provinceId);
+        if (resData && resData.data) {
+          setDistricts(resData.data);
         }
       } catch (error) {
         console.error("Lỗi lấy quận huyện:", error);
@@ -87,9 +88,9 @@ const CheckoutPage = () => {
     
     if (districtId) {
       try {
-        const res = await axios.post('http://localhost:5000/api/ghn/wards', { district_id: parseInt(districtId) });
-        if (res.data && res.data.data) {
-          setWards(res.data.data);
+        const resData = await ghnService.getWards(districtId);
+        if (resData && resData.data) {
+          setWards(resData.data);
         }
       } catch (error) {
         console.error("Lỗi lấy phường xã:", error);
@@ -141,17 +142,19 @@ const CheckoutPage = () => {
       // Avoid too large max dimensions
       if (maxHeight > 200) maxHeight = 200;
 
-      const res = await axios.post('http://localhost:5000/api/ghn/shipping-fee', {
+      const payload = {
         to_district_id: districtId,
         to_ward_code: wardCode,
         weight: totalWeight || 1000,
         length: maxLength || 20,
         width: maxWidth || 20,
         height: maxHeight || 10
-      });
+      };
+      
+      const resData = await ghnService.calculateShippingFee(payload);
 
-      if (res.data && res.data.data && res.data.data.total) {
-        setShippingFee(res.data.data.total);
+      if (resData && resData.data && resData.data.total) {
+        setShippingFee(resData.data.total);
       }
     } catch (error) {
       console.error("Lỗi tính phí ship:", error);
@@ -200,7 +203,7 @@ const CheckoutPage = () => {
     try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const res = await axios.post('http://localhost:5000/api/orders', orderData, {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders`, orderData, {
             headers: { Authorization: `Bearer ${token}` }
         });
         

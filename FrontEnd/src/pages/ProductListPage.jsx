@@ -21,7 +21,7 @@ const ProductListPage = () => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/brands');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/brands`);
         setBrands(res.data.data || res.data || []);
       } catch (error) {
         console.error("Lỗi khi tải brands:", error);

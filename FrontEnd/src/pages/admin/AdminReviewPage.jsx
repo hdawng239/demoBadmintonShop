@@ -14,7 +14,7 @@ const AdminReviewPage = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:5000/api/reviews?page=${page}&limit=10`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reviews?page=${page}&limit=10`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.data) {
@@ -39,7 +39,7 @@ const AdminReviewPage = () => {
     if (!window.confirm("Cảnh báo: Bạn có chắc chắn muốn xóa đánh giá này?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/reviews/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reviews/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchReviews(currentPage);
