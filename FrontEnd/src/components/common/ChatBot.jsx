@@ -43,7 +43,7 @@ const ChatBot = () => {
       const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/chat`, {
         message: userMessage,
         sessionId: sessionId,
-        history: messages // gửi lịch sử trước đó
+        history: messages.slice(1) // Bỏ tin nhắn chào mừng mặc định của bot để history bắt đầu bằng user
       });
 
       const botReply = response.data.reply;

@@ -74,7 +74,7 @@ const handleChat = async (req, res) => {
 
         res.status(200).json({ reply: responseText });
     } catch (error) {
-        console.error("Lỗi Chatbot:", error);
+        console.error("Lỗi Chatbot:", error.message || error);
         res.status(500).json({ error: "Hệ thống tư vấn đang bận, vui lòng thử lại sau." });
     }
 };
