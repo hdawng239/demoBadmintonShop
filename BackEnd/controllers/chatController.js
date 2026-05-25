@@ -23,9 +23,9 @@ Thông tin cơ bản về NaviShop để bạn lấy tư liệu trả lời khá
 
 Giọng văn: Xưng "em" và gọi khách là "bạn" hoặc "anh/chị". Trả lời ngắn gọn, súc tích, có dùng emoji hợp lý để tạo sự thân thiện.`;
 
-const model = genAI.getGenerativeModel({ 
-    model: "gemini-3.1-flash",
-    systemInstruction: systemInstruction 
+const model = genAI.getGenerativeModel({
+    model: "gemini-3.1-flash-lite",
+    systemInstruction: systemInstruction
 });
 
 const handleChat = async (req, res) => {
@@ -75,7 +75,7 @@ const handleChat = async (req, res) => {
         res.status(200).json({ reply: responseText });
     } catch (error) {
         console.error("Lỗi Chatbot:", error.message || error);
-        res.status(500).json({ error: "Hệ thống tư vấn đang bận, vui lòng thử lại sau." });
+        res.status(500).json({ error: "Hệ thống tư vấn đang bận, vui lòng thử lại sau.", details: error.message || String(error) });
     }
 };
 
