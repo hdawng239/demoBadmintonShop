@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/carts';
+const API_URL = 'https://demobadmintonshop-production.up.railway.app/api/carts';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');

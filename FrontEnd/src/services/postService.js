@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/posts';
+const API_URL = 'https://demobadmintonshop-production.up.railway.app/api/post';
 
 export const postService = {
   getAllPosts: async (page = 1, limit = 10) => {
