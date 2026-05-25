@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
+import ChatBot from '../common/ChatBot';
 
 const MainLayout = ({ children }) => {
   return (
@@ -9,6 +10,7 @@ const MainLayout = ({ children }) => {
       <main className="flex-1 w-full overflow-hidden bg-[#f8f9fa]">
         {children}
       </main>
+      <ChatBot />
       <Footer />
     </div>
   );

@@ -16,6 +16,7 @@ const authRoutes = require('./routes/authRoutes');
 const ghnRoutes = require('./routes/ghnRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const sepayRoutes = require('./routes/sepayRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 // Cấu hình Middleware CORS để Frontend có thể gọi API
 const cors = require('cors');
@@ -37,6 +38,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/ghn', ghnRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sepay', sepayRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: "Hệ thống E-Commerce chuẩn MVC đã sẵn sàng!" });
