@@ -27,7 +27,7 @@ files.forEach(file => {
   content = content.replace(/'http:\/\/localhost:5000\/api(.*?)'/g, '`' + baseExpr + '$1`');
   content = content.replace(/"http:\/\/localhost:5000\/api(.*?)"/g, '`' + baseExpr + '$1`');
   content = content.replace(/`http:\/\/localhost:5000\/api(.*?)`/g, '`' + baseExpr + '$1`');
-  
+
   content = content.replace(/'https:\/\/demobadmintonshop-production\.up\.railway\.app\/api(.*?)'/g, '`' + baseExpr + '$1`');
   content = content.replace(/"https:\/\/demobadmintonshop-production\.up\.railway\.app\/api(.*?)"/g, '`' + baseExpr + '$1`');
   content = content.replace(/`https:\/\/demobadmintonshop-production\.up\.railway\.app\/api(.*?)`/g, '`' + baseExpr + '$1`');
