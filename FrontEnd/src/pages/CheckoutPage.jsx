@@ -213,8 +213,12 @@ const CheckoutPage = () => {
             }
         }
 
-        // Sau khi đặt thành công, chuyển hướng sang trang success
-        navigate('/order-success', { state: { orderId: res.data.orderId } });
+        // Sau khi đặt thành công, chuyển hướng
+        if (paymentMethod === 'qr') {
+            navigate('/payment-qr', { state: { orderId: res.data.orderId, totalAmount } });
+        } else {
+            navigate('/order-success', { state: { orderId: res.data.orderId } });
+        }
     } catch (error) {
         console.error("Lỗi tạo đơn hàng:", error);
         alert("Đã xảy ra lỗi khi đặt hàng.");

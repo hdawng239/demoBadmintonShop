@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+require('dotenv').config();
 
 // Import các Routes
 const productRoutes = require('./routes/productRoutes');
@@ -14,6 +15,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const authRoutes = require('./routes/authRoutes');
 const ghnRoutes = require('./routes/ghnRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const sepayRoutes = require('./routes/sepayRoutes');
 
 // Cấu hình Middleware CORS để Frontend có thể gọi API
 const cors = require('cors');
@@ -34,6 +36,7 @@ app.use('/api/carts', cartRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/ghn', ghnRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/sepay', sepayRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: "Hệ thống E-Commerce chuẩn MVC đã sẵn sàng!" });

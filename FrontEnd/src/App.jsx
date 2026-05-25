@@ -14,6 +14,7 @@ import NewsPage from './pages/NewsPage';
 import NewsDetailPage from './pages/NewsDetailPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
+import PaymentQRPage from './pages/PaymentQRPage';
 import ScrollToTop from './components/ScrollToTop';
 
 import AdminRoute from './components/layout/AdminRoute';
@@ -38,6 +39,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
+        <Route path="/payment-qr" element={<PaymentQRPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:id" element={<NewsDetailPage />} />
         <Route path="/franchise" element={<FranchisePage />} />
