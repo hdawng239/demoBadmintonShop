@@ -2,7 +2,9 @@ const Category = require('../models/categoryModel');
 
 const getAllCategories = async (req, res) => {
     try {
-        const categories = await Category.getAll();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const categories = await Category.getAll(page, limit);
         res.status(200).json(categories);
     } catch (error) {
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });

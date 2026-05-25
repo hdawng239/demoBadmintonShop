@@ -29,6 +29,35 @@ const Review = {
         };
     },
     
+    // Lấy toàn bộ đánh giá (Dành cho Admin)
+    getAll: async (page, limit) => {
+        const offset = (page - 1) * limit;
+        
+        const countResult = await pool.query('SELECT COUNT(*) FROM reviews');
+        const totalItems = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalItems / limit);
+
+        const query = `
+            SELECT r.id, r.rating, r.comment, r.created_at, u.full_name as reviewer_name, p.name as product_name
+            FROM reviews r
+            LEFT JOIN users u ON r.user_id = u.id
+            LEFT JOIN products p ON r.product_id = p.id
+            ORDER BY r.created_at DESC
+            LIMIT $1 OFFSET $2
+        `;
+        const result = await pool.query(query, [limit, offset]);
+        
+        return {
+            data: result.rows,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage: page,
+                limit
+            }
+        };
+    },
+    
     // Tạo đánh giá mới
     create: async (data) => {
         const { user_id, product_id, rating, comment } = data;

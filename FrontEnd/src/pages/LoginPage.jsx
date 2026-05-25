@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
+import { Eye, EyeOff } from 'lucide-react';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -15,14 +17,14 @@ const LoginPage = () => {
     setError('');
     
     const isEmail = email.includes('@');
-    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^0[0-9]{9}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
 
     if (isEmail && !emailRegex.test(email)) {
-      setError('Vui lòng nhập đúng định dạng email!');
+      setError('Vui lòng nhập email đúng định dạng @gmail.com!');
       return;
     } else if (!isEmail && !phoneRegex.test(email)) {
-      setError('Tài khoản phải là Email hợp lệ hoặc Số điện thoại (10 số)!');
+      setError('Tài khoản phải là Email (@gmail.com) hợp lệ hoặc Số điện thoại (10 số, bắt đầu bằng 0)!');
       return;
     }
 
@@ -64,15 +66,22 @@ const LoginPage = () => {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
-            <div>
+            <div className="relative">
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 placeholder="Mật khẩu" 
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-12"
               />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
             
             <button 

@@ -1,16 +1,15 @@
 const pool = require('./config/db');
 
-async function checkSchema() {
+async function run() {
     try {
-        const res = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'product_variants'");
-        console.log("product_variants schema:", res.rows);
-        
-        const res2 = await pool.query("SELECT * FROM product_variants LIMIT 5");
-        console.log("product_variants data:", res2.rows);
-    } catch (e) {
-        console.error(e);
+        const axios = require('axios');
+        await pool.query("ALTER TABLE orders ADD COLUMN to_district_id INTEGER DEFAULT 1442;");
+        await pool.query("ALTER TABLE orders ADD COLUMN to_ward_code VARCHAR(20) DEFAULT '21012';");
+        console.log("Added to_district_id and to_ward_code to orders");
+    } catch(e) {
+        console.error(e.response ? e.response.data : e.message);
     } finally {
         process.exit(0);
     }
 }
-checkSchema();
+run();

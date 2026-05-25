@@ -11,6 +11,17 @@ const getProductReviews = async (req, res) => {
     }
 };
 
+const getAllReviews = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const reviewsData = await Review.getAll(page, limit);
+        res.status(200).json(reviewsData);
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
+    }
+};
+
 const createReview = async (req, res) => {
     try {
         const newReview = await Review.create(req.body);
@@ -30,4 +41,4 @@ const deleteReview = async (req, res) => {
     }
 };
 
-module.exports = { getProductReviews, createReview, deleteReview };
+module.exports = { getProductReviews, createReview, deleteReview, getAllReviews };

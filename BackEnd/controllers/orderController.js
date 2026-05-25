@@ -32,12 +32,32 @@ const createOrder = async (req, res) => {
     }
 };
 
+const ghnService = require('../services/ghnService');
+
 const updateOrder = async (req, res) => {
     try {
-        const updated = await Order.update(req.params.id, req.body);
+        const updateData = { ...req.body };
+        
+        // GHN Integration: If status is updated to shipping, create GHN order
+        if (updateData.status === 'shipping') {
+            const currentOrder = await Order.getById(req.params.id);
+            if (currentOrder && !currentOrder.tracking_code) {
+                try {
+                    const trackingCode = await ghnService.createShippingOrder(currentOrder);
+                    updateData.tracking_code = trackingCode;
+                } catch (ghnError) {
+                    console.error("GHN Error during update:", ghnError);
+                    // Decide if we want to block the update or just skip tracking code. We'll block and return error to alert Admin.
+                    return res.status(400).json({ message: "Lỗi tạo đơn GHN: " + ghnError.message });
+                }
+            }
+        }
+
+        const updated = await Order.update(req.params.id, updateData);
         if (!updated) return res.status(404).json({ message: "Không thấy đơn hàng" });
         res.status(200).json({ message: "Cập nhật thành công", data: updated });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
+import { Eye, EyeOff } from 'lucide-react';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const RegisterPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -25,11 +28,11 @@ const RegisterPage = () => {
     setError('');
     setSuccess('');
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    const phoneRegex = /^0[0-9]{9}$/;
 
     if (!emailRegex.test(formData.email)) {
-      setError('Vui lòng nhập đúng định dạng email (vd: abc@gmail.com)!');
+      setError('Vui lòng nhập email đúng định dạng @gmail.com!');
       return;
     }
 
@@ -113,27 +116,41 @@ const RegisterPage = () => {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
-            <div>
+            <div className="relative">
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 name="password"
                 placeholder="Mật khẩu" 
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-12"
               />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
-            <div>
+            <div className="relative">
               <input 
-                type="password" 
+                type={showConfirmPassword ? "text" : "password"} 
                 name="confirmPassword"
                 placeholder="Nhập lại mật khẩu" 
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-12"
               />
+              <button 
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors focus:outline-none"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
             
             <button 

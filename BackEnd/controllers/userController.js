@@ -25,7 +25,15 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
-        const { password, ...otherData } = req.body;
+        const { password, email, phone, ...otherData } = req.body;
+        
+        if (!email || !email.endsWith('@gmail.com')) {
+            return res.status(400).json({ message: "Email bắt buộc phải là định dạng @gmail.com" });
+        }
+        if (phone && !/^0\d{9}$/.test(phone)) {
+            return res.status(400).json({ message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0" });
+        }
+        
         if (!password) {
             return res.status(400).json({ message: "Mật khẩu là bắt buộc!" });
         }
@@ -47,7 +55,19 @@ const updateUser = async (req, res) => {
     try {
         let updateData = { ...req.body };
 
-        // [MỚI] Nếu Admin muốn đổi mật khẩu cho user, phải băm nó ra
+        if (updateData.email && !updateData.email.endsWith('@gmail.com')) {
+            return res.status(400).json({ message: "Email bắt buộc phải là định dạng @gmail.com" });
+        }
+        if (updateData.phone && !/^0\d{9}$/.test(updateData.phone)) {
+            return res.status(400).json({ message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0" });
+        }
+
+        // Nếu khách hàng thường muốn tự đổi role thành admin -> Chặn ngay
+        if (updateData.role && req.user.role !== 'admin') {
+            delete updateData.role;
+        }
+
+        // Nếu có update password, phải băm nó ra
         if (updateData.password) {
             updateData.password_hash = await AuthService.hashPassword(updateData.password);
             delete updateData.password; // Xóa chữ "password" trần đi để tránh lưu nhầm

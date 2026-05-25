@@ -26,6 +26,14 @@ const ProductDetailPage = () => {
   // Variant selection (grouped by attributes)
   const [selectedOptions, setSelectedOptions] = useState({});
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+
+  // Giới hạn số lượng theo tồn kho nếu đổi phân loại
+  useEffect(() => {
+    if (selectedVariant && selectedVariant.stock_quantity > 0 && quantity > selectedVariant.stock_quantity) {
+      setQuantity(selectedVariant.stock_quantity);
+    }
+  }, [selectedVariant]);
 
   // Parse attributes Map at component level
   const attributesMap = {};
@@ -325,6 +333,53 @@ const ProductDetailPage = () => {
               )}
             </div>
 
+            {/* Số lượng */}
+            <div className="mb-8 border-b border-gray-100 pb-8">
+              <h4 className="text-sm font-bold text-gray-800 mb-3">Số lượng:</h4>
+              <div className="flex items-center">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 border border-gray-300 rounded-l-lg flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors text-lg"
+                >
+                  -
+                </button>
+                <input 
+                  type="number"
+                  min="1"
+                  max={selectedVariant ? selectedVariant.stock_quantity : 99}
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    const maxStock = selectedVariant ? selectedVariant.stock_quantity : 99;
+                    if (!isNaN(val)) {
+                      if (val > maxStock) {
+                        setQuantity(maxStock);
+                        showToast(`Chỉ còn ${maxStock} sản phẩm trong kho!`, 'error');
+                      } else {
+                        setQuantity(val);
+                      }
+                    } else {
+                      setQuantity('');
+                    }
+                  }}
+                  onBlur={() => {
+                    if (quantity === '' || isNaN(quantity) || quantity < 1) setQuantity(1);
+                  }}
+                  className="w-14 h-10 border-t border-b border-gray-300 flex items-center justify-center font-semibold text-gray-800 bg-white text-center outline-none focus:ring-2 focus:ring-primary/50 m-0 p-0 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <button 
+                  onClick={() => {
+                    const maxStock = selectedVariant ? selectedVariant.stock_quantity : 99;
+                    if (quantity < maxStock) setQuantity(quantity + 1);
+                    else showToast(`Chỉ còn ${maxStock} sản phẩm trong kho!`, 'error');
+                  }}
+                  className="w-10 h-10 border border-gray-300 rounded-r-lg flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors text-lg"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             {/* Offers Box (Dynamic) */}
             <div className="border border-primary rounded-lg p-5 mb-8 relative bg-orange-50/30">
               <div className="absolute -top-4 left-4 bg-white border border-primary px-3 py-1 rounded-full text-primary font-bold flex items-center shadow-sm">
@@ -369,7 +424,7 @@ const ProductDetailPage = () => {
                     await cartService.addItemToCart({
                       cart_id: cartId,
                       variant_id: selectedVariant ? selectedVariant.id : null,
-                      quantity: 1
+                      quantity: quantity
                     });
                     
                     showToast('Đã thêm ' + (selectedVariant ? selectedVariant.variant_name : product.name) + ' vào giỏ hàng!', 'success');
@@ -403,7 +458,7 @@ const ProductDetailPage = () => {
                     await cartService.addItemToCart({
                       cart_id: cartId,
                       variant_id: selectedVariant ? selectedVariant.id : null,
-                      quantity: 1
+                      quantity: quantity
                     });
                     
                     window.dispatchEvent(new Event('cartUpdated'));

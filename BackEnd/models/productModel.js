@@ -73,15 +73,16 @@ const Product = {
         return product;
     },
     create: async (data) => {
-        const { category_id, brand_id, name, base_price, description, technical_specs, is_active } = data;
+        const { category_id, brand_id, name, base_price, description, technical_specs, is_active, image_url } = data;
         const query = `
-            INSERT INTO products (category_id, brand_id, name, base_price, description, technical_specs, is_active) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+            INSERT INTO products (category_id, brand_id, name, base_price, description, technical_specs, is_active, image_url) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
         `;
         const result = await pool.query(query, [
             category_id, brand_id, name, base_price, description, 
             technical_specs ? JSON.stringify(technical_specs) : null, 
-            is_active ?? true
+            is_active ?? true,
+            image_url || null
         ]);
         return result.rows[0];
     },

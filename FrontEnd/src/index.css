@@ -17,3 +17,9 @@ body {
 .transition-all-300 {
   transition: all 0.3s ease-in-out;
 }
+
+/* Ẩn icon con mắt mặc định của trình duyệt Edge */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

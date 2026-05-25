@@ -27,8 +27,23 @@ const Order = {
         };
     },
     getById: async (id) => {
-        const result = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
-        return result.rows[0];
+        const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
+        if (orderResult.rows.length === 0) return null;
+        
+        const order = orderResult.rows[0];
+        
+        // Lấy chi tiết các món hàng trong đơn
+        const itemsQuery = `
+            SELECT oi.*, p.name as product_name, pv.variant_name, p.image_url, p.technical_specs 
+            FROM order_items oi
+            JOIN product_variants pv ON oi.variant_id = pv.id
+            JOIN products p ON pv.product_id = p.id
+            WHERE oi.order_id = $1
+        `;
+        const itemsResult = await pool.query(itemsQuery, [id]);
+        order.items = itemsResult.rows;
+        
+        return order;
     },
     // Hàm bọc gói giao dịch phức tạp liên bảng
     createWithItems: async (orderData, cartItems) => {

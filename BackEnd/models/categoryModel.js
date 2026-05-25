@@ -2,16 +2,32 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 
 const Category = {
-    getAll: async () => {
+    getAll: async (page = 1, limit = 10) => {
+        const offset = (page - 1) * limit;
+
+        const countResult = await pool.query('SELECT COUNT(*) FROM categories');
+        const totalItems = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalItems / limit);
+
         // Lấy danh mục kèm theo tên của danh mục cha (nếu có) bằng cách tự JOIN chính nó
         const query = `
             SELECT c1.*, c2.name AS parent_name 
             FROM categories c1
             LEFT JOIN categories c2 ON c1.parent_id = c2.id
             ORDER BY c1.id ASC
+            LIMIT $1 OFFSET $2
         `;
-        const result = await pool.query(query);
-        return result.rows;
+        const result = await pool.query(query, [limit, offset]);
+        
+        return {
+            data: result.rows,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage: parseInt(page),
+                limit: parseInt(limit)
+            }
+        };
     },
     getById: async (id) => {
         const result = await pool.query('SELECT * FROM categories WHERE id = $1', [id]);

@@ -16,6 +16,17 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
 import ScrollToTop from './components/ScrollToTop';
 
+import AdminRoute from './components/layout/AdminRoute';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminProductPage from './pages/admin/AdminProductPage';
+import AdminCategoryPage from './pages/admin/AdminCategoryPage';
+import AdminUserPage from './pages/admin/AdminUserPage';
+import AdminOrderPage from './pages/admin/AdminOrderPage';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
+
+import AdminPostPage from './pages/admin/AdminPostPage';
+import AdminReviewPage from './pages/admin/AdminReviewPage';
+
 function App() {
   return (
     <Router>
@@ -36,6 +47,16 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><AdminUserPage /></AdminRoute>} />
+        <Route path="/admin/products" element={<AdminRoute><AdminProductPage /></AdminRoute>} />
+        <Route path="/admin/categories" element={<AdminRoute><AdminCategoryPage /></AdminRoute>} />
+        <Route path="/admin/orders" element={<AdminRoute><AdminOrderPage /></AdminRoute>} />
+        <Route path="/admin/posts" element={<AdminRoute><AdminPostPage /></AdminRoute>} />
+        <Route path="/admin/reviews" element={<AdminRoute><AdminReviewPage /></AdminRoute>} />
       </Routes>
     </Router>
   );

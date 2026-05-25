@@ -5,6 +5,13 @@ const register = async (req, res) => {
     try {
         const { full_name, email, password, phone, address } = req.body;
 
+        if (!email || !email.endsWith('@gmail.com')) {
+            return res.status(400).json({ message: "Email bắt buộc phải là định dạng @gmail.com" });
+        }
+        if (phone && !/^0\d{9}$/.test(phone)) {
+            return res.status(400).json({ message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0" });
+        }
+
         // 1. Kiểm tra xem email đã tồn tại chưa
         const existingUser = await User.getByEmailForLogin(email);
         if (existingUser) {
