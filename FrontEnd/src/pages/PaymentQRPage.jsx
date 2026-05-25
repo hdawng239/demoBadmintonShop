@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { CheckCircle, ArrowRight, Copy, Check } from 'lucide-react';
+import axios from 'axios';
 
 const PaymentQRPage = () => {
   const location = useLocation();
@@ -16,6 +17,30 @@ const PaymentQRPage = () => {
       navigate('/');
     }
   }, [orderId, totalAmount, navigate]);
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        
+        const res = await axios.get(`${API_URL}/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.data && res.data.payment_status === 'paid') {
+          clearInterval(intervalId);
+          navigate('/order-success', { state: { orderId: orderId } });
+        }
+      } catch (error) {
+        console.error("Lỗi kiểm tra trạng thái thanh toán:", error);
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [orderId, navigate]);
 
   if (!orderId || !totalAmount) return null;
 

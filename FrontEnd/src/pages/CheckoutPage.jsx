@@ -293,13 +293,14 @@ const CheckoutPage = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Phương thức thanh toán</h3>
                 <div className="space-y-3">
-                  <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="w-4 h-4 text-primary focus:ring-primary" />
-                    <span className="ml-3 font-medium text-gray-700">Thanh toán khi nhận hàng (COD)</span>
+                  <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-primary bg-orange-50/30' : 'border-gray-200 hover:bg-gray-50'}`}>
+                    <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" />
+                    <span className="ml-3 font-medium text-gray-700">Thanh toán khi nhận hàng (Ship COD)</span>
                   </label>
-                  <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input type="radio" name="payment" value="qr" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} className="w-4 h-4 text-primary focus:ring-primary" />
-                    <span className="ml-3 font-medium text-gray-700">Chuyển khoản QR (Momo/VNPay)</span>
+                  
+                  <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'qr' ? 'border-primary bg-orange-50/30' : 'border-gray-200 hover:bg-gray-50'}`}>
+                    <input type="radio" name="payment" value="qr" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" />
+                    <span className="ml-3 font-medium text-gray-700">Chuyển khoản QR (SePay)</span>
                   </label>
                 </div>
               </div>

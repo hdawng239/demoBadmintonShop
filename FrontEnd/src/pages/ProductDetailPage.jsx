@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
@@ -9,6 +9,7 @@ import { Star, ShoppingCart, CheckCircle, Gift, ArrowLeft, ArrowRight, XCircle }
 
 const ProductDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -462,7 +463,23 @@ const ProductDetailPage = () => {
                     });
                     
                     window.dispatchEvent(new Event('cartUpdated'));
-                    window.location.href = '/cart'; // Chuyển sang giỏ hàng
+                    
+                    // Create selected item structure matching cart item structure
+                    const priceToUse = parseInt(product.sale_price || product.base_price) + (selectedVariant?.price_modifier ? parseInt(selectedVariant.price_modifier) : 0);
+                    
+                    const selectedItemForCheckout = {
+                      id: 'temp_' + Date.now(), // temp cart item id
+                      variant_id: selectedVariant ? selectedVariant.id : null,
+                      quantity: quantity,
+                      base_price: product.sale_price || product.base_price,
+                      price_modifier: selectedVariant?.price_modifier || 0,
+                      technical_specs: product.technical_specs,
+                      product_name: product.name,
+                      image_url: product.image_url,
+                      variant_name: selectedVariant ? selectedVariant.variant_name : null,
+                    };
+
+                    navigate('/checkout', { state: { selectedItems: [selectedItemForCheckout] } });
                   } catch (error) {
                     console.error("Lỗi mua ngay:", error);
                     showToast("Có lỗi xảy ra.", 'error');
