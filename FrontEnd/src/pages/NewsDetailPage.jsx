@@ -64,7 +64,7 @@ const NewsDetailPage = () => {
           {/* Header */}
           <header className="mb-10 text-center">
             <div className="inline-block bg-orange-100 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
-              Tin tức NaviShop
+              Tin tức Naro Shop
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
               {post.title}

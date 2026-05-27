@@ -20,7 +20,7 @@ const OrderSuccessPage = () => {
           
           <h1 className="text-3xl font-black text-gray-800 mb-2 uppercase">Đặt Hàng Thành Công!</h1>
           <p className="text-gray-500 mb-8">
-            Cảm ơn bạn đã mua sắm tại NaviShop. Đơn hàng của bạn {orderId && <span className="font-bold text-gray-800">#{orderId}</span>} đang được xử lý và sẽ sớm được giao đến bạn.
+            Cảm ơn bạn đã mua sắm tại Naro Shop. Đơn hàng của bạn {orderId && <span className="font-bold text-gray-800">#{orderId}</span>} đang được xử lý và sẽ sớm được giao đến bạn.
           </p>
 
           <div className="bg-gray-50 rounded-xl p-6 mb-8 text-left border border-gray-100">

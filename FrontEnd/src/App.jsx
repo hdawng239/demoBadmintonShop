@@ -4,6 +4,7 @@ import ProductListPage from './pages/ProductListPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import FranchisePage from './pages/FranchisePage';
+import StoreSystemPage from './pages/StoreSystemPage';
 import GuidePage from './pages/GuidePage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -43,6 +44,7 @@ function App() {
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:id" element={<NewsDetailPage />} />
         <Route path="/franchise" element={<FranchisePage />} />
+        <Route path="/he-thong-cua-hang" element={<StoreSystemPage />} />
         <Route path="/guide" element={<GuidePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />

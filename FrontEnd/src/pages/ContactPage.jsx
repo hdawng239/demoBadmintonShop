@@ -6,8 +6,8 @@ const ContactPage = () => {
     <MainLayout>
       <div className="container mx-auto px-4 py-16 min-h-[60vh] max-w-5xl">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold mb-4 text-gray-900 border-b-4 border-primary inline-block pb-2">Liên Hệ Với NaviShop</h1>
-          <p className="text-gray-500 max-w-2xl mx-auto mt-4">Bạn có câu hỏi, góp ý hay cần tư vấn? Hãy để lại thông tin, đội ngũ NaviShop luôn sẵn sàng lắng nghe và phản hồi bạn trong thời gian sớm nhất.</p>
+          <h1 className="text-4xl font-extrabold mb-4 text-gray-900 border-b-4 border-primary inline-block pb-2">Liên Hệ Với Naro Shop</h1>
+          <p className="text-gray-500 max-w-2xl mx-auto mt-4">Bạn có câu hỏi, góp ý hay cần tư vấn? Hãy để lại thông tin, đội ngũ Naro Shop luôn sẵn sàng lắng nghe và phản hồi bạn trong thời gian sớm nhất.</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
@@ -44,7 +44,7 @@ const ContactPage = () => {
                     </div>
                     <div>
                       <strong className="block text-gray-300 font-medium mb-1">Email hỗ trợ:</strong>
-                      <span className="text-gray-400">cskh@navishop.com</span>
+                      <span className="text-gray-400">cskh@naroshop.com</span>
                     </div>
                   </li>
                   <li className="flex items-start">
@@ -85,7 +85,7 @@ const ContactPage = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung cần hỗ trợ <span className="text-red-500">*</span></label>
-                  <textarea rows="5" placeholder="Bạn cần NaviShop giúp gì..." className="w-full border border-gray-300 rounded-xl p-3.5 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors bg-white shadow-sm resize-none"></textarea>
+                  <textarea rows="5" placeholder="Bạn cần Naro Shop giúp gì..." className="w-full border border-gray-300 rounded-xl p-3.5 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors bg-white shadow-sm resize-none"></textarea>
                 </div>
                 <button type="button" className="w-full bg-primary text-white font-bold text-lg px-6 py-4 rounded-xl hover:bg-orange-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                   Gửi Yêu Cầu

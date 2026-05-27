@@ -7,15 +7,15 @@ const AboutPage = () => {
       <div className="container mx-auto px-4 py-16 min-h-[60vh] max-w-4xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold mb-4 text-gray-900 border-b-4 border-primary inline-block pb-2">Về Chúng Tôi</h1>
-          <p className="text-gray-500 max-w-2xl mx-auto mt-4 text-lg">Khơi nguồn đam mê, chắp cánh tài năng - NaviShop luôn đồng hành cùng bạn trên mọi mặt sân.</p>
+          <p className="text-gray-500 max-w-2xl mx-auto mt-4 text-lg">Khơi nguồn đam mê, chắp cánh tài năng - Naro Shop luôn đồng hành cùng bạn trên mọi mặt sân.</p>
         </div>
 
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-12">
           <p className="text-lg text-gray-700 leading-relaxed mb-6 first-letter:text-5xl first-letter:font-bold first-letter:text-primary first-letter:mr-2 first-letter:float-left">
-            <strong className="text-primary">NaviShop</strong> tự hào là hệ thống cửa hàng dụng cụ cầu lông uy tín và quy mô lớn nhất Việt Nam. Khởi nguồn từ tình yêu cháy bỏng với trái cầu lông vũ, chúng tôi không chỉ là một nhà bán lẻ, mà còn là điểm tựa vững chắc cho cộng đồng đam mê thể thao nước nhà.
+            <strong className="text-primary">Naro Shop</strong> tự hào là hệ thống cửa hàng dụng cụ cầu lông uy tín và quy mô lớn nhất Việt Nam. Khởi nguồn từ tình yêu cháy bỏng với trái cầu lông vũ, chúng tôi không chỉ là một nhà bán lẻ, mà còn là điểm tựa vững chắc cho cộng đồng đam mê thể thao nước nhà.
           </p>
           <p className="text-lg text-gray-700 leading-relaxed">
-            Chúng tôi cam kết cung cấp 100% sản phẩm chính hãng từ các thương hiệu đình đám toàn cầu như <strong className="text-gray-900">Yonex, Victor, Lining, Mizuno...</strong> Với đội ngũ tư vấn viên am hiểu sâu sắc về kỹ thuật, NaviShop tự tin mang đến cho bạn những sự lựa chọn tối ưu nhất, phù hợp nhất với lối đánh và thể trạng của riêng bạn.
+            Chúng tôi cam kết cung cấp 100% sản phẩm chính hãng từ các thương hiệu đình đám toàn cầu như <strong className="text-gray-900">Yonex, Victor, Lining, Mizuno...</strong> Với đội ngũ tư vấn viên am hiểu sâu sắc về kỹ thuật, Naro Shop tự tin mang đến cho bạn những sự lựa chọn tối ưu nhất, phù hợp nhất với lối đánh và thể trạng của riêng bạn.
           </p>
         </div>
 

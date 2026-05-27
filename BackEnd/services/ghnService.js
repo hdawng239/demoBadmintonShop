@@ -54,7 +54,7 @@ const createShippingOrder = async (orderData) => {
 
         const payload = {
             payment_type_id: 2, // 2: Buyer pays shipping (or 1: Seller pays) - using 2 for standard e-commerce
-            note: `Đơn hàng #${orderData.id} từ NaviShop`,
+            note: `Đơn hàng #${orderData.id} từ Naro Shop`,
             required_note: "KHONGCHOXEMHANG",
             to_name: orderData.shipping_name,
             to_phone: orderData.shipping_phone,

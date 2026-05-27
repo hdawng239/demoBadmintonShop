@@ -9,17 +9,17 @@ const Footer = () => {
         {/* Cột 1 */}
         <div>
           <h3 className="text-white font-bold uppercase mb-4">Thông tin chung</h3>
-          <p className="mb-4 text-justify"><strong>NaviShop</strong> là hệ thống cửa hàng cầu lông, pickleball với hơn 80 chi nhánh trên toàn quốc, cung cấp sỉ và lẻ các mặt hàng dụng cụ cầu lông, pickleball từ phong trào tới chuyên nghiệp.</p>
-          <p className="mb-4 text-justify"><strong>Với sứ mệnh:</strong> "NaviShop cam kết mang đến những sản phẩm, dịch vụ chất lượng tốt nhất phục vụ cho người chơi thể thao để nâng cao sức khỏe của chính mình."</p>
+          <p className="mb-4 text-justify"><strong>Naro Shop</strong> là hệ thống cửa hàng cầu lông, pickleball với hơn 80 chi nhánh trên toàn quốc, cung cấp sỉ và lẻ các mặt hàng dụng cụ cầu lông, pickleball từ phong trào tới chuyên nghiệp.</p>
+          <p className="mb-4 text-justify"><strong>Với sứ mệnh:</strong> "Naro Shop cam kết mang đến những sản phẩm, dịch vụ chất lượng tốt nhất phục vụ cho người chơi thể thao để nâng cao sức khỏe của chính mình."</p>
           <p className="text-justify"><strong className="text-primary">Tầm nhìn:</strong> "Trở thành nhà phân phối và sản xuất thể thao lớn nhất Việt Nam"</p>
         </div>
 
         {/* Cột 2 */}
         <div>
           <h3 className="font-bold text-lg mb-4 text-primary">THÔNG TIN LIÊN HỆ</h3>
-          <p className="mb-4 text-primary hover:underline cursor-pointer">Xem tất cả các cửa hàng NaviShop</p>
+          <p className="mb-4 text-primary hover:underline cursor-pointer">Xem tất cả các cửa hàng Naro Shop</p>
           <p className="mb-2">Hotline: 0977508430</p>
-          <p className="mb-2">Email: info@navishop.com</p>
+          <p className="mb-2">Email: info@naroshop.com</p>
           <p className="mb-2">Hợp tác kinh doanh: 0947342259 (Ms. Thảo)</p>
           <p className="mb-4">Nhượng quyền thương hiệu: <span className="text-primary">0334.741.141</span> (Mr. Hậu)</p>
           <div className="flex space-x-3">
@@ -64,8 +64,8 @@ const Footer = () => {
 
       {/* Bottom Footer */}
       <div className="bg-primary text-white py-6 text-center text-xs">
-        <p className="font-bold uppercase mb-1">Công ty TNHH NaviShop</p>
-        <p>Địa chỉ: 390/2 Hà Huy Giáp, Phường Thạnh Lộc, Quận 12, TPHCM - Email: info@navishop.com</p>
+        <p className="font-bold uppercase mb-1">Công ty TNHH Naro Shop</p>
+        <p>Địa chỉ: 390/2 Hà Huy Giáp, Phường Thạnh Lộc, Quận 12, TPHCM - Email: info@naroshop.com</p>
         <p>GPKD số 0314496879 do Sở KH và ĐT TP Hồ Chí Minh cấp ngày 05/07/2017</p>
         <div className="flex justify-center mt-3">
           <div className="bg-white text-primary flex items-center px-3 py-1 rounded-md font-bold">

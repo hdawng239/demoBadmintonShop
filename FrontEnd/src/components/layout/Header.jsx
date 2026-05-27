@@ -95,7 +95,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-8">
           <Link to="/" className="text-3xl font-black italic tracking-tighter text-black flex items-center">
-            <span className="bg-black text-white px-2 py-1 mr-1 rounded-sm">Navi</span>Shop
+            <span className="bg-black text-white px-2 py-1 mr-1 rounded-sm">Naro</span>Shop
           </Link>
           
           <div className="hidden lg:flex items-center space-x-6 text-sm">
@@ -103,10 +103,10 @@ const Header = () => {
               <Phone className="w-4 h-4 mr-1" />
               HOTLINE: 0977508430
             </div>
-            <div className="flex items-center text-gray-700 hover:text-primary cursor-pointer">
+            <Link to="/he-thong-cua-hang" className="flex items-center text-gray-700 hover:text-primary cursor-pointer">
               <MapPin className="w-4 h-4 mr-1" />
               HỆ THỐNG CỬA HÀNG
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -187,10 +187,6 @@ const Header = () => {
         </div>
 
         <div className="flex items-center space-x-6">
-          <div className="flex flex-col items-center text-gray-600 hover:text-primary cursor-pointer transition-all-300">
-            <Search className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-semibold uppercase">Tra cứu</span>
-          </div>
           {user ? (
             <div className="relative group cursor-pointer flex flex-col justify-center">
               <div className="flex flex-col items-center text-primary transition-all-300">

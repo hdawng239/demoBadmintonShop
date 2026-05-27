@@ -9,6 +9,7 @@ const RegisterPage = () => {
     full_name: '',
     email: '',
     phone: '',
+    address: '',
     password: '',
     confirmPassword: ''
   });
@@ -36,8 +37,13 @@ const RegisterPage = () => {
       return;
     }
 
-    if (formData.phone && !phoneRegex.test(formData.phone)) {
+    if (!formData.phone || !phoneRegex.test(formData.phone)) {
       setError('Số điện thoại không hợp lệ (Phải đủ 10 số và bắt đầu bằng 0)!');
+      return;
+    }
+
+    if (!formData.address || formData.address.trim() === '') {
+      setError('Vui lòng nhập địa chỉ!');
       return;
     }
 
@@ -48,7 +54,7 @@ const RegisterPage = () => {
 
     setIsLoading(true);
     try {
-      await authService.register(formData.full_name, formData.email, formData.phone, formData.password);
+      await authService.register(formData.full_name, formData.email, formData.phone, formData.address, formData.password);
       setSuccess('Đăng ký thành công! Đang chuyển hướng...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
@@ -110,8 +116,20 @@ const RegisterPage = () => {
               <input 
                 type="text" 
                 name="phone"
-                placeholder="Số điện thoại" 
+                placeholder="Số điện thoại (*)" 
+                required
                 value={formData.phone}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              />
+            </div>
+            <div>
+              <input 
+                type="text" 
+                name="address"
+                placeholder="Địa chỉ cụ thể (*)" 
+                required
+                value={formData.address}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />

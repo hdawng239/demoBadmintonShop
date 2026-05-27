@@ -5,20 +5,20 @@ const FranchisePage = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-16 min-h-[60vh] max-w-4xl">
-        <h1 className="text-4xl font-extrabold mb-8 text-gray-900 border-b-4 border-primary inline-block pb-2">Chính sách nhượng quyền NaviShop</h1>
+        <h1 className="text-4xl font-extrabold mb-8 text-gray-900 border-b-4 border-primary inline-block pb-2">Chính sách nhượng quyền Naro Shop</h1>
         <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
           <p className="text-xl text-gray-600 font-medium mb-8">
-            Kính chào Quý đối tác, chào mừng bạn đến với hệ sinh thái nhượng quyền của <strong className="text-primary">NaviShop</strong>. Với sứ mệnh mang đến những trải nghiệm thể thao đẳng cấp, chúng tôi không ngừng mở rộng hệ thống và tìm kiếm những nhà đầu tư chung chí hướng.
+            Kính chào Quý đối tác, chào mừng bạn đến với hệ sinh thái nhượng quyền của <strong className="text-primary">Naro Shop</strong>. Với sứ mệnh mang đến những trải nghiệm thể thao đẳng cấp, chúng tôi không ngừng mở rộng hệ thống và tìm kiếm những nhà đầu tư chung chí hướng.
           </p>
 
           <div className="bg-orange-50 p-6 rounded-2xl border-l-4 border-primary mb-10 shadow-sm">
             <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
               <span className="bg-primary text-white w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-sm">1</span>
-              Vì sao chọn NaviShop?
+              Vì sao chọn Naro Shop?
             </h2>
             <p className="mb-4">Chúng tôi tự hào là hệ thống phân phối dụng cụ cầu lông hàng đầu, với nguồn khách hàng trung thành rộng lớn và quy trình vận hành tối ưu. Hợp tác cùng chúng tôi, bạn sẽ nhận được:</p>
             <ul className="list-disc pl-6 space-y-2 text-gray-700">
-              <li><strong className="text-gray-900">Sức mạnh thương hiệu:</strong> Thừa hưởng uy tín và định vị vững chắc của NaviShop trên thị trường.</li>
+              <li><strong className="text-gray-900">Sức mạnh thương hiệu:</strong> Thừa hưởng uy tín và định vị vững chắc của Naro Shop trên thị trường.</li>
               <li><strong className="text-gray-900">Nguồn hàng ổn định:</strong> Cam kết phân phối hàng chính hãng (Yonex, Lining, Victor) với mức chiết khấu cực kỳ cạnh tranh.</li>
               <li><strong className="text-gray-900">Hỗ trợ toàn diện:</strong> Đội ngũ chuyên gia của chúng tôi sẽ đồng hành cùng bạn từ khâu chọn mặt bằng, setup cửa hàng, đến đào tạo nhân sự bài bản.</li>
               <li><strong className="text-gray-900">Chiến lược Marketing:</strong> Hỗ trợ truyền thông trên các kênh chính thức của tổng công ty, mang lượng khách đổ về liên tục.</li>

@@ -7,7 +7,7 @@ const GuidePage = () => {
       <div className="container mx-auto px-4 py-16 min-h-[60vh] max-w-4xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold mb-4 text-gray-900">Hướng Dẫn Mua Hàng</h1>
-          <p className="text-gray-500 max-w-2xl mx-auto">Chỉ với vài thao tác đơn giản, bạn có thể dễ dàng sở hữu những dụng cụ cầu lông chất lượng cao từ NaviShop.</p>
+          <p className="text-gray-500 max-w-2xl mx-auto">Chỉ với vài thao tác đơn giản, bạn có thể dễ dàng sở hữu những dụng cụ cầu lông chất lượng cao từ Naro Shop.</p>
         </div>
 
         <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">

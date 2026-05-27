@@ -49,7 +49,7 @@ const calculateFee = async (req, res) => {
         }
 
         const data = {
-            from_district_id: 1454, // Quận 12 (Trụ sở NaviShop)
+            from_district_id: 1454, // Quận 12 (Trụ sở Naro Shop)
             to_district_id: to_district_id,
             to_ward_code: to_ward_code,
             weight: weight,

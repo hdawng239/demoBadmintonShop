@@ -5,7 +5,7 @@ import { X, Send, Bot, User, MessageCircle } from 'lucide-react';
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'bot', content: 'Chào bạn! Mình là trợ lý AI của NaviShop. Mình có thể giúp gì cho bạn hôm nay?' }
+    { role: 'bot', content: 'Chào bạn! Mình là trợ lý AI của Naro Shop. Mình có thể giúp gì cho bạn hôm nay?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -93,7 +93,7 @@ const ChatBot = () => {
                 <Bot size={24} className="text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-lg leading-tight">NaviShop</h3>
+                <h3 className="font-bold text-lg leading-tight">Naro Shop</h3>
                 <p className="text-xs text-white/80">Chat với chúng tôi</p>
               </div>
             </div>
@@ -108,7 +108,7 @@ const ChatBot = () => {
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
             <div className="text-center text-xs text-gray-400 my-4 border-b pb-4">
-              Bạn đang chat với Trợ lý AI của NaviShop
+              Bạn đang chat với Trợ lý AI của Naro Shop
             </div>
             
             {messages.map((msg, idx) => (

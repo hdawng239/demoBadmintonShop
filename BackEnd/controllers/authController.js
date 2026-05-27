@@ -8,8 +8,11 @@ const register = async (req, res) => {
         if (!email || !email.endsWith('@gmail.com')) {
             return res.status(400).json({ message: "Email bắt buộc phải là định dạng @gmail.com" });
         }
-        if (phone && !/^0\d{9}$/.test(phone)) {
-            return res.status(400).json({ message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0" });
+        if (!phone || !/^0\d{9}$/.test(phone)) {
+            return res.status(400).json({ message: "Số điện thoại bắt buộc phải có 10 chữ số và bắt đầu bằng số 0" });
+        }
+        if (!address || address.trim() === '') {
+            return res.status(400).json({ message: "Địa chỉ là bắt buộc" });
         }
 
         // 1. Kiểm tra xem email đã tồn tại chưa
@@ -64,7 +67,9 @@ const login = async (req, res) => {
                 id: user.id,
                 full_name: user.full_name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                phone: user.phone,
+                address: user.address
             }
         });
     } catch (error) {

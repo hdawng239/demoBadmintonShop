@@ -63,7 +63,7 @@ const ProductDetailPage = () => {
     if (product.category_id === 1) {
       return (
         <ul className="mt-2 space-y-3 text-sm text-gray-700">
-          <li className="flex items-start"><CheckCircle className="w-5 h-5 text-purple-500 mr-2 shrink-0" /> Tặng 2 Quấn cán vợt Cầu Lông: <span className="text-primary font-medium ml-1">NaviShop 001, VS002</span> hoặc <span className="text-primary font-medium">Joto 001</span></li>
+          <li className="flex items-start"><CheckCircle className="w-5 h-5 text-purple-500 mr-2 shrink-0" /> Tặng 2 Quấn cán vợt Cầu Lông: <span className="text-primary font-medium ml-1">Naro Shop 001, VS002</span> hoặc <span className="text-primary font-medium">Joto 001</span></li>
           <li className="flex items-start"><CheckCircle className="w-5 h-5 text-purple-500 mr-2 shrink-0" /> Sản phẩm cam kết chính hãng</li>
           <li className="flex items-start"><CheckCircle className="w-5 h-5 text-purple-500 mr-2 shrink-0" /> Một số sản phẩm sẽ được tặng bao đơn hoặc bao nhung bảo vệ vợt</li>
           <li className="flex items-start"><CheckCircle className="w-5 h-5 text-purple-500 mr-2 shrink-0" /> Thanh toán sau khi kiểm tra và nhận hàng (Giao khung vợt)</li>
@@ -392,7 +392,7 @@ const ProductDetailPage = () => {
               
               <div className="mt-5 pt-4 border-t border-dashed border-gray-300">
                 <h4 className="font-bold text-gray-800 mb-3 flex items-center text-sm">
-                  <Gift className="w-4 h-4 text-primary mr-2" /> Ưu đãi thêm khi mua sản phẩm tại <span className="text-primary ml-1 uppercase">NaviShop Premium</span>
+                  <Gift className="w-4 h-4 text-primary mr-2" /> Ưu đãi thêm khi mua sản phẩm tại <span className="text-primary ml-1 uppercase">Naro Shop Premium</span>
                 </h4>
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-start"><CheckCircle className="w-4 h-4 text-green-500 mr-2 shrink-0 mt-0.5" /> <span className="text-primary font-medium">Sơn logo mặt vợt</span> miễn phí</li>

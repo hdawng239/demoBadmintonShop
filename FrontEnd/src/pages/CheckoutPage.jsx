@@ -41,7 +41,8 @@ const CheckoutPage = () => {
       return;
     }
     setSelectedItems(items);
-    if (user.name) setName(user.name);
+    if (user.full_name || user.name) setName(user.full_name || user.name);
+    if (user.phone) setPhone(user.phone);
 
     // Fetch Provinces
     fetchProvinces();
@@ -173,6 +174,11 @@ const CheckoutPage = () => {
     e.preventDefault();
     if (!selectedProvince || !selectedDistrict || !selectedWard || !addressDetail || !name || !phone) {
         alert("Vui lòng nhập đầy đủ thông tin giao hàng!");
+        return;
+    }
+
+    if (!/^0\d{9}$/.test(phone)) {
+        alert("Số điện thoại không hợp lệ (Phải đủ 10 số và bắt đầu bằng 0)!");
         return;
     }
 

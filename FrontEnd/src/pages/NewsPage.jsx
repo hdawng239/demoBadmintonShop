@@ -47,7 +47,7 @@ const NewsPage = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Tin tức & Khuyến mãi</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">Cập nhật những thông tin mới nhất về sản phẩm cầu lông, kỹ thuật đánh cầu và các chương trình khuyến mãi siêu hấp dẫn từ NaviShop.</p>
+          <p className="text-gray-600 max-w-2xl mx-auto">Cập nhật những thông tin mới nhất về sản phẩm cầu lông, kỹ thuật đánh cầu và các chương trình khuyến mãi siêu hấp dẫn từ Naro Shop.</p>
         </div>
 
         {posts.length > 0 ? (

@@ -25,7 +25,7 @@ const AdminLayout = ({ children }) => {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
         <div className="p-5 text-center text-2xl font-black border-b border-gray-100 flex items-center justify-center space-x-2">
-          <span className="text-primary">NaviShop</span> 
+          <span className="text-primary">Naro Shop</span> 
           <span className="text-gray-800 text-sm bg-gray-100 px-2 py-1 rounded-md font-bold mt-1">ADMIN</span>
         </div>
         
