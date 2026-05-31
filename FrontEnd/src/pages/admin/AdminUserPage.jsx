@@ -19,7 +19,7 @@ const AdminUserPage = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users?page=${page}&limit=10`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/users?page=${page}&limit=10`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.data) {
@@ -44,7 +44,7 @@ const AdminUserPage = () => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa user này?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchUsers(currentPage);
@@ -58,7 +58,7 @@ const AdminUserPage = () => {
     if (!window.confirm(`Xác nhận đổi quyền của ${user.full_name} thành ${newRole.toUpperCase()}?`)) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/${user.id}`, { role: newRole }, {
+      await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/users/${user.id}`, { role: newRole }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchUsers(currentPage);
@@ -75,12 +75,12 @@ const AdminUserPage = () => {
         // Cập nhật
         const updateData = { ...formData };
         if (!updateData.password) delete updateData.password; // Không gửi pass rỗng
-        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/${editUser.id}`, updateData, {
+        await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/users/${editUser.id}`, updateData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         // Thêm mới
-        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users`, formData, {
+        await axios.post(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/users`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

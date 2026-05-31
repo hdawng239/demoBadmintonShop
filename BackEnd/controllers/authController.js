@@ -8,7 +8,7 @@ const register = async (req, res) => {
         if (!email || !email.endsWith('@gmail.com')) {
             return res.status(400).json({ message: "Email bắt buộc phải là định dạng @gmail.com" });
         }
-        if (!phone || !/^0\d{9}$/.test(phone)) {
+        if (!phone || !/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
             return res.status(400).json({ message: "Số điện thoại bắt buộc phải có 10 chữ số và bắt đầu bằng số 0" });
         }
         if (!address || address.trim() === '') {

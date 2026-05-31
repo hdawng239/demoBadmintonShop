@@ -19,7 +19,7 @@ const AdminOrderPage = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders?page=${page}&limit=10`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/orders?page=${page}&limit=10`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.data) {
@@ -44,7 +44,7 @@ const AdminOrderPage = () => {
   const handleUpdateStatus = async (orderId, field, value) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, { [field]: value }, {
+      const response = await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/orders/${orderId}`, { [field]: value }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Cập nhật state nội bộ để UI giật lẹ không cần load lại cả bảng, và sử dụng data trả về (để lấy tracking_code)
@@ -61,7 +61,7 @@ const AdminOrderPage = () => {
     if (!window.confirm("Cảnh báo: Bạn có chắc chắn muốn xóa đơn hàng này?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchOrders(currentPage);
@@ -75,7 +75,7 @@ const AdminOrderPage = () => {
     setIsLoadingDetails(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${id}`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSelectedOrderDetails(res.data);

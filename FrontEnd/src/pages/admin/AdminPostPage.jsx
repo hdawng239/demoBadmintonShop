@@ -18,7 +18,7 @@ const AdminPostPage = () => {
   const fetchPosts = async (page = 1) => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/posts?page=${page}&limit=10`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/posts?page=${page}&limit=10`);
       if (res.data.data) {
         setPosts(res.data.data);
         setPagination(res.data.pagination);
@@ -41,7 +41,7 @@ const AdminPostPage = () => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này?")) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/posts/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/posts/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchPosts(currentPage);
@@ -64,12 +64,12 @@ const AdminPostPage = () => {
 
       if (editPost) {
         // Cập nhật
-        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/posts/${editPost.id}`, dataToSave, {
+        await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/posts/${editPost.id}`, dataToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         // Thêm mới
-        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/posts`, dataToSave, {
+        await axios.post(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/posts`, dataToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

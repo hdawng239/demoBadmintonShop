@@ -30,7 +30,7 @@ const createUser = async (req, res) => {
         if (!email || !email.endsWith('@gmail.com')) {
             return res.status(400).json({ message: "Email bắt buộc phải là định dạng @gmail.com" });
         }
-        if (phone && !/^0\d{9}$/.test(phone)) {
+        if (phone && !/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
             return res.status(400).json({ message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0" });
         }
         
@@ -58,7 +58,7 @@ const updateUser = async (req, res) => {
         if (updateData.email && !updateData.email.endsWith('@gmail.com')) {
             return res.status(400).json({ message: "Email bắt buộc phải là định dạng @gmail.com" });
         }
-        if (updateData.phone && !/^0\d{9}$/.test(updateData.phone)) {
+        if (updateData.phone && !/^0(3|5|7|8|9)\d{8}$/.test(updateData.phone)) {
             return res.status(400).json({ message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0" });
         }
 

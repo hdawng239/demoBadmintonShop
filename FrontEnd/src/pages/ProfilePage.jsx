@@ -52,7 +52,7 @@ const ProfilePage = () => {
     setSaving(true);
     setMessage({ type: '', text: '' });
     
-    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    const phoneRegex = /^0(3|5|7|8|9)\d{8}$/;
     if (formData.phone && !phoneRegex.test(formData.phone)) {
       setMessage({ type: 'error', text: 'Số điện thoại không hợp lệ (Phải đủ 10 số và bắt đầu bằng 0)!' });
       setSaving(false);

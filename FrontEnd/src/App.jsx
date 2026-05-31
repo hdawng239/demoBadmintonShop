@@ -6,6 +6,7 @@ import CartPage from './pages/CartPage';
 import FranchisePage from './pages/FranchisePage';
 import StoreSystemPage from './pages/StoreSystemPage';
 import GuidePage from './pages/GuidePage';
+import UserOrdersPage from './pages/UserOrdersPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
@@ -51,6 +52,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/my-orders" element={<UserOrdersPage />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />

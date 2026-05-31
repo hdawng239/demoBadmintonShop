@@ -21,6 +21,16 @@ const getOrderById = async (req, res) => {
     }
 };
 
+const getOrdersByUser = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const orders = await Order.getByUserId(userId);
+        res.status(200).json(orders);
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
+    }
+};
+
 const createOrder = async (req, res) => {
     try {
         const { cartItems, ...orderData } = req.body;
@@ -72,4 +82,4 @@ const deleteOrder = async (req, res) => {
     }
 };
 
-module.exports = { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder };
+module.exports = { getAllOrders, getOrderById, getOrdersByUser, createOrder, updateOrder, deleteOrder };

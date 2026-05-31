@@ -45,6 +45,29 @@ const Order = {
         
         return order;
     },
+    getByUserId: async (userId) => {
+        const dataQuery = `
+            SELECT * 
+            FROM orders 
+            WHERE user_id = $1 
+            ORDER BY created_at DESC
+        `;
+        const result = await pool.query(dataQuery, [userId]);
+        const orders = result.rows;
+        
+        for (let order of orders) {
+            const itemsQuery = `
+                SELECT oi.*, p.name as product_name, pv.variant_name, p.image_url, p.technical_specs 
+                FROM order_items oi
+                JOIN product_variants pv ON oi.variant_id = pv.id
+                JOIN products p ON pv.product_id = p.id
+                WHERE oi.order_id = $1
+            `;
+            const itemsResult = await pool.query(itemsQuery, [order.id]);
+            order.items = itemsResult.rows;
+        }
+        return orders;
+    },
     // Hàm bọc gói giao dịch phức tạp liên bảng
     createWithItems: async (orderData, cartItems) => {
         const client = await pool.connect(); // Lấy 1 client riêng để làm Transaction

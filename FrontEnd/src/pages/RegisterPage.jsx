@@ -30,7 +30,7 @@ const RegisterPage = () => {
     setSuccess('');
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    const phoneRegex = /^0[0-9]{9}$/;
+    const phoneRegex = /^0(3|5|7|8|9)\d{8}$/;
 
     if (!emailRegex.test(formData.email)) {
       setError('Vui lòng nhập email đúng định dạng @gmail.com!');

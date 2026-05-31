@@ -177,7 +177,7 @@ const CheckoutPage = () => {
         return;
     }
 
-    if (!/^0\d{9}$/.test(phone)) {
+    if (!/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
         alert("Số điện thoại không hợp lệ (Phải đủ 10 số và bắt đầu bằng 0)!");
         return;
     }
@@ -209,7 +209,7 @@ const CheckoutPage = () => {
     try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders`, orderData, {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/orders`, orderData, {
             headers: { Authorization: `Bearer ${token}` }
         });
         

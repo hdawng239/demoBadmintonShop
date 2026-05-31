@@ -204,6 +204,7 @@ const Header = () => {
                   </div>
                   <ul className="py-2 text-sm text-gray-700">
                     <li><Link to="/profile" className="block px-4 py-2 hover:bg-gray-100 hover:text-primary transition-colors">Hồ sơ cá nhân</Link></li>
+                    <li><Link to="/my-orders" className="block px-4 py-2 hover:bg-gray-100 hover:text-primary transition-colors">Theo dõi đơn hàng</Link></li>
                     <li><button onClick={handleLogout} className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-red-500 transition-colors">Đăng xuất</button></li>
                   </ul>
                 </div>

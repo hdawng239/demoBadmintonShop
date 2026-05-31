@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/posts`;
+const API_URL = `${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/posts`;
 
 export const postService = {
   getAllPosts: async (page = 1, limit = 10) => {

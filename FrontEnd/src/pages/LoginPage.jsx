@@ -17,7 +17,7 @@ const LoginPage = () => {
     setError('');
     
     const isEmail = email.includes('@');
-    const phoneRegex = /^0[0-9]{9}$/;
+    const phoneRegex = /^0(3|5|7|8|9)\d{8}$/;
     const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
 
     if (isEmail && !emailRegex.test(email)) {
