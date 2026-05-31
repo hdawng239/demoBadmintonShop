@@ -7,6 +7,7 @@ const AdminLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
+  const [user, setUser] = useState(authService.getCurrentUser());
 
   useEffect(() => {
     // Tự động mở menu Sản phẩm nếu đang ở các trang con của nó
@@ -124,14 +125,23 @@ const AdminLayout = ({ children }) => {
         <header className="bg-white shadow-sm border-b border-gray-100 z-10 relative">
           <div className="px-8 py-4 flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-800">Dashboard Quản Trị</h2>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-primary font-bold">
-                A
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-primary font-bold uppercase">
+                  {user?.full_name ? user.full_name.charAt(0) : 'A'}
+                </div>
+                <div className="hidden sm:block text-sm">
+                  <p className="font-semibold text-gray-800 leading-tight">{user?.full_name || 'Admin'} (Admin)</p>
+                  <p className="text-gray-500 text-xs">Quản trị viên</p>
+                </div>
               </div>
-              <div className="hidden sm:block text-sm">
-                <p className="font-semibold text-gray-800 leading-tight">Admin</p>
-                <p className="text-gray-500 text-xs">Quản trị viên</p>
-              </div>
+              <button 
+                onClick={handleLogout}
+                className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors flex items-center"
+                title="Đăng xuất"
+              >
+                <LogOut size={18} />
+              </button>
             </div>
           </div>
         </header>

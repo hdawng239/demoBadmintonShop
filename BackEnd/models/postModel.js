@@ -2,20 +2,31 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 
 const Post = {
-    getAll: async (page, limit) => {
+    getAll: async (page = 1, limit = 10, search = '') => {
         const offset = (page - 1) * limit;
         
-        const countResult = await pool.query('SELECT COUNT(*) FROM posts');
+        let countQuery = 'SELECT COUNT(*) FROM posts';
+        let dataQuery = `
+            SELECT * 
+            FROM posts 
+        `;
+        let countParams = [];
+        let dataParams = [limit, offset];
+
+        if (search) {
+            countQuery += ' WHERE title ILIKE $1';
+            dataQuery += ' WHERE title ILIKE $3';
+            countParams.push(`%${search}%`);
+            dataParams.push(`%${search}%`);
+        }
+
+        dataQuery += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2';
+
+        const countResult = await pool.query(countQuery, countParams);
         const totalItems = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalItems / limit);
 
-        const dataQuery = `
-            SELECT * 
-            FROM posts 
-            ORDER BY created_at DESC 
-            LIMIT $1 OFFSET $2
-        `;
-        const result = await pool.query(dataQuery, [limit, offset]);
+        const result = await pool.query(dataQuery, dataParams);
         
         return {
             data: result.rows,

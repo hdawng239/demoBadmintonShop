@@ -38,7 +38,7 @@ const HomePage = () => {
           autoplay={{ delay: 4000, disableOnInteraction: false }}
           pagination={{ clickable: true }}
           loop={true}
-          className="w-full h-[300px] md:h-[500px]"
+          className="w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[500px]"
         >
           {heroSlides.map((slide, index) => (
             <SwiperSlide key={index}>

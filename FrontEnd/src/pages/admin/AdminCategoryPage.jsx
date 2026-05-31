@@ -9,6 +9,7 @@ const AdminCategoryPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -17,7 +18,7 @@ const AdminCategoryPage = () => {
   const fetchCategories = async (page = 1) => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/categories?page=${page}&limit=10`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/categories?page=${page}&limit=10&search=${searchQuery}`);
       if (res.data.data) {
         setCategories(res.data.data);
         setPagination(res.data.pagination);
@@ -34,6 +35,12 @@ const AdminCategoryPage = () => {
   useEffect(() => {
     fetchCategories(currentPage);
   }, [currentPage]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchCategories(1);
+  };
 
   const openModal = (category = null) => {
     if (category) {
@@ -105,6 +112,21 @@ const AdminCategoryPage = () => {
           <Plus size={20} className="mr-2" />
           Thêm Danh Mục
         </button>
+      </div>
+
+      <div className="mb-6">
+        <form onSubmit={handleSearch} className="flex max-w-md">
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm danh mục..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 border border-gray-300 rounded-l-xl p-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+          />
+          <button type="submit" className="bg-primary text-white px-4 py-2 rounded-r-xl hover:bg-orange-600 transition font-medium">
+            Tìm kiếm
+          </button>
+        </form>
       </div>
 
       {isLoading ? (

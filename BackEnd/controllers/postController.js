@@ -4,7 +4,8 @@ const getAllPosts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
-        res.status(200).json(await Post.getAll(page, limit));
+        const search = req.query.search || '';
+        res.status(200).json(await Post.getAll(page, limit, search));
     } catch (err) { 
         res.status(500).json({ error: err.message }); 
     }

@@ -92,9 +92,9 @@ const Header = () => {
   return (
     <header className="bg-white w-full border-b border-gray-200 sticky top-0 z-50">
       {/* Top Bar */}
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-8">
-          <Link to="/" className="text-3xl font-black italic tracking-tighter text-black flex items-center">
+      <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-y-4">
+        <div className="flex items-center space-x-4 md:space-x-8">
+          <Link to="/" className="text-2xl md:text-3xl font-black italic tracking-tighter text-black flex items-center">
             <span className="bg-black text-white px-2 py-1 mr-1 rounded-sm">Naro</span>Shop
           </Link>
           
@@ -110,7 +110,7 @@ const Header = () => {
           </div>
         </div>
 
-        <div className="flex-1 max-w-xl px-6" ref={searchRef}>
+        <div className="flex-1 w-full md:w-auto md:max-w-xl px-0 md:px-6 order-last md:order-none" ref={searchRef}>
           <div className="relative">
             <input 
               type="text" 
@@ -232,8 +232,8 @@ const Header = () => {
 
       {/* Navigation Menu */}
       <nav className="bg-primary text-white">
-        <div className="container mx-auto px-4">
-          <ul className="flex items-center justify-center space-x-8 text-sm font-bold uppercase">
+        <div className="container mx-auto px-4 overflow-x-auto scrollbar-hide">
+          <ul className="flex items-center justify-start md:justify-center space-x-6 md:space-x-8 text-sm font-bold uppercase whitespace-nowrap">
             <li><Link to="/" className="block py-3 hover:text-yellow-300 transition-colors">Trang chủ</Link></li>
             
             {/* Mega Menu Wrapper */}
@@ -248,8 +248,8 @@ const Header = () => {
               </div>
 
               {/* Mega Menu Content */}
-              <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[800px] bg-white text-black shadow-2xl border-t border-gray-100 rounded-b-lg overflow-hidden transition-all duration-300 transform origin-top ${isHovered ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}>
-                <div className="p-8 grid grid-cols-4 gap-6">
+              <div className={`absolute top-full left-0 md:left-1/2 md:-translate-x-1/2 w-[95vw] md:w-[800px] bg-white text-black shadow-2xl border-t border-gray-100 rounded-b-lg overflow-hidden transition-all duration-300 transform origin-top z-[100] ${isHovered ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}>
+                <div className="p-4 md:p-8 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                   {/* Cột 1: Vợt */}
                   <div>
                     <Link to="/category/1" className="text-primary font-bold uppercase mb-4 block hover:underline">Vợt Cầu Lông</Link>
