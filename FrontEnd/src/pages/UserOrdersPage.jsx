@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import { Package, Truck, Calendar, MapPin, CreditCard, ChevronRight, ExternalLink } from 'lucide-react';
 import axios from 'axios';
-import { useAuthStore } from '../store/useAuthStore';
+
 
 const UserOrdersPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { token } = useAuthStore();
+    const token = localStorage.getItem('token');
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -28,7 +28,7 @@ const UserOrdersPage = () => {
         if (token) {
             fetchOrders();
         }
-    }, [token]);
+    }, []);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
