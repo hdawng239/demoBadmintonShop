@@ -238,7 +238,7 @@ const Header = () => {
             
             {/* Mega Menu Wrapper */}
             <li 
-              className="relative group"
+              className="group static lg:relative"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               onClick={() => setIsHovered(!isHovered)}
@@ -249,7 +249,7 @@ const Header = () => {
               </div>
 
               {/* Mega Menu Content */}
-              <div className={`absolute top-full left-0 md:left-1/2 md:-translate-x-1/2 w-[95vw] md:w-[800px] bg-white text-black shadow-2xl border-t border-gray-100 rounded-b-lg overflow-hidden transition-all duration-300 transform origin-top z-[100] ${isHovered ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}>
+              <div className={`absolute top-full left-0 w-full lg:w-[800px] lg:left-1/2 lg:-translate-x-1/2 bg-white text-black shadow-2xl border-t border-gray-100 rounded-b-lg overflow-hidden transition-all duration-300 transform origin-top z-[100] ${isHovered ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}>
                 <div className="p-4 md:p-8 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                   {/* Cột 1: Vợt */}
                   <div>
@@ -275,7 +275,7 @@ const Header = () => {
                   </div>
                   {/* Cột 3: Quần áo */}
                   <div>
-                    <div className="text-primary font-bold uppercase mb-4 block">Quần Áo Cầu Lông</div>
+                    <Link to="/category/3" className="text-primary font-bold uppercase mb-4 block hover:underline">Quần Áo Cầu Lông</Link>
                     <ul className="space-y-2 text-sm text-gray-600">
                       <li><Link to="/category/6" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Quần áo Cầu Lông nam</Link></li>
                       <li><Link to="/category/8" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Quần áo Cầu Lông nữ</Link></li>
