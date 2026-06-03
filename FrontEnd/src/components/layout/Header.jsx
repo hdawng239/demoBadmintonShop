@@ -232,8 +232,8 @@ const Header = () => {
 
       {/* Navigation Menu */}
       <nav className="bg-primary text-white">
-        <div className="container mx-auto px-4 overflow-x-auto scrollbar-hide">
-          <ul className="flex items-center justify-start md:justify-center space-x-6 md:space-x-8 text-sm font-bold uppercase whitespace-nowrap">
+        <div className="container mx-auto px-4 py-2 md:py-0">
+          <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold uppercase">
             <li><Link to="/" className="block py-3 hover:text-yellow-300 transition-colors">Trang chủ</Link></li>
             
             {/* Mega Menu Wrapper */}
@@ -241,6 +241,7 @@ const Header = () => {
               className="relative group"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
+              onClick={() => setIsHovered(!isHovered)}
             >
               <div className="flex items-center py-3 cursor-pointer hover:text-yellow-300 transition-colors">
                 <span>Sản phẩm</span>
