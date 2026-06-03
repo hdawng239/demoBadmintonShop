@@ -284,7 +284,7 @@ const Header = () => {
                   </div>
                   {/* Cột 3: Quần áo */}
                   <div>
-                    <Link to="/category/3" className="text-primary font-bold uppercase mb-4 block hover:underline">Quần Áo Cầu Lông</Link>
+                    <Link to="/category/13" className="text-primary font-bold uppercase mb-4 block hover:underline">Quần Áo Cầu Lông</Link>
                     <ul className="space-y-2 text-sm text-gray-600">
                       <li><Link to="/category/6" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Quần áo Cầu Lông nam</Link></li>
                       <li><Link to="/category/8" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Quần áo Cầu Lông nữ</Link></li>
