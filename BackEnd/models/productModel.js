@@ -10,7 +10,8 @@ const Product = {
         
         // Thêm điều kiện lọc vào mảng
         if (categoryId) {
-            whereClauses.push(`p.category_id = $${whereClauses.length + 1}`);
+            const index = whereClauses.length + 1;
+            whereClauses.push(`(p.category_id = $${index} OR p.category_id IN (SELECT id FROM categories WHERE parent_id = $${index}))`);
             queryParams.push(categoryId);
         }
         if (brandId) {

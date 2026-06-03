@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Phone, MapPin, Search as SearchIcon, User, ShoppingCart, ChevronDown, Flame } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { cartService } from '../../services/cartService';
@@ -18,12 +18,22 @@ const Header = () => {
   const searchRef = useRef(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const menuRef = useRef(null);
+
+  // Auto close menu when route changes
+  useEffect(() => {
+    setIsHovered(false);
+  }, [location]);
 
   // Handle click outside search
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchDropdown(false);
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsHovered(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -238,9 +248,8 @@ const Header = () => {
             
             {/* Mega Menu Wrapper */}
             <li 
+              ref={menuRef}
               className="group static lg:relative"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
               onClick={() => setIsHovered(!isHovered)}
             >
               <div className="flex items-center py-3 cursor-pointer hover:text-yellow-300 transition-colors">
