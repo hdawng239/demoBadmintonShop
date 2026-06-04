@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Pagination from '../../components/Pagination';
-import { Eye, Trash2, X, Package } from 'lucide-react';
+import { Eye, Trash2, X, Package, Printer } from 'lucide-react';
 import axios from 'axios';
+import { printInvoice } from '../../utils/printInvoice';
 
 const AdminOrderPage = () => {
   const [orders, setOrders] = useState([]);
@@ -178,6 +179,9 @@ const AdminOrderPage = () => {
                         <div className="flex items-center justify-center space-x-2">
                           <button onClick={() => viewOrderDetails(order.id)} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg transition" title="Xem chi tiết">
                             <Eye size={18} />
+                          </button>
+                          <button onClick={() => printInvoice(order)} className="text-orange-500 hover:text-orange-700 bg-orange-50 p-2 rounded-lg transition" title="In hoặc Tải hóa đơn (PDF)">
+                            <Printer size={18} />
                           </button>
                           <button onClick={() => handleDelete(order.id)} className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg transition" title="Xóa đơn hàng">
                             <Trash2 size={18} />

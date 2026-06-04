@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
-import { Package, Truck, Calendar, MapPin, CreditCard, ChevronRight, ExternalLink } from 'lucide-react';
+import { Package, Truck, Calendar, MapPin, CreditCard, ChevronRight, ExternalLink, Printer } from 'lucide-react';
 import axios from 'axios';
+import { printInvoice } from '../utils/printInvoice';
 
 
 const UserOrdersPage = () => {
@@ -93,6 +94,16 @@ const UserOrdersPage = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
+                                            <button 
+                                                onClick={() => printInvoice(order)} 
+                                                className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center gap-1"
+                                                title="In hoặc tải hóa đơn"
+                                            >
+                                                <Printer className="w-3 h-3" /> In Hóa Đơn
+                                            </button>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa TT'}
+                                            </span>
                                             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusInfo(order.status).color}`}>
                                                 {getStatusInfo(order.status).label}
                                             </span>
