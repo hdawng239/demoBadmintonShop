@@ -86,25 +86,29 @@ export const printInvoice = (order) => {
         <table>
             <thead>
                 <tr>
-                    <th class="text-center" width="50">STT</th>
+                    <th class="text-center" width="40">STT</th>
+                    <th class="text-center" width="50">ẢNH</th>
                     <th>TÊN SẢN PHẨM</th>
                     <th>PHÂN LOẠI</th>
-                    <th class="text-center" width="60">SL</th>
-                    <th class="text-right" width="120">ĐƠN GIÁ</th>
-                    <th class="text-right" width="120">THÀNH TIỀN</th>
+                    <th class="text-center" width="50">SL</th>
+                    <th class="text-right" width="110">ĐƠN GIÁ</th>
+                    <th class="text-right" width="110">THÀNH TIỀN</th>
                 </tr>
             </thead>
             <tbody>
                 ${order.items && order.items.length > 0 ? order.items.map((item, index) => `
                 <tr>
                     <td class="text-center">${index + 1}</td>
+                    <td class="text-center">
+                        ${item.image_url ? `<img src="${item.image_url}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;" />` : ''}
+                    </td>
                     <td class="font-bold">${item.product_name}</td>
                     <td>${item.variant_name}</td>
                     <td class="text-center">${item.quantity}</td>
                     <td class="text-right">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price_at_time)}</td>
                     <td class="text-right font-bold">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price_at_time * item.quantity)}</td>
                 </tr>
-                `).join('') : '<tr><td colspan="6" class="text-center">Không có chi tiết sản phẩm</td></tr>'}
+                `).join('') : '<tr><td colspan="7" class="text-center">Không có chi tiết sản phẩm</td></tr>'}
             </tbody>
         </table>
 

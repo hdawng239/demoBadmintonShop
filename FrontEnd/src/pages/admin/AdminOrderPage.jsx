@@ -88,6 +88,18 @@ const AdminOrderPage = () => {
     }
   };
 
+  const handlePrintOrder = async (orderInfo) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/orders/${orderInfo.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      printInvoice(res.data);
+    } catch (err) {
+      alert("Lỗi tải chi tiết đơn hàng để in");
+    }
+  };
+
   // Helper cho màu badge (Mặc dù dùng select inline nhưng vẫn có thể trang trí bằng CSS)
   const getStatusColor = (status) => {
     switch (status) {
@@ -180,7 +192,7 @@ const AdminOrderPage = () => {
                           <button onClick={() => viewOrderDetails(order.id)} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg transition" title="Xem chi tiết">
                             <Eye size={18} />
                           </button>
-                          <button onClick={() => printInvoice(order)} className="text-orange-500 hover:text-orange-700 bg-orange-50 p-2 rounded-lg transition" title="In hoặc Tải hóa đơn (PDF)">
+                          <button onClick={() => handlePrintOrder(order)} className="text-orange-500 hover:text-orange-700 bg-orange-50 p-2 rounded-lg transition" title="In hoặc Tải hóa đơn (PDF)">
                             <Printer size={18} />
                           </button>
                           <button onClick={() => handleDelete(order.id)} className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg transition" title="Xóa đơn hàng">
