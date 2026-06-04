@@ -8,7 +8,6 @@ const Product = {
         let whereClauses = [];
         let queryParams = [];
         
-        // Thêm điều kiện lọc vào mảng
         if (categoryId) {
             const index = whereClauses.length + 1;
             whereClauses.push(`(p.category_id = $${index} OR p.category_id IN (SELECT id FROM categories WHERE parent_id = $${index}))`);
@@ -45,7 +44,6 @@ const Product = {
         const totalItems = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalItems / limit);
 
-        // Trả về một object đầy đủ thông số phân trang
         return {
             totalItems,
             totalPages,
@@ -93,7 +91,6 @@ const Product = {
         
         if (!query) throw new Error("Không có dữ liệu hợp lệ để cập nhật");
 
-        // Nếu có trường technical_specs (JSONB), cần ép kiểu thành chuỗi JSON trước khi lưu
         if (data.technical_specs) {
             const specIndex = Object.keys(data).indexOf('technical_specs');
             values[specIndex] = JSON.stringify(data.technical_specs);

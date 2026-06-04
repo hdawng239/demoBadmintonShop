@@ -1,7 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const pool = require("../config/db"); // Giả sử dùng chung pool db
 
-// Khởi tạo Gemini
 const genAI = new GoogleGenerativeAI(process.env.KEY_GEMINI);
 
 const baseSystemInstruction = `Bạn là trợ lý tư vấn của Naro Shop - cửa hàng dụng cụ cầu lông.
@@ -55,13 +54,11 @@ const handleChat = async (req, res) => {
         const sid = sessionId || 'anonymous_session';
         const uid = userId || null;
 
-        // Lưu tin nhắn của User vào DB
         await pool.query(
             "INSERT INTO chat_logs (session_id, user_id, sender_type, message) VALUES ($1, $2, $3, $4)",
             [sid, uid, 'user', message]
         );
 
-        // Khởi tạo phiên chat với lịch sử truyền từ FrontEnd
         let formattedHistory = [];
         if (history && Array.isArray(history)) {
             formattedHistory = history.map(msg => ({
@@ -70,7 +67,6 @@ const handleChat = async (req, res) => {
             }));
         }
 
-        // Lấy danh sách sản phẩm thực tế
         const catalogInfo = await getProductCatalog();
         const finalSystemInstruction = baseSystemInstruction + catalogInfo;
 
@@ -90,7 +86,6 @@ const handleChat = async (req, res) => {
         const result = await chat.sendMessage(message);
         const responseText = result.response.text();
 
-        // Lưu tin nhắn của Bot vào DB
         await pool.query(
             "INSERT INTO chat_logs (session_id, user_id, sender_type, message) VALUES ($1, $2, $3, $4)",
             [sid, uid, 'bot', responseText]

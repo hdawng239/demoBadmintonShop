@@ -417,7 +417,6 @@ const ProductDetailPage = () => {
                     if (cart && cart.id) {
                       cartId = cart.id;
                     } else {
-                      // Tạo giỏ hàng mới
                       const newCart = await cartService.createCart(currentUser.id);
                       cartId = newCart.id;
                     }

@@ -32,7 +32,6 @@ const Order = {
         
         const order = orderResult.rows[0];
         
-        // Lấy chi tiết các món hàng trong đơn
         const itemsQuery = `
             SELECT oi.*, p.name as product_name, pv.variant_name, p.image_url, p.technical_specs 
             FROM order_items oi
@@ -68,7 +67,6 @@ const Order = {
         }
         return orders;
     },
-    // Hàm bọc gói giao dịch phức tạp liên bảng
     createWithItems: async (orderData, cartItems) => {
         const client = await pool.connect(); // Lấy 1 client riêng để làm Transaction
         try {

@@ -48,7 +48,6 @@ const AdminOrderPage = () => {
       const response = await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/orders/${orderId}`, { [field]: value }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Cập nhật state nội bộ để UI giật lẹ không cần load lại cả bảng, và sử dụng data trả về (để lấy tracking_code)
       const updatedOrder = response.data.data;
       setOrders(orders.map(o => o.id === orderId ? { ...o, ...updatedOrder } : o));
     } catch (err) {

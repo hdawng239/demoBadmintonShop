@@ -6,7 +6,6 @@ const Pagination = ({ pagination, onPageChange }) => {
 
   const { currentPage, totalPages } = pagination;
 
-  // Tạo mảng số trang hiển thị
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;

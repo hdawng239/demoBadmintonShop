@@ -31,7 +31,6 @@ const Cart = {
         return result.rows[0];
     },
     clearCart: async (id) => {
-        // Xóa giỏ hàng sẽ tự động xóa sạch các cart_items bên trong nhờ ON DELETE CASCADE
         const result = await pool.query('DELETE FROM carts WHERE id = $1 RETURNING *', [id]);
         return result.rows[0];
     }

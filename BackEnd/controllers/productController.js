@@ -2,8 +2,6 @@ const Product = require('../models/productModel');
 
 const getAllProducts = async (req, res) => {
     try {
-        // Lấy page và limit từ query string trên URL. 
-        // Nếu khách không truyền (?page=1&limit=10) thì tự động mặc định là trang 1, mỗi trang lấy 10 món.
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         

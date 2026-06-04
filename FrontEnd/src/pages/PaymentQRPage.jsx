@@ -44,7 +44,6 @@ const PaymentQRPage = () => {
 
   if (!orderId || !totalAmount) return null;
 
-  // Lấy cấu hình bank từ .env, hoặc dùng giá trị mặc định của bạn nếu chưa thêm tiền tố VITE_
   const bankAccount = import.meta.env.VITE_BANK_STK || '0338780204';
   const bankId = import.meta.env.VITE_BANK_ID || 'MB';
   const bankName = import.meta.env.VITE_BANK_NAME || 'DO HAI DANG';

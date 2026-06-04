@@ -28,7 +28,6 @@ const AdminLoginPage = () => {
     try {
       const data = await authService.login(formData.email, formData.password);
       
-      // Kiểm tra quyền admin
       if (data.user && data.user.role === 'admin') {
         navigate('/admin');
       } else {

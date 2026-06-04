@@ -7,7 +7,6 @@ const generateDynamicUpdate = (tableName, updateData, id) => {
 
     const keys = Object.keys(data);
     
-    // Nếu không có dữ liệu gì để cập nhật thì báo lỗi
     if (keys.length === 0) {
         return { query: null, values: null };
     }

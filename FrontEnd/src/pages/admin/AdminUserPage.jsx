@@ -79,14 +79,12 @@ const AdminUserPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (editUser) {
-        // Cập nhật
         const updateData = { ...formData };
         if (!updateData.password) delete updateData.password; // Không gửi pass rỗng
         await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/users/${editUser.id}`, updateData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        // Thêm mới
         await axios.post(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/users`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });

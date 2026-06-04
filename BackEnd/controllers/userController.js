@@ -63,12 +63,10 @@ const updateUser = async (req, res) => {
             return res.status(400).json({ message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0" });
         }
 
-        // Nếu khách hàng thường muốn tự đổi role thành admin -> Chặn ngay
         if (updateData.role && req.user.role !== 'admin') {
             delete updateData.role;
         }
 
-        // Nếu có update password, phải băm nó ra
         if (updateData.password) {
             updateData.password_hash = await AuthService.hashPassword(updateData.password);
             delete updateData.password; // Xóa chữ "password" trần đi để tránh lưu nhầm

@@ -39,7 +39,6 @@ const Post = {
         };
     },
     getById: async (id) => {
-        // Lấy bài viết KÈM THEO tên của Admin (Tác giả)
         const postQuery = `
             SELECT p.*, u.full_name AS author_name 
             FROM posts p

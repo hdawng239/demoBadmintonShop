@@ -70,12 +70,10 @@ const AdminPostPage = () => {
       const dataToSave = { ...formData, author_id: payload.id };
 
       if (editPost) {
-        // Cập nhật
         await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/posts/${editPost.id}`, dataToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        // Thêm mới
         await axios.post(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/posts`, dataToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });

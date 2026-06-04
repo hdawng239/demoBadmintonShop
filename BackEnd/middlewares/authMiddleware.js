@@ -28,7 +28,6 @@ const verifyToken = (req, res, next) => {
 };
 
 const isAdmin = (req, res, next) => {
-    // Lưu ý: Hàm này LUÔN PHẢI CHẠY SAU hàm verifyToken.
     // Vì verifyToken đã giải mã JWT và gắn thông tin vào req.user rồi, 
     // nên ở đây ta mới có thể lôi req.user.role ra để kiểm tra.
     

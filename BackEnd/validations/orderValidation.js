@@ -7,7 +7,6 @@ const validateOrderCreate = (data) => {
     if (!data.cartItems || !Array.isArray(data.cartItems) || data.cartItems.length === 0) {
         errors.push("Giỏ hàng (cartItems) phải là một mảng và không được trống");
     } else {
-        // Kiểm tra từng món trong giỏ hàng xem có gửi đúng variant_id không
         data.cartItems.forEach((item, index) => {
             if (!item.variant_id) errors.push(`Sản phẩm thứ ${index + 1} thiếu variant_id`);
             if (!item.price) errors.push(`Sản phẩm thứ ${index + 1} thiếu price`);

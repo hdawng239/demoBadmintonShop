@@ -28,7 +28,6 @@ export const cartService = {
     try {
       // Đầu tiên phải đảm bảo user có giỏ hàng, nếu chưa có thì API có thể tự tạo hoặc ta phải gọi
       // Nhưng theo controller addItemToCart gọi thẳng CartItem.createOrUpdate
-      // Gửi: { cart_id, variant_id, quantity }
       // Do đó cần lấy cart_id trước. Nếu chưa có giỏ hàng thì phải tạo
       // Ở đây ta có thể tối ưu trên Backend tự tạo giỏ, nhưng nếu BE không tự tạo, ta xử lý ở đây:
       const response = await axios.post(`${API_URL}/items`, cartData, getAuthHeaders());

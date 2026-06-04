@@ -29,7 +29,6 @@ const Review = {
         };
     },
     
-    // Lấy toàn bộ đánh giá (Dành cho Admin)
     getAll: async (page, limit) => {
         const offset = (page - 1) * limit;
         
@@ -58,7 +57,6 @@ const Review = {
         };
     },
     
-    // Tạo đánh giá mới
     create: async (data) => {
         const { user_id, product_id, rating, comment } = data;
         const query = `
@@ -69,7 +67,6 @@ const Review = {
         return result.rows[0];
     },
 
-    // Xóa đánh giá (Dành cho Admin hoặc chính chủ xóa)
     delete: async (id) => {
         const result = await pool.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
         return result.rows[0];

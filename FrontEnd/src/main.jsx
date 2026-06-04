@@ -13,7 +13,6 @@ axios.interceptors.response.use(
       localStorage.removeItem('user');
       window.dispatchEvent(new Event('userUpdated'));
       
-      // Nếu đang ở admin thì văng ra admin/login
       if (window.location.pathname.startsWith('/admin')) {
         window.location.href = '/admin/login';
       } else {

@@ -43,7 +43,6 @@ const User = {
         return result.rows[0];
     },
     getByEmailForLogin: async (email) => {
-        // Lấy tất cả thông tin, BAO GỒM CẢ mật khẩu băm để đem đi so sánh
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         return result.rows[0];
     },
@@ -62,7 +61,6 @@ const User = {
         if (!query) throw new Error("Không có dữ liệu hợp lệ để cập nhật");
 
         const result = await pool.query(query, values);
-        // Trả về dữ liệu đã update nhưng giấu password đi
         const updatedUser = result.rows[0];
         delete updatedUser.password_hash;
         return updatedUser;

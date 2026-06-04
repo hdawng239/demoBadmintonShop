@@ -23,7 +23,6 @@ const clearCart = async (req, res) => {
     catch (err) { res.status(500).json({ error: err.message }); }
 };
 
-// Hàm dành riêng cho Cart Items
 const addItemToCart = async (req, res) => {
     try { res.status(201).json(await CartItem.createOrUpdate(req.body)); } 
     catch (err) { res.status(500).json({ error: err.message }); }

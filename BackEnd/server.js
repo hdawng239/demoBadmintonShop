@@ -3,7 +3,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 require('dotenv').config();
 
-// Import các Routes
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -18,14 +17,11 @@ const adminRoutes = require('./routes/adminRoutes');
 const sepayRoutes = require('./routes/sepayRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 
-// Cấu hình Middleware CORS để Frontend có thể gọi API
 const cors = require('cors');
 app.use(cors());
 
-// Cấu hình Middleware đọc dữ liệu JSON
 app.use(express.json());
 
-// Điều hướng các endpoint API chính thức
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
@@ -41,9 +37,9 @@ app.use('/api/sepay', sepayRoutes);
 app.use('/api/chat', chatRoutes);
 
 app.get('/', (req, res) => {
-    res.json({ message: "Hệ thống E-Commerce chuẩn MVC đã sẵn sàng!" });
+    res.json({ status: "ok", message: "API is running" });
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server chuẩn kiến trúc MVC đang chạy tại http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });

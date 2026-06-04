@@ -4,7 +4,6 @@ import axios from 'axios';
 const API_URL = `${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/products`;
 
 export const productService = {
-    // Lấy danh sách sản phẩm có phân trang và lọc
     getAllProducts: async (page = 1, limit = 8, categoryId = null, brandId = null, keyword = null) => {
         try {
             let url = `${API_URL}?page=${page}&limit=${limit}`;
@@ -26,7 +25,6 @@ export const productService = {
             return [];
         }
     },
-    // Lấy thông tin chi tiết 1 sản phẩm
     getProductById: async (id) => {
         try {
             const response = await axios.get(`${API_URL}/${id}`);
