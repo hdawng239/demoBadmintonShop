@@ -406,9 +406,11 @@ const ProductDetailPage = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <button 
+                disabled={selectedVariant && selectedVariant.stock_quantity === 0}
                 onClick={async () => {
                   if (!currentUser) return showToast('Vui lòng đăng nhập trước khi mua!', 'error');
                   if (Object.keys(attributesMap).length > 0 && !selectedVariant) return showToast('Vui lòng chọn đầy đủ phân loại!', 'error');
+                  if (selectedVariant && selectedVariant.stock_quantity === 0) return showToast('Sản phẩm đã hết hàng!', 'error');
                   
                   try {
                     // Cần lấy cart_id. Sẽ xử lý bằng cách getMyCart, nếu lỗi 404 thì tạo mới
@@ -435,15 +437,17 @@ const ProductDetailPage = () => {
                     showToast("Có lỗi xảy ra khi thêm vào giỏ hàng.", 'error');
                   }
                 }}
-                className="w-full bg-orange-50 hover:bg-orange-100 text-primary border border-primary font-bold py-3 rounded-xl uppercase flex items-center justify-center transition-colors shadow-sm"
+                className={`w-full font-bold py-3 rounded-xl uppercase flex items-center justify-center transition-colors shadow-sm ${selectedVariant && selectedVariant.stock_quantity === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-300' : 'bg-orange-50 hover:bg-orange-100 text-primary border border-primary'}`}
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                Thêm Giỏ Hàng
+                {selectedVariant && selectedVariant.stock_quantity === 0 ? 'Hết hàng' : 'Thêm Giỏ Hàng'}
               </button>
               <button 
+                disabled={selectedVariant && selectedVariant.stock_quantity === 0}
                 onClick={async () => {
                   if (!currentUser) return showToast('Vui lòng đăng nhập!', 'error');
                   if (Object.keys(attributesMap).length > 0 && !selectedVariant) return showToast('Vui lòng chọn đầy đủ phân loại!', 'error');
+                  if (selectedVariant && selectedVariant.stock_quantity === 0) return showToast('Sản phẩm đã hết hàng!', 'error');
                   
                   try {
                     let cartId;

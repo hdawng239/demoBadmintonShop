@@ -84,12 +84,30 @@ const Order = {
             const orderResult = await client.query(insertOrderQuery, orderValues);
             const newOrderId = orderResult.rows[0].id;
 
-            // 2. Vòng lặp chèn bảng order_items
+            // 2. Vòng lặp chèn bảng order_items và trừ kho
+            const checkStockQuery = `SELECT variant_name, stock_quantity FROM product_variants WHERE id = $1 FOR UPDATE`;
+            const updateStockQuery = `UPDATE product_variants SET stock_quantity = stock_quantity - $1 WHERE id = $2`;
             const insertItemsQuery = `
                 INSERT INTO order_items (order_id, variant_id, quantity, price_at_time) 
                 VALUES ($1, $2, $3, $4)
             `;
+
             for (let item of cartItems) {
+                // Kiểm tra tồn kho trước khi đặt
+                const stockRes = await client.query(checkStockQuery, [item.variant_id]);
+                if (stockRes.rows.length === 0) {
+                    throw new Error(`Sản phẩm phân loại ID ${item.variant_id} không tồn tại.`);
+                }
+                
+                const currentStock = stockRes.rows[0].stock_quantity;
+                if (currentStock < item.quantity) {
+                    throw new Error(`Sản phẩm "${stockRes.rows[0].variant_name}" chỉ còn ${currentStock} cái. Vui lòng giảm số lượng!`);
+                }
+
+                // Trừ số lượng tồn kho
+                await client.query(updateStockQuery, [item.quantity, item.variant_id]);
+
+                // Chèn vào order_items
                 await client.query(insertItemsQuery, [newOrderId, item.variant_id, item.quantity, item.price]);
             }
 
