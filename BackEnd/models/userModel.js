@@ -46,6 +46,24 @@ const User = {
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         return result.rows[0];
     },
+    getByIdentifierForLogin: async (identifier) => {
+        const result = await pool.query('SELECT * FROM users WHERE email = $1 OR phone = $1', [identifier]);
+        return result.rows[0];
+    },
+    updateOTP: async (email, otp, expires) => {
+        const result = await pool.query(
+            'UPDATE users SET otp_code = $1, otp_expires = $2 WHERE email = $3 RETURNING id',
+            [otp, expires, email]
+        );
+        return result.rows[0];
+    },
+    resetPasswordWithOTP: async (email, hashedPassword) => {
+        const result = await pool.query(
+            'UPDATE users SET password_hash = $1, otp_code = NULL, otp_expires = NULL WHERE email = $2 RETURNING id',
+            [hashedPassword, email]
+        );
+        return result.rows[0];
+    },
     create: async (data) => {
         // Tạm thời lưu thẳng password do Frontend gửi lên (Chúng ta sẽ sửa thành mã Hash ở bước sau)
         const { full_name, email, password, role, phone, address } = data;

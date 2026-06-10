@@ -47,13 +47,16 @@ const ProductListPage = () => {
     }
   }, [location.search, brands]);
 
+  const queryParams = new URLSearchParams(location.search);
+  const keyword = queryParams.get('q') || '';
+
   // Fetch Products
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
         const limit = 12; // 12 sản phẩm 1 trang cho danh sách
-        const data = await productService.getAllProducts(page, limit, categoryId, selectedBrand);
+        const data = await productService.getAllProducts(page, limit, categoryId, selectedBrand, keyword);
         
         setProducts(data?.products || data?.data || []);
         setTotalPages(data?.totalPages || 1);
@@ -65,7 +68,7 @@ const ProductListPage = () => {
       }
     };
     fetchProducts();
-  }, [categoryId, selectedBrand, page]);
+  }, [categoryId, selectedBrand, page, keyword]);
 
   return (
     <MainLayout>
@@ -74,7 +77,11 @@ const ProductListPage = () => {
           {/* Breadcrumb */}
           <div className="text-sm text-gray-500 mb-6">
             <Link to="/" className="hover:text-primary">Trang chủ</Link> <span className="mx-2">/</span> 
-            <span className="text-gray-800 font-medium">Danh mục sản phẩm</span>
+            {keyword ? (
+              <span className="text-gray-800 font-medium">Tìm kiếm: "{keyword}"</span>
+            ) : (
+              <span className="text-gray-800 font-medium">Danh mục sản phẩm</span>
+            )}
           </div>
 
           <div className="flex flex-col md:flex-row gap-8">
@@ -124,7 +131,9 @@ const ProductListPage = () => {
             {/* Product Grid */}
             <div className="w-full md:w-3/4">
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex justify-between items-center">
-                <h1 className="text-xl font-bold uppercase text-gray-800">SẢN PHẨM</h1>
+                <h1 className="text-xl font-bold uppercase text-gray-800">
+                  {keyword ? `KẾT QUẢ TÌM KIẾM: "${keyword}"` : "SẢN PHẨM"}
+                </h1>
                 <span className="text-sm text-gray-500">Hiển thị {products.length} trên tổng {totalItems} sản phẩm</span>
               </div>
 

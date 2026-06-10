@@ -76,6 +76,15 @@ const updateUser = async (req, res) => {
         if (!updated) return res.status(404).json({ message: "Không tìm thấy người dùng" });
         res.status(200).json({ message: "Cập nhật thành công", data: updated });
     } catch (error) {
+        if (error.code === '23505') {
+            if (error.detail && error.detail.includes('email')) {
+                return res.status(400).json({ message: "Email này đã được sử dụng bởi tài khoản khác!" });
+            }
+            if (error.detail && error.detail.includes('phone')) {
+                return res.status(400).json({ message: "Số điện thoại này đã được sử dụng bởi tài khoản khác!" });
+            }
+            return res.status(400).json({ message: "Thông tin email hoặc số điện thoại này đã tồn tại!" });
+        }
         res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }
 };

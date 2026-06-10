@@ -41,5 +41,32 @@ export const authService = {
     const userStr = localStorage.getItem('user');
     if (userStr) return JSON.parse(userStr);
     return null;
+  },
+
+  getCaptcha: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/captcha`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Lỗi kết nối server khi tải Captcha" };
+    }
+  },
+
+  forgotPassword: async (email, captchaAnswer, captchaToken) => {
+    try {
+      const response = await axios.post(`${API_URL}/forgot-password`, { email, captchaAnswer, captchaToken });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Lỗi kết nối server" };
+    }
+  },
+
+  resetPassword: async (email, otp, newPassword) => {
+    try {
+      const response = await axios.post(`${API_URL}/reset-password`, { email, otp, newPassword });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Lỗi kết nối server" };
+    }
   }
 };

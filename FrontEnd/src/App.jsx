@@ -11,6 +11,7 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import NewsPage from './pages/NewsPage';
 import NewsDetailPage from './pages/NewsDetailPage';
@@ -31,6 +32,7 @@ import AdminLoginPage from './pages/admin/AdminLoginPage';
 
 import AdminPostPage from './pages/admin/AdminPostPage';
 import AdminReviewPage from './pages/admin/AdminReviewPage';
+import AdminVoucherPage from './pages/admin/AdminVoucherPage';
 
 function App() {
   return (
@@ -40,6 +42,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/category/:categoryId" element={<ProductListPage />} />
+        <Route path="/search" element={<ProductListPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
@@ -53,6 +56,7 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/my-orders" element={<UserOrdersPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
@@ -66,6 +70,7 @@ function App() {
         <Route path="/admin/orders" element={<AdminRoute><AdminOrderPage /></AdminRoute>} />
         <Route path="/admin/posts" element={<AdminRoute><AdminPostPage /></AdminRoute>} />
         <Route path="/admin/reviews" element={<AdminRoute><AdminReviewPage /></AdminRoute>} />
+        <Route path="/admin/vouchers" element={<AdminRoute><AdminVoucherPage /></AdminRoute>} />
       </Routes>
     </Router>
   );

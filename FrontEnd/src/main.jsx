@@ -13,10 +13,13 @@ axios.interceptors.response.use(
       localStorage.removeItem('user');
       window.dispatchEvent(new Event('userUpdated'));
       
-      if (window.location.pathname.startsWith('/admin')) {
-        window.location.href = '/admin/login';
-      } else {
-        window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/admin/login') {
+        if (currentPath.startsWith('/admin')) {
+          window.location.href = '/admin/login';
+        } else {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);

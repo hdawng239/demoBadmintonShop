@@ -9,6 +9,7 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     full_name: '',
+    email: '',
     phone: '',
     address: '',
     password: ''
@@ -30,6 +31,7 @@ const ProfilePage = () => {
         setUser(data);
         setFormData({
           full_name: data.full_name || '',
+          email: data.email || '',
           phone: data.phone || '',
           address: data.address || '',
           password: '' 
@@ -52,6 +54,13 @@ const ProfilePage = () => {
     setSaving(true);
     setMessage({ type: '', text: '' });
     
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      setMessage({ type: 'error', text: 'Email bắt buộc phải là định dạng @gmail.com!' });
+      setSaving(false);
+      return;
+    }
+
     const phoneRegex = /^0(3|5|7|8|9)\d{8}$/;
     if (formData.phone && !phoneRegex.test(formData.phone)) {
       setMessage({ type: 'error', text: 'Số điện thoại không hợp lệ (Phải đủ 10 số và bắt đầu bằng 0)!' });
@@ -68,6 +77,7 @@ const ProfilePage = () => {
       // Update local storage
       const currentUser = authService.getCurrentUser();
       currentUser.full_name = formData.full_name;
+      currentUser.email = formData.email;
       localStorage.setItem('user', JSON.stringify(currentUser));
       window.dispatchEvent(new Event('userUpdated'));
 
@@ -104,8 +114,15 @@ const ProfilePage = () => {
 
             <form onSubmit={handleUpdate} className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Email (Không thể thay đổi)</label>
-                <input type="text" value={user?.email || ''} disabled className="w-full bg-gray-100 text-gray-500 px-4 py-3 rounded cursor-not-allowed border border-gray-200" />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ Email (*)</label>
+                <input 
+                  type="email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
               </div>
 
               <div>

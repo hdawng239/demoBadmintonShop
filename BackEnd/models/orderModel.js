@@ -74,16 +74,27 @@ const Order = {
 
             // 1. Chèn bảng orders
             const insertOrderQuery = `
-                INSERT INTO orders (user_id, payment_method, total_amount, shipping_name, shipping_phone, shipping_address, to_district_id, to_ward_code)
-                VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 1442), COALESCE($8, '21012')) RETURNING id
+                INSERT INTO orders (user_id, payment_method, total_amount, shipping_name, shipping_phone, shipping_address, to_district_id, to_ward_code, voucher_code, discount_amount)
+                VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 1442), COALESCE($8, '21012'), $9, $10) RETURNING id
             `;
             const orderValues = [
                 orderData.user_id, orderData.payment_method, orderData.total_amount, 
                 orderData.shipping_name, orderData.shipping_phone, orderData.shipping_address,
-                orderData.to_district_id || null, orderData.to_ward_code || null
+                orderData.to_district_id || null, orderData.to_ward_code || null,
+                orderData.voucher_code || null, parseFloat(orderData.discount_amount || 0)
             ];
             const orderResult = await client.query(insertOrderQuery, orderValues);
             const newOrderId = orderResult.rows[0].id;
+
+            // 1b. Tăng lượt dùng voucher nếu có áp dụng
+            if (orderData.voucher_code) {
+                const updateVoucherQuery = `
+                    UPDATE vouchers 
+                    SET used_count = used_count + 1 
+                    WHERE UPPER(code) = UPPER($1)
+                `;
+                await client.query(updateVoucherQuery, [orderData.voucher_code]);
+            }
 
             // 2. Vòng lặp chèn bảng order_items và trừ kho
             const checkStockQuery = `SELECT variant_name, stock_quantity FROM product_variants WHERE id = $1 FOR UPDATE`;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Users, LogOut, ChevronDown, ChevronUp, FileText, MessageSquare, Menu } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, LogOut, ChevronDown, ChevronUp, FileText, MessageSquare, Menu, Ticket } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 const AdminLayout = ({ children }) => {
@@ -139,6 +139,16 @@ const AdminLayout = ({ children }) => {
           >
             <MessageSquare size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
             {!isSidebarCollapsed && <span>Reviews</span>}
+          </Link>
+
+          {/* Vouchers */}
+          <Link 
+            to="/admin/vouchers"
+            className={`flex items-center rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} ${location.pathname.startsWith('/admin/vouchers') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            title={isSidebarCollapsed ? "Vouchers" : ""}
+          >
+            <Ticket size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
+            {!isSidebarCollapsed && <span>Vouchers</span>}
           </Link>
         </nav>
 

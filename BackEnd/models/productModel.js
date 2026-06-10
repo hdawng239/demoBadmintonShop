@@ -18,8 +18,11 @@ const Product = {
             queryParams.push(brandId);
         }
         if (keyword) {
-            whereClauses.push(`p.name ILIKE $${whereClauses.length + 1}`);
-            queryParams.push(`%${keyword}%`);
+            const terms = keyword.trim().split(/\s+/);
+            terms.forEach(term => {
+                whereClauses.push(`p.name ILIKE $${whereClauses.length + 1}`);
+                queryParams.push(`%${term}%`);
+            });
         }
         
         const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';

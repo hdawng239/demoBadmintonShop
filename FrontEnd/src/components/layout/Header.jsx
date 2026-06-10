@@ -62,6 +62,16 @@ const Header = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSearchDropdown(false);
+      const inputEl = searchRef.current?.querySelector('input');
+      if (inputEl) inputEl.blur();
+    }
+  };
+
   useEffect(() => {
     const fetchCartCount = async () => {
       const currentUser = authService.getCurrentUser();
@@ -141,7 +151,7 @@ const Header = () => {
         </div>
 
         <div className="flex-1 w-full md:w-auto md:max-w-xl px-0 md:px-6 order-last md:order-none" ref={searchRef}>
-          <div className="relative">
+          <form onSubmit={handleSearchSubmit} className="relative">
             <input 
               type="text" 
               placeholder="Tìm sản phẩm..." 
@@ -153,7 +163,9 @@ const Header = () => {
               onFocus={() => setShowSearchDropdown(true)}
               className="w-full bg-gray-100 border border-gray-200 rounded-full py-2 px-4 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all-300"
             />
-            <SearchIcon className="absolute right-3 top-2.5 text-gray-400 w-5 h-5 cursor-pointer hover:text-primary" />
+            <button type="submit" className="absolute right-3 top-2.5 text-gray-400 hover:text-primary transition-colors focus:outline-none">
+              <SearchIcon className="w-5 h-5 cursor-pointer" />
+            </button>
             
             {/* Search Dropdown */}
             {showSearchDropdown && (
@@ -169,7 +181,8 @@ const Header = () => {
                         key={idx} 
                         onClick={() => {
                           setSearchQuery(tag);
-                          setShowSearchDropdown(true);
+                          setShowSearchDropdown(false);
+                          navigate(`/search?q=${encodeURIComponent(tag)}`);
                         }}
                         className="bg-gray-100 hover:bg-gray-200 cursor-pointer text-gray-700 px-3 py-1.5 rounded-md text-sm transition-colors"
                       >
@@ -213,7 +226,7 @@ const Header = () => {
                 </div>
               </div>
             )}
-          </div>
+          </form>
         </div>
 
         <div className="flex items-center space-x-6">
