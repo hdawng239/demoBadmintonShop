@@ -16,6 +16,7 @@ const ghnRoutes = require('./routes/ghnRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const sepayRoutes = require('./routes/sepayRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const variantRoutes = require('./routes/variantRoutes');
 
 const cors = require('cors');
 app.use(cors());
@@ -35,6 +36,7 @@ app.use('/api/ghn', ghnRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sepay', sepayRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/variants', variantRoutes);
 
 app.get('/', (req, res) => {
     res.json({ status: "ok", message: "API is running" });

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Pagination from '../../components/Pagination';
-import { Edit, Trash2, Plus, Image as ImageIcon } from 'lucide-react';
+import { Edit, Trash2, Plus, Image as ImageIcon, Package, X } from 'lucide-react';
 import axios from 'axios';
 
 const AdminProductPage = () => {
@@ -19,6 +19,137 @@ const AdminProductPage = () => {
     name: '', category_id: '', brand_id: '', base_price: '', description: '', image_url: '', is_active: true,
     length: '', width: '', height: '', weight_g: ''
   });
+
+  // Variant Modal State
+  const [showVariantModal, setShowVariantModal] = useState(false);
+  const [selectedProductForVariants, setSelectedProductForVariants] = useState(null);
+  const [variants, setVariants] = useState([]);
+  
+  // Variant Form Data
+  const defaultVariantForm = { id: null, variant_name: '', stock_quantity: 10, price_modifier: 0, sizeAttr: '', colorAttr: '' };
+  const [variantForm, setVariantForm] = useState(defaultVariantForm);
+
+  const openVariantModal = async (product) => {
+    setSelectedProductForVariants(product);
+    setVariantForm(defaultVariantForm);
+    setShowVariantModal(true);
+    await fetchVariants(product.id);
+  };
+
+  const fetchVariants = async (productId) => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/variants/product/${productId}`);
+      setVariants(res.data.data);
+    } catch (err) {
+      console.error("Lỗi fetch variants", err);
+    }
+  };
+
+  const getAttributeKeys = () => {
+    if (variants && variants.length > 0) {
+      for (const v of variants) {
+        if (v.attributes) {
+          const attrs = typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes;
+          const keys = Object.keys(attrs);
+          if (keys.length > 0) {
+            const sizeKey = keys.find(k => k !== 'Màu sắc') || 'Kích cỡ';
+            return { sizeKey, colorKey: 'Màu sắc' };
+          }
+        }
+      }
+    }
+    if (selectedProductForVariants) {
+      const catId = selectedProductForVariants.category_id;
+      if (catId === 1) {
+        return { sizeKey: 'Trọng lượng', colorKey: 'Màu sắc' };
+      }
+    }
+    return { sizeKey: 'Kích cỡ', colorKey: 'Màu sắc' };
+  };
+
+  const handleSubmitVariant = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Đóng gói attributes dùng khóa động
+      const { sizeKey, colorKey } = getAttributeKeys();
+      const attributes = {};
+      if (variantForm.sizeAttr) attributes[sizeKey] = variantForm.sizeAttr;
+      if (variantForm.colorAttr) attributes[colorKey] = variantForm.colorAttr;
+      
+      const payload = {
+        product_id: selectedProductForVariants.id,
+        variant_name: variantForm.variant_name || [variantForm.sizeAttr, variantForm.colorAttr].filter(Boolean).join(' - ') || 'Mặc định',
+        stock_quantity: variantForm.stock_quantity,
+        price_modifier: variantForm.price_modifier,
+        attributes: Object.keys(attributes).length > 0 ? attributes : null
+      };
+
+      if (variantForm.id) {
+        // Cập nhật
+        await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/variants/${variantForm.id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        // Thêm mới
+        await axios.post(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/variants`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+      
+      setVariantForm(defaultVariantForm);
+      fetchVariants(selectedProductForVariants.id);
+    } catch (err) {
+      alert("Lỗi lưu phân loại");
+    }
+  };
+
+  const handleEditVariantClick = (v) => {
+    const { sizeKey, colorKey } = getAttributeKeys();
+    let sizeAttr = '';
+    let colorAttr = '';
+    if (v.attributes) {
+      const attrs = typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes;
+      sizeAttr = attrs[sizeKey] || attrs['Kích cỡ'] || attrs['Size'] || attrs['Trọng lượng'] || '';
+      colorAttr = attrs[colorKey] || attrs['Màu sắc'] || '';
+    }
+    setVariantForm({
+      id: v.id,
+      variant_name: v.variant_name,
+      stock_quantity: v.stock_quantity,
+      price_modifier: v.price_modifier,
+      sizeAttr,
+      colorAttr
+    });
+  };
+
+  const handleUpdateVariantStock = async (id, stock_quantity) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/variants/${id}`, {
+        stock_quantity: parseInt(stock_quantity)
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchVariants(selectedProductForVariants.id);
+    } catch (err) {
+      alert("Lỗi cập nhật tồn kho");
+    }
+  };
+
+  const handleDeleteVariant = async (id) => {
+    if (!window.confirm("Xóa phân loại này?")) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/variants/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchVariants(selectedProductForVariants.id);
+    } catch (err) {
+      alert(err.response?.data?.message || "Lỗi xóa phân loại");
+    }
+  };
 
   const fetchData = async (page = 1) => {
     setIsLoading(true);
@@ -182,6 +313,9 @@ const AdminProductPage = () => {
                       <td className="p-4 text-primary font-bold">{parseInt(product.base_price).toLocaleString()} ₫</td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center space-x-2">
+                          <button onClick={() => openVariantModal(product)} className="text-green-600 hover:text-green-800 bg-green-50 p-2 rounded-lg transition" title="Quản lý Tồn kho & Phân loại">
+                            <Package size={18} />
+                          </button>
                           <button onClick={() => openEditModal(product)} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg transition" title="Sửa">
                             <Edit size={18} />
                           </button>
@@ -284,6 +418,120 @@ const AdminProductPage = () => {
             <div className="p-5 border-t border-gray-100 flex justify-end space-x-3 flex-shrink-0 bg-gray-50 rounded-b-2xl">
               <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-white font-medium transition">Hủy</button>
               <button type="submit" form="productForm" className="px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-orange-600 shadow-sm font-medium transition">Lưu sản phẩm</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Variant Management Modal */}
+      {showVariantModal && selectedProductForVariants && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                <Package className="w-5 h-5 mr-2 text-primary" />
+                Phân loại & Tồn kho: {selectedProductForVariants.name}
+              </h2>
+              <button onClick={() => setShowVariantModal(false)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              {/* Add/Edit Variant Form */}
+              <form onSubmit={handleSubmitVariant} className="bg-orange-50/50 p-4 rounded-xl border border-orange-100 mb-6">
+                <div className="flex gap-4 items-end flex-wrap">
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Tên Phân Loại (Gõ nếu muốn ghi đè)</label>
+                    <input type="text" value={variantForm.variant_name} onChange={e => setVariantForm({...variantForm, variant_name: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="Tự động tạo nếu để trống" />
+                  </div>
+                  <div className="w-28">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">{getAttributeKeys().sizeKey}</label>
+                    <input type="text" value={variantForm.sizeAttr} onChange={e => setVariantForm({...variantForm, sizeAttr: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder={getAttributeKeys().sizeKey === 'Trọng lượng' ? '3U, 4U, 5U' : 'S, M, 39, 40'} />
+                  </div>
+                  <div className="w-28">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">{getAttributeKeys().colorKey}</label>
+                    <input type="text" value={variantForm.colorAttr} onChange={e => setVariantForm({...variantForm, colorAttr: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="Đỏ, Xanh, Cam" />
+                  </div>
+                  <div className="w-32">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Cộng thêm giá</label>
+                    <input type="number" required value={variantForm.price_modifier} onChange={e => setVariantForm({...variantForm, price_modifier: parseInt(e.target.value) || 0})} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                  </div>
+                  <div className="w-24">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Tồn kho</label>
+                    <input type="number" required min="0" value={variantForm.stock_quantity} onChange={e => setVariantForm({...variantForm, stock_quantity: parseInt(e.target.value) || 0})} className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                  </div>
+                  <button type="submit" className="bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm whitespace-nowrap">
+                    {variantForm.id ? 'Cập nhật' : 'Thêm'}
+                  </button>
+                  {variantForm.id && (
+                    <button type="button" onClick={() => setVariantForm(defaultVariantForm)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm whitespace-nowrap">
+                      Hủy
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {/* Variants Table */}
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-50 text-gray-600 text-sm">
+                    <tr>
+                      <th className="p-3 font-semibold">Tên phân loại / Thuộc tính</th>
+                      <th className="p-3 font-semibold text-right">Giá cộng thêm</th>
+                      <th className="p-3 font-semibold text-center w-32">Tồn kho</th>
+                      <th className="p-3 font-semibold text-center w-24">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variants.map(v => {
+                      let attrText = '';
+                      if (v.attributes) {
+                        const attrs = typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes;
+                        attrText = Object.entries(attrs).map(([k, val]) => `${k}: ${val}`).join(' | ');
+                      }
+                      
+                      return (
+                      <tr key={v.id} className="border-t border-gray-100 hover:bg-gray-50/50">
+                        <td className="p-3">
+                          <div className="font-medium text-gray-800">{v.variant_name}</div>
+                          {attrText && <div className="text-xs text-gray-500 mt-1">{attrText}</div>}
+                        </td>
+                        <td className="p-3 text-right text-gray-600">{v.price_modifier > 0 ? '+' : ''}{parseInt(v.price_modifier).toLocaleString()} ₫</td>
+                        <td className="p-3 text-center">
+                          <input 
+                            type="number" 
+                            className="w-20 text-center border border-gray-300 rounded-lg py-1 px-2 focus:ring-2 focus:ring-primary/20 outline-none"
+                            defaultValue={v.stock_quantity}
+                            onBlur={(e) => {
+                              if (e.target.value != v.stock_quantity) {
+                                handleUpdateVariantStock(v.id, e.target.value);
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <button onClick={() => handleEditVariantClick(v)} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded-lg transition" title="Sửa">
+                              <Edit size={16} />
+                            </button>
+                            <button onClick={() => handleDeleteVariant(v.id)} className="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded-lg transition" title="Xóa">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      );
+                    })}
+                    {variants.length === 0 && (
+                      <tr><td colSpan="4" className="p-6 text-center text-gray-500">Chưa có phân loại nào.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-100 flex justify-end bg-gray-50">
+              <button onClick={() => setShowVariantModal(false)} className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors">
+                Đóng
+              </button>
             </div>
           </div>
         </div>

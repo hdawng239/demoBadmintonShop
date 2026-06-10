@@ -3,14 +3,20 @@ import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { cartService } from '../services/cartService';
 import { authService } from '../services/authService';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, XCircle, CheckCircle } from 'lucide-react';
 
 const CartPage = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [toast, setToast] = useState({ message: '', type: '' });
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast({ message: '', type: '' }), 3500);
+  };
 
   const fetchCart = async () => {
     try {
@@ -35,6 +41,11 @@ const CartPage = () => {
 
   const handleUpdateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
+    const item = cart.items.find(i => i.id === itemId);
+    if (item && newQuantity > item.stock_quantity) {
+      showToast(`Sản phẩm "${item.product_name} (${item.variant_name || 'Mặc định'})" chỉ còn ${item.stock_quantity} cái trong kho!`, 'error');
+      return;
+    }
     try {
       await cartService.updateItemQuantity(itemId, newQuantity);
       // Tạm thời update local state để nhanh
@@ -46,7 +57,7 @@ const CartPage = () => {
       });
     } catch (error) {
       console.error("Lỗi cập nhật số lượng:", error);
-      alert("Có lỗi xảy ra khi cập nhật số lượng.");
+      showToast("Có lỗi xảy ra khi cập nhật số lượng.", "error");
     }
   };
 
@@ -60,7 +71,7 @@ const CartPage = () => {
       });
     } catch (error) {
       console.error("Lỗi xóa sản phẩm:", error);
-      alert("Có lỗi xảy ra khi xóa sản phẩm.");
+      showToast("Có lỗi xảy ra khi xóa sản phẩm.", "error");
     }
   };
 
@@ -90,10 +101,15 @@ const CartPage = () => {
 
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
-      alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
+      showToast("Vui lòng chọn ít nhất một sản phẩm để thanh toán!", "error");
       return;
     }
     const selectedCartItems = cart.items.filter(item => selectedItems.includes(item.id));
+    const outOfStockItems = selectedCartItems.filter(item => item.quantity > item.stock_quantity);
+    if (outOfStockItems.length > 0) {
+      showToast(`Sản phẩm "${outOfStockItems[0].product_name} (${outOfStockItems[0].variant_name || 'Mặc định'})" chỉ còn ${outOfStockItems[0].stock_quantity} cái trong kho!`, "error");
+      return;
+    }
     navigate('/checkout', { state: { selectedItems: selectedCartItems } });
   };
 
@@ -111,6 +127,14 @@ const CartPage = () => {
 
   return (
     <MainLayout>
+      {/* Toast Notification */}
+      {toast.message && (
+        <div className={`fixed top-24 right-4 z-[9999] px-6 py-4 rounded-xl shadow-2xl flex items-center transition-all duration-300 animate-bounce ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          {toast.type === 'error' ? <XCircle className="w-6 h-6 mr-3" /> : <CheckCircle className="w-6 h-6 mr-3" />}
+          <span className="font-bold text-sm">{toast.message}</span>
+        </div>
+      )}
+
       <div className="bg-gray-50 min-h-screen py-8">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl font-bold text-gray-800 uppercase mb-8 flex items-center">

@@ -14,6 +14,7 @@ const Cart = {
                        pv.id AS variant_id,
                        pv.variant_name,
                        pv.price_modifier,
+                       pv.stock_quantity AS stock_quantity,
                        p.id AS product_id
                 FROM cart_items ci
                 LEFT JOIN product_variants pv ON ci.variant_id = pv.id

@@ -51,7 +51,7 @@ const updateOrder = async (req, res) => {
         // GHN Integration: If status is updated to shipping, create GHN order
         if (updateData.status === 'shipping') {
             const currentOrder = await Order.getById(req.params.id);
-            if (currentOrder && !currentOrder.tracking_code) {
+            if (currentOrder && currentOrder.payment_method !== 'store' && !currentOrder.tracking_code) {
                 try {
                     const trackingCode = await ghnService.createShippingOrder(currentOrder);
                     updateData.tracking_code = trackingCode;

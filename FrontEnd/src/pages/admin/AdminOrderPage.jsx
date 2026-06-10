@@ -133,7 +133,7 @@ const AdminOrderPage = () => {
                     <th className="p-4 font-semibold">Mã ĐH</th>
                     <th className="p-4 font-semibold">Khách hàng</th>
                     <th className="p-4 font-semibold text-right">Tổng tiền</th>
-                    <th className="p-4 font-semibold text-center">Thanh toán (Method)</th>
+                    <th className="p-4 font-semibold text-center">Phương thức thanh toán</th>
                     <th className="p-4 font-semibold text-center">Trạng thái TT</th>
                     <th className="p-4 font-semibold text-center">Trạng thái ĐH</th>
                     <th className="p-4 font-semibold text-center">Hành động</th>
@@ -151,7 +151,7 @@ const AdminOrderPage = () => {
                         {parseFloat(order.total_amount).toLocaleString()} ₫
                       </td>
                       <td className="p-4 text-center text-gray-600 font-medium uppercase text-sm">
-                        {order.payment_method}
+                        {order.payment_method === 'store' ? 'ON COUNTER' : order.payment_method}
                       </td>
                       
                       {/* Inline Payment Status Select */}
@@ -175,7 +175,9 @@ const AdminOrderPage = () => {
                         >
                           <option value="pending">PENDING</option>
                           <option value="processing">PROCESSING</option>
-                          <option value="shipping">SHIPPING</option>
+                          <option value="shipping" disabled={order.payment_method === 'store'}>
+                            SHIPPING
+                          </option>
                           <option value="completed">COMPLETED</option>
                           <option value="cancelled">CANCELLED</option>
                         </select>
@@ -237,9 +239,13 @@ const AdminOrderPage = () => {
                       <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Người nhận</p>
                       <p className="text-gray-800 font-medium">{selectedOrderDetails.shipping_name}</p>
                       <p className="text-gray-600">{selectedOrderDetails.shipping_phone}</p>
+                      <p className="text-xs text-gray-500 uppercase font-semibold mb-1 mt-3">Hình thức thanh toán</p>
+                      <p className="text-gray-800 font-medium uppercase">
+                        {selectedOrderDetails.payment_method === 'store' ? 'ON COUNTER' : selectedOrderDetails.payment_method}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Địa chỉ giao hàng</p>
+                      <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Địa chỉ nhận/giao hàng</p>
                       <p className="text-gray-800">{selectedOrderDetails.shipping_address}</p>
                       {selectedOrderDetails.tracking_code && (
                         <div className="mt-3">

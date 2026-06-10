@@ -83,7 +83,17 @@ const Product = {
             is_active ?? true,
             image_url || null
         ]);
-        return result.rows[0];
+        
+        const newProduct = result.rows[0];
+        
+        // Tự động tạo 1 phân loại mặc định cho sản phẩm mới (Tồn kho mặc định: 100)
+        const variantQuery = `
+            INSERT INTO product_variants (product_id, variant_name, stock_quantity, price_modifier) 
+            VALUES ($1, $2, $3, $4)
+        `;
+        await pool.query(variantQuery, [newProduct.id, 'Mặc định', 100, 0]);
+        
+        return newProduct;
     },
         update: async (id, data) => {
         // Tự động sinh SQL cho bảng 'products'

@@ -5,12 +5,19 @@ import { authService } from '../services/authService';
 import axios from 'axios';
 import { cartService } from '../services/cartService';
 import { ghnService } from '../services/ghnService';
+import { XCircle, CheckCircle } from 'lucide-react';
 
 const CheckoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ message: '', type: '' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast({ message: '', type: '' }), 4500);
+  };
 
   // Form State
   const [name, setName] = useState('');
@@ -47,6 +54,19 @@ const CheckoutPage = () => {
     // Fetch Provinces
     fetchProvinces();
   }, [navigate, location.state]);
+
+  // Handle payment method changes (reset shipping fee if store pickup)
+  useEffect(() => {
+    if (paymentMethod === 'store') {
+      setShippingFee(0);
+    } else {
+      if (selectedDistrict && selectedWard) {
+        calculateShippingFee(parseInt(selectedDistrict), selectedWard);
+      } else {
+        setShippingFee(0);
+      }
+    }
+  }, [paymentMethod, selectedDistrict, selectedWard]);
 
   const fetchProvinces = async () => {
     try {
@@ -172,23 +192,33 @@ const CheckoutPage = () => {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (!selectedProvince || !selectedDistrict || !selectedWard || !addressDetail || !name || !phone) {
-        alert("Vui lòng nhập đầy đủ thông tin giao hàng!");
+    if (!name || !phone) {
+        showToast("Vui lòng nhập đầy đủ Họ tên và Số điện thoại!", "error");
         return;
+    }
+
+    if (paymentMethod !== 'store') {
+        if (!selectedProvince || !selectedDistrict || !selectedWard || !addressDetail) {
+            showToast("Vui lòng nhập đầy đủ thông tin giao hàng!", "error");
+            return;
+        }
     }
 
     if (!/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
-        alert("Số điện thoại không hợp lệ (Phải đủ 10 số và bắt đầu bằng 0)!");
+        showToast("Số điện thoại không hợp lệ (Phải đủ 10 số và bắt đầu bằng 0)!", "error");
         return;
     }
 
-    const provinceName = provinces.find(p => String(p.ProvinceID) === selectedProvince)?.ProvinceName || '';
-    const districtName = districts.find(d => String(d.DistrictID) === selectedDistrict)?.DistrictName || '';
-    const wardName = wards.find(w => String(w.WardCode) === selectedWard)?.WardName || '';
+    let fullAddress = "Nhận tại cửa hàng";
+    if (paymentMethod !== 'store') {
+        const provinceName = provinces.find(p => String(p.ProvinceID) === selectedProvince)?.ProvinceName || '';
+        const districtName = districts.find(d => String(d.DistrictID) === selectedDistrict)?.DistrictName || '';
+        const wardName = wards.find(w => String(w.WardCode) === selectedWard)?.WardName || '';
+        fullAddress = `${addressDetail}, ${wardName}, ${districtName}, ${provinceName}`;
+    }
 
-    const fullAddress = `${addressDetail}, ${wardName}, ${districtName}, ${provinceName}`;
     const subTotal = calculateSubTotal();
-    const totalAmount = subTotal + shippingFee;
+    const totalAmount = subTotal + (paymentMethod === 'store' ? 0 : shippingFee);
 
     const user = authService.getCurrentUser();
     const orderData = {
@@ -198,6 +228,8 @@ const CheckoutPage = () => {
         shipping_name: name,
         shipping_phone: phone,
         shipping_address: fullAddress,
+        to_district_id: paymentMethod !== 'store' ? parseInt(selectedDistrict) : null,
+        to_ward_code: paymentMethod !== 'store' ? selectedWard : null,
         cartItems: selectedItems.map(item => ({
             variant_id: item.variant_id,
             quantity: item.quantity,
@@ -230,7 +262,8 @@ const CheckoutPage = () => {
         }
     } catch (error) {
         console.error("Lỗi tạo đơn hàng:", error);
-        alert("Đã xảy ra lỗi khi đặt hàng.");
+        const errorMsg = error.response?.data?.error || error.response?.data?.message || "Đã xảy ra lỗi khi đặt hàng.";
+        showToast(errorMsg, "error");
     } finally {
         setLoading(false);
     }
@@ -238,6 +271,13 @@ const CheckoutPage = () => {
 
   return (
     <MainLayout>
+      {/* Toast Notification */}
+      {toast.message && (
+        <div className={`fixed top-24 right-4 z-[9999] px-6 py-4 rounded-xl shadow-2xl flex items-center transition-all duration-300 animate-bounce ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          {toast.type === 'error' ? <XCircle className="w-6 h-6 mr-3" /> : <CheckCircle className="w-6 h-6 mr-3" />}
+          <span className="font-bold text-sm">{toast.message}</span>
+        </div>
+      )}
       <div className="bg-gray-50 py-8 min-h-screen">
         <div className="container mx-auto px-4 max-w-6xl">
           <h1 className="text-2xl font-bold text-gray-800 uppercase mb-8">Thanh Toán</h1>
@@ -247,7 +287,9 @@ const CheckoutPage = () => {
               
               {/* Thông tin giao hàng */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Thông tin giao hàng</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
+                  {paymentMethod === 'store' ? 'Thông tin người nhận hàng' : 'Thông tin giao hàng'}
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm text-gray-600 mb-1">Họ và tên</label>
@@ -259,40 +301,44 @@ const CheckoutPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Tỉnh/Thành phố</label>
-                    <select required value={selectedProvince} onChange={handleProvinceChange} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary">
-                      <option value="">Chọn Tỉnh/Thành</option>
-                      {provinces.map(p => (
-                        <option key={p.ProvinceID} value={p.ProvinceID}>{p.ProvinceName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Quận/Huyện</label>
-                    <select required value={selectedDistrict} onChange={handleDistrictChange} disabled={!selectedProvince} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary">
-                      <option value="">Chọn Quận/Huyện</option>
-                      {districts.map(d => (
-                        <option key={d.DistrictID} value={d.DistrictID}>{d.DistrictName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Phường/Xã</label>
-                    <select required value={selectedWard} onChange={handleWardChange} disabled={!selectedDistrict} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary">
-                      <option value="">Chọn Phường/Xã</option>
-                      {wards.map(w => (
-                        <option key={w.WardCode} value={w.WardCode}>{w.WardName}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                {paymentMethod !== 'store' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Tỉnh/Thành phố</label>
+                        <select required={paymentMethod !== 'store'} value={selectedProvince} onChange={handleProvinceChange} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary">
+                          <option value="">Chọn Tỉnh/Thành</option>
+                          {provinces.map(p => (
+                            <option key={p.ProvinceID} value={p.ProvinceID}>{p.ProvinceName}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Quận/Huyện</label>
+                        <select required={paymentMethod !== 'store'} value={selectedDistrict} onChange={handleDistrictChange} disabled={!selectedProvince} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary">
+                          <option value="">Chọn Quận/Huyện</option>
+                          {districts.map(d => (
+                            <option key={d.DistrictID} value={d.DistrictID}>{d.DistrictName}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Phường/Xã</label>
+                        <select required={paymentMethod !== 'store'} value={selectedWard} onChange={handleWardChange} disabled={!selectedDistrict} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary">
+                          <option value="">Chọn Phường/Xã</option>
+                          {wards.map(w => (
+                            <option key={w.WardCode} value={w.WardCode}>{w.WardName}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Địa chỉ cụ thể (Số nhà, tên đường)</label>
-                  <input type="text" required value={addressDetail} onChange={e => setAddressDetail(e.target.value)} placeholder="VD: 123 Đường Nguyễn Văn Linh" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary" />
-                </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Địa chỉ cụ thể (Số nhà, tên đường)</label>
+                      <input type="text" required={paymentMethod !== 'store'} value={addressDetail} onChange={e => setAddressDetail(e.target.value)} placeholder="VD: 123 Đường Nguyễn Văn Linh" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-primary focus:border-primary" />
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Phương thức thanh toán */}
@@ -307,6 +353,11 @@ const CheckoutPage = () => {
                   <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'qr' ? 'border-primary bg-orange-50/30' : 'border-gray-200 hover:bg-gray-50'}`}>
                     <input type="radio" name="payment" value="qr" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" />
                     <span className="ml-3 font-medium text-gray-700">Chuyển khoản QR (SePay)</span>
+                  </label>
+
+                  <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'store' ? 'border-primary bg-orange-50/30' : 'border-gray-200 hover:bg-gray-50'}`}>
+                    <input type="radio" name="payment" value="store" checked={paymentMethod === 'store'} onChange={() => setPaymentMethod('store')} className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" />
+                    <span className="ml-3 font-medium text-gray-700">Nhận hàng tại cửa hàng (Thanh toán tại quầy)</span>
                   </label>
                 </div>
               </div>

@@ -18,6 +18,8 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
 import PaymentQRPage from './pages/PaymentQRPage';
 import ScrollToTop from './components/ScrollToTop';
+import FavoritesPage from './pages/FavoritesPage';
+
 
 import AdminRoute from './components/layout/AdminRoute';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
@@ -53,6 +55,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/my-orders" element={<UserOrdersPage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />

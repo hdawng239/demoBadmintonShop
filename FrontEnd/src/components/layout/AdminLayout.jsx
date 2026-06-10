@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Users, LogOut, ChevronDown, ChevronUp, Grid, FileText, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, LogOut, ChevronDown, ChevronUp, FileText, MessageSquare, Menu } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 const AdminLayout = ({ children }) => {
@@ -9,12 +9,34 @@ const AdminLayout = ({ children }) => {
   const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
   const [user, setUser] = useState(authService.getCurrentUser());
 
+  // Collapsible sidebar state reading from localStorage
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
+    localStorage.getItem('adminSidebarCollapsed') === 'true'
+  );
+
   useEffect(() => {
-    // Tự động mở menu Sản phẩm nếu đang ở các trang con của nó
-    if (location.pathname.startsWith('/admin/products') || location.pathname.startsWith('/admin/categories')) {
+    // Tự động mở menu Sản phẩm nếu đang ở các trang con của nó và sidebar đang mở rộng
+    if (!isSidebarCollapsed && (location.pathname.startsWith('/admin/products') || location.pathname.startsWith('/admin/categories'))) {
       setIsProductMenuOpen(true);
     }
-  }, [location.pathname]);
+  }, [location.pathname, isSidebarCollapsed]);
+
+  const toggleSidebar = () => {
+    const newState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newState);
+    localStorage.setItem('adminSidebarCollapsed', String(newState));
+  };
+
+  const handleProductsClick = () => {
+    if (isSidebarCollapsed) {
+      // Tự động mở rộng sidebar khi click chọn mục Products để xem menu con
+      setIsSidebarCollapsed(false);
+      localStorage.setItem('adminSidebarCollapsed', 'false');
+      setIsProductMenuOpen(true);
+    } else {
+      setIsProductMenuOpen(!isProductMenuOpen);
+    }
+  };
 
   const handleLogout = () => {
     authService.logout();
@@ -24,36 +46,44 @@ const AdminLayout = ({ children }) => {
   return (
     <div className="flex h-screen bg-[#F4F6F8] font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
-        <div className="p-5 text-center text-2xl font-black border-b border-gray-100 flex items-center justify-center space-x-2">
-          <span className="text-primary">Naro Shop</span> 
-          <span className="text-gray-800 text-sm bg-gray-100 px-2 py-1 rounded-md font-bold mt-1">ADMIN</span>
+      <aside className={`bg-white border-r border-gray-200 flex flex-col hidden md:flex transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+        <div className={`text-center font-black border-b border-gray-100 flex items-center justify-center transition-all duration-300 ${isSidebarCollapsed ? 'p-4 text-xl' : 'p-5 text-2xl'}`}>
+          {isSidebarCollapsed ? (
+            <span className="bg-black text-white px-2.5 py-1 rounded-sm">N</span>
+          ) : (
+            <div className="flex items-center justify-center space-x-2">
+              <span className="bg-black text-white px-2 py-1 mr-1 rounded-sm">Naro</span>
+              <span className="text-gray-800 text-sm bg-gray-100 px-2 py-1 rounded-md font-bold mt-1">ADMIN</span>
+            </div>
+          )}
         </div>
         
         <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
           {/* Dashboard */}
           <Link 
             to="/admin"
-            className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/admin' ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            className={`flex items-center rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} ${location.pathname === '/admin' ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            title={isSidebarCollapsed ? "Dashboard" : ""}
           >
-            <LayoutDashboard size={20} className="mr-3" />
-            Dashboard
+            <LayoutDashboard size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
+            {!isSidebarCollapsed && <span>Dashboard</span>}
           </Link>
 
           {/* Products Dropdown */}
           <div>
             <button 
-              onClick={() => setIsProductMenuOpen(!isProductMenuOpen)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${(location.pathname.startsWith('/admin/products') || location.pathname.startsWith('/admin/categories')) ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+              onClick={handleProductsClick}
+              className={`w-full flex items-center rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'justify-between px-4 py-3'} ${(location.pathname.startsWith('/admin/products') || location.pathname.startsWith('/admin/categories')) ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+              title={isSidebarCollapsed ? "Products" : ""}
             >
               <div className="flex items-center">
-                <Package size={20} className="mr-3" />
-                Products
+                <Package size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
+                {!isSidebarCollapsed && <span>Products</span>}
               </div>
-              {isProductMenuOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {!isSidebarCollapsed && (isProductMenuOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
             </button>
             
-            {isProductMenuOpen && (
+            {isProductMenuOpen && !isSidebarCollapsed && (
               <div className="mt-1 ml-4 pl-4 border-l-2 border-gray-100 space-y-1">
                 <Link 
                   to="/admin/products"
@@ -74,47 +104,52 @@ const AdminLayout = ({ children }) => {
           {/* Orders */}
           <Link 
             to="/admin/orders"
-            className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.startsWith('/admin/orders') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            className={`flex items-center rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} ${location.pathname.startsWith('/admin/orders') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            title={isSidebarCollapsed ? "Orders" : ""}
           >
-            <ShoppingCart size={20} className="mr-3" />
-            Orders
+            <ShoppingCart size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
+            {!isSidebarCollapsed && <span>Orders</span>}
           </Link>
 
           {/* Users */}
           <Link 
             to="/admin/users"
-            className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.startsWith('/admin/users') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            className={`flex items-center rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} ${location.pathname.startsWith('/admin/users') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            title={isSidebarCollapsed ? "Customers" : ""}
           >
-            <Users size={20} className="mr-3" />
-            Customers
+            <Users size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
+            {!isSidebarCollapsed && <span>Customers</span>}
           </Link>
 
           {/* Posts/News */}
           <Link 
             to="/admin/posts"
-            className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.startsWith('/admin/posts') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            className={`flex items-center rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} ${location.pathname.startsWith('/admin/posts') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            title={isSidebarCollapsed ? "News" : ""}
           >
-            <FileText size={20} className="mr-3" />
-            News
+            <FileText size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
+            {!isSidebarCollapsed && <span>News</span>}
           </Link>
 
           {/* Reviews */}
           <Link 
             to="/admin/reviews"
-            className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.startsWith('/admin/reviews') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            className={`flex items-center rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'px-4 py-3'} ${location.pathname.startsWith('/admin/reviews') ? 'bg-primary text-white font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-primary'}`}
+            title={isSidebarCollapsed ? "Reviews" : ""}
           >
-            <MessageSquare size={20} className="mr-3" />
-            Reviews
+            <MessageSquare size={20} className={isSidebarCollapsed ? '' : 'mr-3'} />
+            {!isSidebarCollapsed && <span>Reviews</span>}
           </Link>
         </nav>
 
         <div className="p-4 border-t border-gray-100">
           <button 
             onClick={handleLogout}
-            className="flex items-center justify-center w-full px-4 py-3 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors font-medium"
+            className={`flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors font-medium ${isSidebarCollapsed ? 'p-3 w-12 h-12 mx-auto' : 'w-full px-4 py-3'}`}
+            title={isSidebarCollapsed ? "Đăng xuất" : ""}
           >
-            <LogOut size={20} className="mr-2" />
-            Đăng xuất
+            <LogOut size={20} className={isSidebarCollapsed ? '' : 'mr-2'} />
+            {!isSidebarCollapsed && <span>Đăng xuất</span>}
           </button>
         </div>
       </aside>
@@ -124,7 +159,16 @@ const AdminLayout = ({ children }) => {
         {/* Topbar */}
         <header className="bg-white shadow-sm border-b border-gray-100 z-10 relative">
           <div className="px-8 py-4 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-800">Dashboard Quản Trị</h2>
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={toggleSidebar}
+                className="p-2 text-gray-500 hover:text-primary hover:bg-gray-50 rounded-xl transition-colors shrink-0 cursor-pointer"
+                title={isSidebarCollapsed ? "Mở rộng menu" : "Thu gọn menu"}
+              >
+                <Menu size={20} />
+              </button>
+              <h2 className="text-xl font-bold text-gray-800">Dashboard Quản Trị</h2>
+            </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-primary font-bold uppercase">

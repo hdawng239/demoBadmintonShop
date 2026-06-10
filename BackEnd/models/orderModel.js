@@ -74,12 +74,13 @@ const Order = {
 
             // 1. Chèn bảng orders
             const insertOrderQuery = `
-                INSERT INTO orders (user_id, payment_method, total_amount, shipping_name, shipping_phone, shipping_address)
-                VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+                INSERT INTO orders (user_id, payment_method, total_amount, shipping_name, shipping_phone, shipping_address, to_district_id, to_ward_code)
+                VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 1442), COALESCE($8, '21012')) RETURNING id
             `;
             const orderValues = [
                 orderData.user_id, orderData.payment_method, orderData.total_amount, 
-                orderData.shipping_name, orderData.shipping_phone, orderData.shipping_address
+                orderData.shipping_name, orderData.shipping_phone, orderData.shipping_address,
+                orderData.to_district_id || null, orderData.to_ward_code || null
             ];
             const orderResult = await client.query(insertOrderQuery, orderValues);
             const newOrderId = orderResult.rows[0].id;

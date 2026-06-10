@@ -155,7 +155,9 @@ const UserOrdersPage = () => {
                                                     </h4>
                                                     <div className="flex justify-between items-center text-sm mb-2">
                                                         <span className="text-gray-500">Hình thức:</span>
-                                                        <span className="font-medium uppercase">{order.payment_method}</span>
+                                                        <span className="font-medium uppercase">
+                                                            {order.payment_method === 'store' ? 'Nhận tại cửa hàng' : order.payment_method}
+                                                        </span>
                                                     </div>
                                                     <div className="flex justify-between items-center text-base pt-2 border-t border-gray-200 mt-2">
                                                         <span className="font-bold text-gray-800">Tổng cộng:</span>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Phone, MapPin, Search as SearchIcon, User, ShoppingCart, ChevronDown, Flame } from 'lucide-react';
+import { Search, Phone, MapPin, Search as SearchIcon, User, ShoppingCart, ChevronDown, Flame, Heart } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { cartService } from '../../services/cartService';
 import { productService } from '../../services/productService';
@@ -9,6 +9,7 @@ const Header = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [user, setUser] = useState(authService.getCurrentUser());
   const [cartCount, setCartCount] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,7 +64,8 @@ const Header = () => {
 
   useEffect(() => {
     const fetchCartCount = async () => {
-      if (authService.getCurrentUser()) {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
         try {
           const cart = await cartService.getMyCart();
           const count = cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
@@ -77,19 +79,37 @@ const Header = () => {
       }
     };
 
+    const fetchFavoritesCount = () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        try {
+          const favs = JSON.parse(localStorage.getItem(`favorites_${currentUser.id}`)) || [];
+          setFavoritesCount(favs.length);
+        } catch (e) {
+          setFavoritesCount(0);
+        }
+      } else {
+        setFavoritesCount(0);
+      }
+    };
+
     fetchCartCount();
+    fetchFavoritesCount();
 
     const handleUserUpdate = () => {
       setUser(authService.getCurrentUser());
       fetchCartCount();
+      fetchFavoritesCount();
     };
     
     window.addEventListener('userUpdated', handleUserUpdate);
     window.addEventListener('cartUpdated', fetchCartCount);
+    window.addEventListener('favoritesUpdated', fetchFavoritesCount);
     
     return () => {
       window.removeEventListener('userUpdated', handleUserUpdate);
       window.removeEventListener('cartUpdated', fetchCartCount);
+      window.removeEventListener('favoritesUpdated', fetchFavoritesCount);
     };
   }, []);
 
@@ -224,6 +244,19 @@ const Header = () => {
             <Link to="/login" className="flex flex-col items-center text-gray-600 hover:text-primary cursor-pointer transition-all-300">
               <User className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-semibold uppercase">Tài khoản</span>
+            </Link>
+          )}
+          {user && (
+            <Link to="/favorites" className="flex flex-col items-center text-gray-600 hover:text-primary cursor-pointer transition-all-300 relative">
+              <div className="relative">
+                <Heart className={`w-5 h-5 mb-1 ${favoritesCount > 0 ? 'text-red-500 fill-current' : 'text-gray-600'}`} />
+                {favoritesCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {favoritesCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-semibold uppercase">Yêu thích</span>
             </Link>
           )}
           <Link to="/cart" className="flex flex-col items-center text-gray-600 hover:text-primary cursor-pointer transition-all-300 relative">
