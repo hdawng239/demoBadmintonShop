@@ -20,6 +20,7 @@ import OrderSuccessPage from './pages/OrderSuccessPage';
 import PaymentQRPage from './pages/PaymentQRPage';
 import ScrollToTop from './components/ScrollToTop';
 import FavoritesPage from './pages/FavoritesPage';
+import SearchImagePage from './pages/SearchImagePage';
 
 
 import AdminRoute from './components/layout/AdminRoute';
@@ -60,6 +61,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/my-orders" element={<UserOrdersPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/search-image" element={<SearchImagePage />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />

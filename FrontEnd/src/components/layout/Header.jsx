@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Phone, MapPin, Search as SearchIcon, User, ShoppingCart, ChevronDown, Flame, Heart } from 'lucide-react';
+import { Search, Phone, MapPin, Search as SearchIcon, User, ShoppingCart, ChevronDown, Flame, Heart, Camera } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { cartService } from '../../services/cartService';
 import { productService } from '../../services/productService';
@@ -17,10 +17,29 @@ const Header = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const navigate = useNavigate();
   const location = useLocation();
   const menuRef = useRef(null);
+
+  const handleCameraClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      navigate('/search-image', { state: { image: reader.result } });
+      e.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Auto close menu when route changes
   useEffect(() => {
@@ -161,7 +180,22 @@ const Header = () => {
                 setShowSearchDropdown(true);
               }}
               onFocus={() => setShowSearchDropdown(true)}
-              className="w-full bg-gray-100 border border-gray-200 rounded-full py-2 px-4 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all-300"
+              className="w-full bg-gray-100 border border-gray-200 rounded-full py-2 px-4 pl-4 pr-16 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all-300"
+            />
+            <button 
+              type="button" 
+              onClick={handleCameraClick}
+              className="absolute right-10 top-2.5 text-gray-400 hover:text-primary transition-colors focus:outline-none"
+              title="Tìm kiếm bằng hình ảnh"
+            >
+              <Camera className="w-5 h-5 cursor-pointer" />
+            </button>
+            <input 
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              accept="image/*"
+              className="hidden"
             />
             <button type="submit" className="absolute right-3 top-2.5 text-gray-400 hover:text-primary transition-colors focus:outline-none">
               <SearchIcon className="w-5 h-5 cursor-pointer" />

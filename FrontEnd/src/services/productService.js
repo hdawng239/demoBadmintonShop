@@ -33,5 +33,14 @@ export const productService = {
             console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
             return null;
         }
+    },
+    searchByImage: async (base64Image) => {
+        try {
+            const response = await axios.post(`${API_URL}/search-image`, { image: base64Image });
+            return response.data;
+        } catch (error) {
+            console.error('Lỗi khi tìm kiếm sản phẩm bằng hình ảnh:', error);
+            throw error;
+        }
     }
 };
