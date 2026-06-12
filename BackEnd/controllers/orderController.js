@@ -82,4 +82,28 @@ const deleteOrder = async (req, res) => {
     }
 };
 
-module.exports = { getAllOrders, getOrderById, getOrdersByUser, createOrder, updateOrder, deleteOrder };
+const cancelOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // 1. Kiểm tra đơn hàng tồn tại
+        const order = await Order.getById(id);
+        if (!order) {
+            return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+        }
+
+        // 2. Xác thực quyền: chỉ Admin hoặc chính khách hàng tạo đơn mới được hủy
+        if (order.user_id !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Bạn không có quyền thực hiện hành động này!" });
+        }
+
+        // 3. Thực hiện hủy đơn
+        await Order.cancelOrderById(id);
+        res.status(200).json({ message: "Hủy đơn hàng thành công!" });
+    } catch (error) {
+        console.error("Lỗi hủy đơn hàng:", error);
+        res.status(500).json({ message: error.message || "Lỗi hệ thống", error: error.message });
+    }
+};
+
+module.exports = { getAllOrders, getOrderById, getOrdersByUser, createOrder, updateOrder, deleteOrder, cancelOrder };

@@ -1,5 +1,29 @@
 const pool = require('../config/db');
 
+// Helper to get all dates between two dates
+function getDatesInRange(startDate, endDate) {
+    const dates = [];
+    let currentDate = new Date(startDate);
+    const tempEnd = new Date(endDate);
+    while (currentDate <= tempEnd) {
+        dates.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return dates;
+}
+
+// Helper to get all months between two dates
+function getMonthsInRange(startDate, endDate) {
+    const months = [];
+    let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const targetEnd = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+    while (currentDate <= targetEnd) {
+        months.push(new Date(currentDate));
+        currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    return months;
+}
+
 const getDashboardStats = async (req, res) => {
     try {
         const { timeframe = 'month', startDate, endDate } = req.query;
@@ -98,11 +122,34 @@ const getDashboardStats = async (req, res) => {
         }
         
         const chartResult = await pool.query(chartQuery, [start, end]);
-        const chartData = chartResult.rows.map(row => ({
-            name: row.label,
-            revenue: parseFloat(row.revenue || 0),
-            orders: parseInt(row.orders || 0)
-        }));
+        
+        let chartData = [];
+        if (timeframe === 'year' || durationDays > 60) {
+            const months = getMonthsInRange(start, end);
+            chartData = months.map(m => {
+                const padMonth = String(m.getMonth() + 1).padStart(2, '0');
+                const label = `${padMonth}/${m.getFullYear()}`;
+                const dbRow = chartResult.rows.find(row => row.label === label);
+                return {
+                    name: label,
+                    revenue: dbRow ? parseFloat(dbRow.revenue || 0) : 0,
+                    orders: dbRow ? parseInt(dbRow.orders || 0) : 0
+                };
+            });
+        } else {
+            const dates = getDatesInRange(start, end);
+            chartData = dates.map(d => {
+                const padDay = String(d.getDate()).padStart(2, '0');
+                const padMonth = String(d.getMonth() + 1).padStart(2, '0');
+                const label = `${padDay}/${padMonth}`;
+                const dbRow = chartResult.rows.find(row => row.label === label);
+                return {
+                    name: label,
+                    revenue: dbRow ? parseFloat(dbRow.revenue || 0) : 0,
+                    orders: dbRow ? parseInt(dbRow.orders || 0) : 0
+                };
+            });
+        }
 
         // 8. Top 3 Khách hàng chi tiêu nhiều nhất
         const topCustomersQuery = `

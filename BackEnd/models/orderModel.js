@@ -141,6 +141,50 @@ const Order = {
         const result = await pool.query(query, values);
         return result.rows[0];
     },
+    cancelOrderById: async (id) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // 1. Lấy trạng thái hiện tại của đơn hàng
+            const orderRes = await client.query('SELECT status, payment_status, voucher_code FROM orders WHERE id = $1 FOR UPDATE', [id]);
+            if (orderRes.rows.length === 0) {
+                throw new Error("Không tìm thấy đơn hàng");
+            }
+            const order = orderRes.rows[0];
+
+            // Chỉ cho phép hủy khi đơn ở trạng thái pending và chưa thanh toán
+            if (order.status !== 'pending' || order.payment_status === 'paid') {
+                throw new Error("Đơn hàng không thể hủy ở trạng thái hiện tại");
+            }
+
+            // 2. Cập nhật trạng thái đơn hàng thành 'cancelled'
+            await client.query("UPDATE orders SET status = 'cancelled' WHERE id = $1", [id]);
+
+            // 3. Phục hồi tồn kho sản phẩm
+            const itemsRes = await client.query('SELECT variant_id, quantity FROM order_items WHERE order_id = $1', [id]);
+            const updateStockQuery = `UPDATE product_variants SET stock_quantity = stock_quantity + $1 WHERE id = $2`;
+            for (let item of itemsRes.rows) {
+                await client.query(updateStockQuery, [item.quantity, item.variant_id]);
+            }
+
+            // 4. Hoàn trả lại lượt dùng voucher (giảm used_count đi 1)
+            if (order.voucher_code) {
+                await client.query(
+                    "UPDATE vouchers SET used_count = GREATEST(0, used_count - 1) WHERE UPPER(code) = UPPER($1)",
+                    [order.voucher_code]
+                );
+            }
+
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
     delete: async (id) => {
         const result = await pool.query('DELETE FROM orders WHERE id = $1 RETURNING *', [id]);
         return result.rows[0];

@@ -41,6 +41,8 @@ const createUser = async (req, res) => {
         const hashedPassword = await AuthService.hashPassword(password);
         const newUserData = {
             ...otherData,
+            email,
+            phone,
             password: hashedPassword 
         };
 

@@ -101,7 +101,7 @@ const AdminProductPage = () => {
       setVariantForm(defaultVariantForm);
       fetchVariants(selectedProductForVariants.id);
     } catch (err) {
-      alert("Lỗi lưu phân loại");
+      alert(err.response?.data?.message || "Lỗi lưu phân loại");
     }
   };
 

@@ -44,6 +44,34 @@ app.get('/', (req, res) => {
     res.json({ status: "ok", message: "API is running" });
 });
 
+// Tự động quét và hủy các đơn hàng QR quá hạn 2 phút chưa thanh toán
+setInterval(async () => {
+    try {
+        const Order = require('./models/orderModel');
+        const pool = require('./config/db');
+        
+        // Tìm các đơn hàng thanh toán qua QR, chưa thanh toán (unpaid), đang chờ xử lý (pending)
+        // và được tạo quá 2 phút trước.
+        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+        
+        const expiredOrdersRes = await pool.query(
+            `SELECT id FROM orders 
+             WHERE payment_method = 'QR' 
+               AND payment_status = 'unpaid' 
+               AND status = 'pending' 
+               AND created_at < $1`,
+            [twoMinutesAgo]
+        );
+        
+        for (const row of expiredOrdersRes.rows) {
+            console.log(`[Auto-Cancel] Đơn hàng #${row.id} quá hạn 2 phút chưa thanh toán. Đang tự động hủy...`);
+            await Order.cancelOrderById(row.id);
+        }
+    } catch (err) {
+        console.error("Lỗi trong quá trình tự động quét hủy đơn hàng QR quá hạn:", err);
+    }
+}, 30000); // Chạy mỗi 30 giây
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

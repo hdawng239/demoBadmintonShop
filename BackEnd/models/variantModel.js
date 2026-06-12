@@ -115,10 +115,12 @@ const Variant = {
 
         let category_id = null;
         let product_id = null;
+        let currentVariant = null;
         try {
-            const varRes = await pool.query('SELECT product_id FROM product_variants WHERE id = $1', [id]);
-            product_id = varRes.rows[0]?.product_id;
-            if (product_id) {
+            const varRes = await pool.query('SELECT * FROM product_variants WHERE id = $1', [id]);
+            currentVariant = varRes.rows[0];
+            if (currentVariant) {
+                product_id = currentVariant.product_id;
                 const prodRes = await pool.query('SELECT category_id FROM products WHERE id = $1', [product_id]);
                 category_id = prodRes.rows[0]?.category_id;
             }
@@ -126,52 +128,82 @@ const Variant = {
             console.error("Lỗi lấy thông tin sản phẩm khi update:", err);
         }
 
-        const parsedAttrs = attributes ? (typeof attributes === 'string' ? JSON.parse(attributes) : attributes) : null;
+        const parsedCurrentAttrs = currentVariant && currentVariant.attributes 
+            ? (typeof currentVariant.attributes === 'string' ? JSON.parse(currentVariant.attributes) : currentVariant.attributes) 
+            : null;
+        const parsedAttrs = attributes 
+            ? (typeof attributes === 'string' ? JSON.parse(attributes) : attributes) 
+            : null;
 
-        // Tự động cập nhật tên nếu để trống hoặc có dạng mặc định
-        if (attributes && (!variant_name || variant_name === 'Mặc định' || /^Phiên bản\s+\d+$/i.test(variant_name))) {
-            variant_name = formatVariantName(category_id, parsedAttrs);
+        // Kiểm tra xem thuộc tính có thực sự thay đổi không
+        let attributesChanged = false;
+        if (parsedAttrs && parsedCurrentAttrs) {
+            const keysCurrent = Object.keys(parsedCurrentAttrs);
+            const keysNew = Object.keys(parsedAttrs);
+            if (keysCurrent.length !== keysNew.length) {
+                attributesChanged = true;
+            } else {
+                for (const key of keysCurrent) {
+                    if (parsedCurrentAttrs[key] !== parsedAttrs[key]) {
+                        attributesChanged = true;
+                        break;
+                    }
+                }
+            }
+        } else if (parsedAttrs || parsedCurrentAttrs) {
+            attributesChanged = true;
         }
 
-        if (attributes && !sku && product_id) {
-            try {
-                const siblingsRes = await pool.query('SELECT attributes FROM product_variants WHERE product_id = $1 AND id != $2', [product_id, id]);
-                const colors = new Set();
-                for (const row of siblingsRes.rows) {
-                    if (row.attributes) {
-                        const attrs = typeof row.attributes === 'string' ? JSON.parse(row.attributes) : row.attributes;
-                        const c = attrs['Màu sắc'] || attrs['color'];
+        if (!attributesChanged && currentVariant) {
+            // Nếu thuộc tính không đổi, giữ nguyên tên và SKU hiện tại
+            variant_name = currentVariant.variant_name;
+            finalSku = currentVariant.sku;
+        } else {
+            // Tự động cập nhật tên nếu để trống hoặc có dạng mặc định
+            if (attributes && (!variant_name || variant_name === 'Mặc định' || /^Phiên bản\s+\d+$/i.test(variant_name))) {
+                variant_name = formatVariantName(category_id, parsedAttrs);
+            }
+
+            if (attributes && !sku && product_id) {
+                try {
+                    const siblingsRes = await pool.query('SELECT attributes FROM product_variants WHERE product_id = $1 AND id != $2', [product_id, id]);
+                    const colors = new Set();
+                    for (const row of siblingsRes.rows) {
+                        if (row.attributes) {
+                            const attrs = typeof row.attributes === 'string' ? JSON.parse(row.attributes) : row.attributes;
+                            const c = attrs['Màu sắc'] || attrs['color'];
+                            if (c) colors.add(c);
+                        }
+                    }
+                    if (parsedAttrs) {
+                        const c = parsedAttrs['Màu sắc'] || parsedAttrs['color'];
                         if (c) colors.add(c);
                     }
-                }
-                if (parsedAttrs) {
-                    const c = parsedAttrs['Màu sắc'] || parsedAttrs['color'];
-                    if (c) colors.add(c);
-                }
-                const sortedColors = Array.from(colors).sort();
-                
-                const clean = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").replace(/[^a-zA-Z0-9]/g, "");
-                
-                let skuParts = ['PR', product_id];
-                if (parsedAttrs) {
-                    if (category_id === 1) {
-                        const w = parsedAttrs['Trọng lượng'] || parsedAttrs['weight'];
-                        if (w) skuParts.push(clean(w));
+                    const sortedColors = Array.from(colors).sort();
+                    
+                    const clean = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").replace(/[^a-zA-Z0-9]/g, "");
+                    
+                    let skuParts = ['PR', product_id];
+                    if (parsedAttrs) {
+                        if (category_id === 1) {
+                            const w = parsedAttrs['Trọng lượng'] || parsedAttrs['weight'];
+                            if (w) skuParts.push(clean(w));
+                        } else {
+                            const s = parsedAttrs['Kích cỡ'] || parsedAttrs['size'] || parsedAttrs['Size'];
+                            if (s) skuParts.push('SZ' + clean(s));
+                        }
+                        const c = parsedAttrs['Màu sắc'] || parsedAttrs['color'];
+                        if (c) {
+                            const idx = sortedColors.indexOf(c);
+                            skuParts.push('CL' + (idx !== -1 ? idx : 0));
+                        }
                     } else {
-                        const s = parsedAttrs['Kích cỡ'] || parsedAttrs['size'] || parsedAttrs['Size'];
-                        if (s) skuParts.push('SZ' + clean(s));
+                        skuParts.push('DFT');
                     }
-                    const c = parsedAttrs['Màu sắc'] || parsedAttrs['color'];
-                    if (c) {
-                        const idx = sortedColors.indexOf(c);
-                        skuParts.push('CL' + (idx !== -1 ? idx : 0));
-                    }
-                } else {
-                    skuParts.push('DFT');
+                    finalSku = skuParts.join('-');
+                } catch (err) {
+                    console.error("Lỗi sinh SKU khi update:", err);
                 }
-                finalSku = skuParts.join('-');
-            } catch (err) {
-                console.error("Lỗi sinh SKU khi update:", err);
             }
         }
 
@@ -184,12 +216,22 @@ const Variant = {
                 sku = COALESCE($5, sku)
             WHERE id = $6 RETURNING *
         `;
+
+        // Chuyển đổi các giá trị undefined thành null để tránh lỗi truyền tham số cho pg
+        const paramVariantName = variant_name !== undefined ? variant_name : null;
+        const paramStockQuantity = stock_quantity !== undefined ? stock_quantity : null;
+        const paramPriceModifier = price_modifier !== undefined ? price_modifier : null;
+        const paramAttributes = attributes !== undefined 
+            ? (attributes ? (typeof attributes === 'string' ? attributes : JSON.stringify(attributes)) : null)
+            : null;
+        const paramSku = finalSku !== undefined ? finalSku : null;
+
         const result = await pool.query(query, [
-            variant_name, 
-            stock_quantity, 
-            price_modifier, 
-            attributes ? (typeof attributes === 'string' ? attributes : JSON.stringify(attributes)) : null,
-            finalSku,
+            paramVariantName, 
+            paramStockQuantity, 
+            paramPriceModifier, 
+            paramAttributes,
+            paramSku,
             id
         ]);
         return result.rows[0];

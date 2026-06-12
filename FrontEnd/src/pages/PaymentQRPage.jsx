@@ -8,6 +8,7 @@ const PaymentQRPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(120); // 2 phút (120 giây)
   
   const orderId = location.state?.orderId;
   const totalAmount = location.state?.totalAmount;
@@ -17,6 +18,48 @@ const PaymentQRPage = () => {
       navigate('/');
     }
   }, [orderId, totalAmount, navigate]);
+
+  // Bộ đếm ngược thời gian thanh toán
+  useEffect(() => {
+    if (!orderId || timeLeft <= 0) return;
+
+    const timerId = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          handleCancelOrder();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [orderId, timeLeft]);
+
+  const handleCancelOrder = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const API_URL = import.meta.env.VITE_API_URL || `http://localhost:5000/api`;
+      
+      await axios.post(`${API_URL}/orders/${orderId}/cancel`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert("Hết thời gian thanh toán (2 phút). Đơn hàng của bạn đã bị hủy.");
+      navigate('/profile');
+    } catch (error) {
+      console.error("Lỗi khi tự động hủy đơn hàng:", error);
+      alert("Hết thời gian thanh toán. Đơn hàng của bạn sẽ được hệ thống hủy.");
+      navigate('/profile');
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     if (!orderId) return;
@@ -71,6 +114,15 @@ const PaymentQRPage = () => {
               <h1 className="text-2xl font-bold text-gray-800">Đặt hàng thành công!</h1>
               <p className="text-gray-600 mt-2">Đơn hàng <span className="font-bold text-primary">#{orderId}</span> của bạn đã được ghi nhận.</p>
               <p className="text-gray-600">Vui lòng quét mã QR dưới đây để hoàn tất thanh toán.</p>
+
+              {/* Countdown timer */}
+              <div className="mt-4 inline-flex items-center space-x-2 bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-xl font-bold text-sm shadow-sm">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <span>Thời gian thanh toán còn lại: {formatTime(timeLeft)}</span>
+              </div>
             </div>
 
             <div className="p-8 grid md:grid-cols-2 gap-8">
