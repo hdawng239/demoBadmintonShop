@@ -34,6 +34,17 @@ const getOrdersByUser = async (req, res) => {
 const createOrder = async (req, res) => {
     try {
         const { cartItems, ...orderData } = req.body;
+        
+        // Kiểm tra chống spam: giới hạn số lượng đơn pending + unpaid tối đa là 3 đơn
+        if (orderData.user_id) {
+            const pendingCount = await Order.countPendingOrdersByUser(orderData.user_id);
+            if (pendingCount >= 3) {
+                return res.status(400).json({ 
+                    message: "Bạn đang có quá nhiều đơn hàng chờ xử lý (tối đa 3 đơn). Vui lòng hoàn tất thanh toán hoặc hủy đơn cũ trước khi đặt thêm đơn mới!" 
+                });
+            }
+        }
+        
         // Gọi Model xử lý toàn bộ transaction hạ tầng DB
         const orderId = await Order.createWithItems(orderData, cartItems);
         res.status(201).json({ message: "Đặt hàng thành công trọn vẹn!", orderId });

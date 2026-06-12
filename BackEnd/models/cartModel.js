@@ -11,6 +11,7 @@ const Cart = {
                        p.base_price,
                        p.image_url,
                        p.technical_specs,
+                       p.is_active AS is_active,
                        pv.id AS variant_id,
                        pv.variant_name,
                        pv.price_modifier,

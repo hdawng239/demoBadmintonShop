@@ -87,13 +87,19 @@ const CartPage = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedItems(cart.items.map(item => item.id));
+      const activeItems = cart.items.filter(item => item.is_active !== false).map(item => item.id);
+      setSelectedItems(activeItems);
     } else {
       setSelectedItems([]);
     }
   };
 
-  const handleSelectItem = (id) => {
+  const handleSelectItem = (item) => {
+    if (item.is_active === false) {
+      showToast("Sản phẩm này đã ngừng kinh doanh!", "error");
+      return;
+    }
+    const id = item.id;
     setSelectedItems(prev => 
       prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
     );
@@ -105,6 +111,11 @@ const CartPage = () => {
       return;
     }
     const selectedCartItems = cart.items.filter(item => selectedItems.includes(item.id));
+    const inactiveItems = selectedCartItems.filter(item => item.is_active === false);
+    if (inactiveItems.length > 0) {
+      showToast(`Sản phẩm "${inactiveItems[0].product_name}" đã ngừng kinh doanh, vui lòng bỏ chọn!`, "error");
+      return;
+    }
     const outOfStockItems = selectedCartItems.filter(item => item.quantity > item.stock_quantity);
     if (outOfStockItems.length > 0) {
       showToast(`Sản phẩm "${outOfStockItems[0].product_name} (${outOfStockItems[0].variant_name || 'Mặc định'})" chỉ còn ${outOfStockItems[0].stock_quantity} cái trong kho!`, "error");
@@ -164,7 +175,7 @@ const CartPage = () => {
                         type="checkbox" 
                         className="w-4 h-4 mr-3 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
                         onChange={handleSelectAll}
-                        checked={cart.items.length > 0 && selectedItems.length === cart.items.length}
+                        checked={cart.items.filter(i => i.is_active !== false).length > 0 && selectedItems.length === cart.items.filter(i => i.is_active !== false).length}
                       />
                       Sản phẩm
                     </div>
@@ -175,14 +186,18 @@ const CartPage = () => {
                   
                   <div className="divide-y divide-gray-100">
                     {cart.items.map(item => (
-                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 md:p-6 items-center">
+                      <div key={item.id} className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 md:p-6 items-center ${item.is_active === false ? 'opacity-60 bg-gray-50/50' : ''}`}>
                         <div className="col-span-1 md:col-span-6 flex items-center relative">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 mr-3 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer hidden md:block"
-                            checked={selectedItems.includes(item.id)}
-                            onChange={() => handleSelectItem(item.id)}
-                          />
+                          {item.is_active !== false ? (
+                            <input 
+                              type="checkbox" 
+                              className="w-4 h-4 mr-3 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer hidden md:block"
+                              checked={selectedItems.includes(item.id)}
+                              onChange={() => handleSelectItem(item)}
+                            />
+                          ) : (
+                            <div className="w-4 h-4 mr-3 bg-gray-100 border border-gray-200 rounded cursor-not-allowed hidden md:block" title="Sản phẩm ngừng kinh doanh"></div>
+                          )}
                           <button 
                             onClick={() => handleRemoveItem(item.id)}
                             className="absolute -top-2 -left-2 md:static md:mr-4 w-6 h-6 md:w-8 md:h-8 bg-red-50 hover:bg-red-100 text-red-500 rounded-full flex items-center justify-center transition-colors"
@@ -200,9 +215,14 @@ const CartPage = () => {
                           </div>
                           
                           <div>
-                            <Link to={`/product/${item.product_id}`} className="font-semibold text-gray-800 hover:text-primary transition-colors line-clamp-2 text-sm md:text-base">
-                              {item.product_name}
-                            </Link>
+                            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                              {item.is_active === false && (
+                                <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold w-fit">Ngừng kinh doanh</span>
+                              )}
+                              <Link to={`/product/${item.product_id}`} className={`font-semibold transition-colors line-clamp-2 text-sm md:text-base ${item.is_active === false ? 'text-gray-400 line-through' : 'text-gray-800 hover:text-primary'}`}>
+                                {item.product_name}
+                              </Link>
+                            </div>
                             <div className="text-xs text-gray-500 mt-1">Phân loại: {item.variant_name || 'Mặc định'}</div>
                           </div>
                         </div>

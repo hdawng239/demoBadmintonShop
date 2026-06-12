@@ -97,7 +97,12 @@ const Order = {
             }
 
             // 2. Vòng lặp chèn bảng order_items và trừ kho
-            const checkStockQuery = `SELECT variant_name, stock_quantity FROM product_variants WHERE id = $1 FOR UPDATE`;
+            const checkStockQuery = `
+                SELECT pv.variant_name, pv.stock_quantity, p.is_active, p.name AS product_name
+                FROM product_variants pv
+                JOIN products p ON pv.product_id = p.id
+                WHERE pv.id = $1 FOR UPDATE
+            `;
             const updateStockQuery = `UPDATE product_variants SET stock_quantity = stock_quantity - $1 WHERE id = $2`;
             const insertItemsQuery = `
                 INSERT INTO order_items (order_id, variant_id, quantity, price_at_time) 
@@ -105,15 +110,20 @@ const Order = {
             `;
 
             for (let item of cartItems) {
-                // Kiểm tra tồn kho trước khi đặt
+                // Kiểm tra tồn kho và trạng thái kinh doanh trước khi đặt
                 const stockRes = await client.query(checkStockQuery, [item.variant_id]);
                 if (stockRes.rows.length === 0) {
                     throw new Error(`Sản phẩm phân loại ID ${item.variant_id} không tồn tại.`);
                 }
                 
-                const currentStock = stockRes.rows[0].stock_quantity;
+                const variantInfo = stockRes.rows[0];
+                if (variantInfo.is_active === false) {
+                    throw new Error(`Sản phẩm "${variantInfo.product_name}" đã ngừng kinh doanh. Vui lòng bỏ chọn hoặc xóa khỏi giỏ hàng!`);
+                }
+                
+                const currentStock = variantInfo.stock_quantity;
                 if (currentStock < item.quantity) {
-                    throw new Error(`Sản phẩm "${stockRes.rows[0].variant_name}" chỉ còn ${currentStock} cái. Vui lòng giảm số lượng!`);
+                    throw new Error(`Sản phẩm "${variantInfo.product_name} (${variantInfo.variant_name})" chỉ còn ${currentStock} cái. Vui lòng giảm số lượng!`);
                 }
 
                 // Trừ số lượng tồn kho
@@ -184,6 +194,16 @@ const Order = {
         } finally {
             client.release();
         }
+    },
+    countPendingOrdersByUser: async (userId) => {
+        const query = `
+            SELECT COUNT(*) FROM orders 
+            WHERE user_id = $1 
+              AND status = 'pending' 
+              AND payment_status = 'unpaid'
+        `;
+        const res = await pool.query(query, [userId]);
+        return parseInt(res.rows[0].count);
     },
     delete: async (id) => {
         const result = await pool.query('DELETE FROM orders WHERE id = $1 RETURNING *', [id]);
