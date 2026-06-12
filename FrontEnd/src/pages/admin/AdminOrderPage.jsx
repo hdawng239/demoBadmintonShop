@@ -179,7 +179,7 @@ const AdminOrderPage = () => {
                             SHIPPING
                           </option>
                           <option value="completed">COMPLETED</option>
-                          <option value="cancelled">CANCELLED</option>
+                          <option value="cancelled" disabled={order.status === 'completed'}>CANCELLED</option>
                         </select>
                         {order.tracking_code && (
                           <div className="text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-1 rounded border border-blue-100 mt-1" title="Mã vận đơn GHN">

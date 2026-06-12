@@ -21,7 +21,7 @@ const PaymentQRPage = () => {
 
   // Bộ đếm ngược thời gian thanh toán
   useEffect(() => {
-    if (!orderId || timeLeft <= 0) return;
+    if (!orderId) return;
 
     const timerId = setInterval(() => {
       setTimeLeft((prev) => {
@@ -35,7 +35,7 @@ const PaymentQRPage = () => {
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [orderId, timeLeft]);
+  }, [orderId]);
 
   const handleCancelOrder = async () => {
     try {
@@ -129,6 +129,13 @@ const PaymentQRPage = () => {
               {/* QR Code Section */}
               <div className="flex flex-col items-center justify-center border-r-0 md:border-r border-gray-100 pr-0 md:pr-8">
                 <h3 className="font-bold text-gray-800 mb-4 uppercase">Quét mã QR để thanh toán</h3>
+                
+                {/* Đồng hồ đếm ngược trực quan ngay trên mã QR */}
+                <div className="mb-4 inline-flex items-center space-x-2 bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-xl font-bold text-sm shadow-sm animate-pulse">
+                  <span className="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                  <span>Thời gian thanh toán còn lại: {formatTime(timeLeft)}</span>
+                </div>
+
                 <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-4 inline-block">
                   <img src={qrUrl} alt="QR Code Payment" className="w-64 h-64 object-contain rounded-xl" />
                 </div>

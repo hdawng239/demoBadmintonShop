@@ -51,16 +51,13 @@ setInterval(async () => {
         const pool = require('./config/db');
         
         // Tìm các đơn hàng thanh toán qua QR, chưa thanh toán (unpaid), đang chờ xử lý (pending)
-        // và được tạo quá 2 phút trước.
-        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-        
+        // và được tạo quá 2 phút trước (timezone-safe bằng cách so sánh trực tiếp trong DB).
         const expiredOrdersRes = await pool.query(
             `SELECT id FROM orders 
-             WHERE payment_method = 'QR' 
+             WHERE LOWER(payment_method) = 'qr' 
                AND payment_status = 'unpaid' 
                AND status = 'pending' 
-               AND created_at < $1`,
-            [twoMinutesAgo]
+               AND created_at < NOW() - INTERVAL '2 minutes'`
         );
         
         for (const row of expiredOrdersRes.rows) {

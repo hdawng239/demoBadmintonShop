@@ -46,12 +46,25 @@ const ghnService = require('../services/ghnService');
 
 const updateOrder = async (req, res) => {
     try {
+        const { id } = req.params;
         const updateData = { ...req.body };
+        
+        const currentOrder = await Order.getById(id);
+        if (!currentOrder) {
+            return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+        }
+
+        // Chặn không cho phép đổi trạng thái giữa Completed và Cancelled
+        if (currentOrder.status === 'completed' && updateData.status === 'cancelled') {
+            return res.status(400).json({ message: "Không thể hủy đơn hàng đã hoàn thành!" });
+        }
+        if (currentOrder.status === 'cancelled' && updateData.status === 'completed') {
+            return res.status(400).json({ message: "Không thể hoàn thành đơn hàng đã hủy!" });
+        }
         
         // GHN Integration: If status is updated to shipping, create GHN order
         if (updateData.status === 'shipping') {
-            const currentOrder = await Order.getById(req.params.id);
-            if (currentOrder && currentOrder.payment_method !== 'store' && !currentOrder.tracking_code) {
+            if (currentOrder.payment_method !== 'store' && !currentOrder.tracking_code) {
                 try {
                     const trackingCode = await ghnService.createShippingOrder(currentOrder);
                     updateData.tracking_code = trackingCode;
@@ -63,8 +76,7 @@ const updateOrder = async (req, res) => {
             }
         }
 
-        const updated = await Order.update(req.params.id, updateData);
-        if (!updated) return res.status(404).json({ message: "Không thấy đơn hàng" });
+        const updated = await Order.update(id, updateData);
         res.status(200).json({ message: "Cập nhật thành công", data: updated });
     } catch (error) {
         console.error(error);

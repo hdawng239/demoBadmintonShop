@@ -31,6 +31,30 @@ const UserOrdersPage = () => {
         }
     }, []);
 
+    const handleCancelOrder = async (orderId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || `http://localhost:5000/api`;
+            await axios.post(`${API_URL}/orders/${orderId}/cancel`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            alert("Hủy đơn hàng thành công!");
+            
+            // Tải lại danh sách đơn hàng
+            const response = await axios.get(`${API_URL}/orders/my-orders`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setOrders(response.data);
+        } catch (error) {
+            console.error("Lỗi khi hủy đơn hàng:", error);
+            alert(error.response?.data?.message || "Lỗi khi hủy đơn hàng");
+        }
+    };
+
     const formatPrice = (price) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     };
@@ -94,19 +118,35 @@ const UserOrdersPage = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <button 
-                                                onClick={() => printInvoice(order)} 
-                                                className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center gap-1"
-                                                title="In hoặc tải hóa đơn"
-                                            >
-                                                <Printer className="w-3 h-3" /> In Hóa Đơn
-                                            </button>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa TT'}
-                                            </span>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusInfo(order.status).color}`}>
-                                                {getStatusInfo(order.status).label}
-                                            </span>
+                                            {order.status === 'cancelled' ? (
+                                                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800">
+                                                    Đã hủy
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <button 
+                                                        onClick={() => printInvoice(order)} 
+                                                        className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center gap-1"
+                                                        title="In hoặc tải hóa đơn"
+                                                    >
+                                                        <Printer className="w-3 h-3" /> In Hóa Đơn
+                                                    </button>
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                        {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa TT'}
+                                                    </span>
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusInfo(order.status).color}`}>
+                                                        {getStatusInfo(order.status).label}
+                                                    </span>
+                                                    {order.status === 'pending' && (
+                                                        <button 
+                                                            onClick={() => handleCancelOrder(order.id)} 
+                                                            className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
+                                                        >
+                                                            Hủy Đơn
+                                                        </button>
+                                                    )}
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 
