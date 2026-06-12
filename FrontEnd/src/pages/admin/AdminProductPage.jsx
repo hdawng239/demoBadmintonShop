@@ -11,6 +11,7 @@ const AdminProductPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
   const [showModal, setShowModal] = useState(false);
@@ -155,7 +156,7 @@ const AdminProductPage = () => {
     setIsLoading(true);
     try {
       const [prodRes, catRes, brandRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/products?page=${page}&limit=10`),
+        axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/products?page=${page}&limit=10&keyword=${encodeURIComponent(searchQuery)}`),
         axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/categories`),
         axios.get(`${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/brands`)
       ]);
@@ -182,6 +183,12 @@ const AdminProductPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchData(1);
   };
 
   useEffect(() => {
@@ -278,6 +285,21 @@ const AdminProductPage = () => {
         >
           <Plus size={20} className="mr-2" /> Thêm mới
         </button>
+      </div>
+
+      <div className="mb-6">
+        <form onSubmit={handleSearch} className="flex max-w-md">
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm sản phẩm..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 border border-gray-300 rounded-l-xl p-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+          />
+          <button type="submit" className="bg-primary text-white px-5 py-2.5 rounded-r-xl hover:bg-orange-600 transition font-medium">
+            Tìm kiếm
+          </button>
+        </form>
       </div>
 
       {isLoading ? (
