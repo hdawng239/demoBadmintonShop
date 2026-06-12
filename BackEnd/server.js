@@ -57,7 +57,7 @@ setInterval(async () => {
              WHERE LOWER(payment_method) = 'qr' 
                AND payment_status = 'unpaid' 
                AND status = 'pending' 
-               AND created_at < NOW() - INTERVAL '2 minutes'`
+               AND created_at < NOW() - INTERVAL '2 minutes'`//
         );
         
         for (const row of expiredOrdersRes.rows) {

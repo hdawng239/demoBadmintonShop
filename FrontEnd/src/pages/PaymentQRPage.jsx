@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import { CheckCircle, ArrowRight, Copy, Check } from 'lucide-react';
+import { CheckCircle, ArrowRight, Copy, Check, XCircle } from 'lucide-react';
 import axios from 'axios';
 
 const PaymentQRPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 phút (120 giây)
+  const [timeLeft, setTimeLeft] = useState(120); //
+  const [toast, setToast] = useState({ message: '', type: '' });
+  
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast({ message: '', type: '' }), 3000);
+  };
   
   const orderId = location.state?.orderId;
   const totalAmount = location.state?.totalAmount;
@@ -46,12 +52,16 @@ const PaymentQRPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      alert("Hết thời gian thanh toán (2 phút). Đơn hàng của bạn đã bị hủy.");
-      navigate('/profile');
+      showToast("Hết thời gian thanh toán (2 phút). Đơn hàng của bạn đã bị hủy.", "error");
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
     } catch (error) {
       console.error("Lỗi khi tự động hủy đơn hàng:", error);
-      alert("Hết thời gian thanh toán. Đơn hàng của bạn sẽ được hệ thống hủy.");
-      navigate('/profile');
+      showToast("Hết thời gian thanh toán. Đơn hàng của bạn đã bị hủy.", "error");
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
     }
   };
 
@@ -103,6 +113,14 @@ const PaymentQRPage = () => {
 
   return (
     <MainLayout>
+      {/* Toast Notification */}
+      {toast.message && (
+        <div className={`fixed top-24 right-4 z-[9999] px-6 py-4 rounded-xl shadow-2xl flex items-center transition-all duration-300 animate-bounce ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          {toast.type === 'error' ? <XCircle className="w-6 h-6 mr-3" /> : <CheckCircle className="w-6 h-6 mr-3" />}
+          <span className="font-bold">{toast.message}</span>
+        </div>
+      )}
+
       <div className="bg-gray-50 py-12 min-h-screen">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
