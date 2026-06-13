@@ -117,35 +117,39 @@ const UserOrdersPage = () => {
                                                 Ngày đặt: {formatDate(order.created_at)}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            {order.status === 'cancelled' ? (
-                                                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800">
-                                                    Đã hủy
-                                                </span>
-                                            ) : (
-                                                <>
-                                                    <button 
-                                                        onClick={() => printInvoice(order)} 
-                                                        className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center gap-1"
-                                                        title="In hoặc tải hóa đơn"
-                                                    >
-                                                        <Printer className="w-3 h-3" /> In Hóa Đơn
-                                                    </button>
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                        {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa TT'}
-                                                    </span>
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusInfo(order.status).color}`}>
-                                                        {getStatusInfo(order.status).label}
-                                                    </span>
-                                                    {order.status === 'pending' && (
-                                                        <button 
-                                                            onClick={() => handleCancelOrder(order.id)} 
-                                                            className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
-                                                        >
-                                                            Hủy Đơn
-                                                        </button>
-                                                    )}
-                                                </>
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <button 
+                                                onClick={() => printInvoice(order)} 
+                                                className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center gap-1"
+                                                title="In hoặc tải hóa đơn"
+                                            >
+                                                <Printer className="w-3 h-3" /> In Hóa Đơn
+                                            </button>
+                                            
+                                            {/* Trạng thái Thanh toán */}
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                                                order.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                                                order.payment_status === 'refunded' ? 'bg-orange-100 text-orange-800 border border-orange-200' :
+                                                'bg-red-100 text-red-800'
+                                            }`}>
+                                                {order.payment_status === 'paid' ? 'Đã thanh toán' :
+                                                 order.payment_status === 'refunded' ? 'Hoàn tiền' :
+                                                 'Chưa TT'}
+                                            </span>
+
+                                            {/* Trạng thái Đơn hàng */}
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusInfo(order.status).color}`}>
+                                                {getStatusInfo(order.status).label}
+                                            </span>
+
+                                            {/* Nút Hủy đơn */}
+                                            {order.status === 'pending' && (
+                                                <button 
+                                                    onClick={() => handleCancelOrder(order.id)} 
+                                                    className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
+                                                >
+                                                    Hủy Đơn
+                                                </button>
                                             )}
                                         </div>
                                     </div>

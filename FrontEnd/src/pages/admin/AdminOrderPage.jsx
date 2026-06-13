@@ -111,7 +111,11 @@ const AdminOrderPage = () => {
   };
 
   const getPaymentStatusColor = (status) => {
-    return status === 'paid' ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200';
+    switch (status) {
+      case 'paid': return 'text-green-700 bg-green-50 border-green-200';
+      case 'refunded': return 'text-orange-700 bg-orange-50 border-orange-200';
+      default: return 'text-red-700 bg-red-50 border-red-200';
+    }
   };
 
   return (
@@ -161,8 +165,9 @@ const AdminOrderPage = () => {
                           onChange={(e) => handleUpdateStatus(order.id, 'payment_status', e.target.value)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-bold outline-none border cursor-pointer appearance-none text-center ${getPaymentStatusColor(order.payment_status)}`}
                         >
-                          <option value="unpaid">UNPAID</option>
-                          <option value="paid">PAID</option>
+                           <option value="unpaid">UNPAID</option>
+                           <option value="paid">PAID</option>
+                           <option value="refunded">REFUNDED</option>
                         </select>
                       </td>
 

@@ -4,12 +4,14 @@ import { Search, Phone, MapPin, Search as SearchIcon, User, ShoppingCart, Chevro
 import { authService } from '../../services/authService';
 import { cartService } from '../../services/cartService';
 import { productService } from '../../services/productService';
+import axios from 'axios';
 
 const Header = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [user, setUser] = useState(authService.getCurrentUser());
   const [cartCount, setCartCount] = useState(0);
   const [favoritesCount, setFavoritesCount] = useState(0);
+  const [menuCategories, setMenuCategories] = useState([]);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,6 +142,55 @@ const Header = () => {
       window.removeEventListener('cartUpdated', fetchCartCount);
       window.removeEventListener('favoritesUpdated', fetchFavoritesCount);
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || `http://localhost:5000/api`;
+        const res = await axios.get(`${API_URL}/categories?limit=100`);
+        const allCats = res.data.data || res.data || [];
+        
+        // Nhóm các danh mục cha và danh mục con
+        const parents = allCats.filter(c => c.parent_id == null);
+        const children = allCats.filter(c => c.parent_id != null);
+        
+        // Ghép danh mục con vào danh mục cha tương ứng
+        const tree = parents.map(parent => {
+          let subcategories = children.filter(child => Number(child.parent_id) === Number(parent.id));
+          
+          // Fallback cho Vợt Cầu Lông (ID 1) và Giày Cầu Lông (ID 2)
+          // nếu không có danh mục con trong CSDL để hiển thị danh sách các thương hiệu
+          if (parent.id === 1) {
+            subcategories = [
+              { id: 'yonex', name: 'Vợt cầu lông Yonex', slug: 'vot-cau-long-yonex', isBrand: true, brandId: 'yonex' },
+              { id: 'lining', name: 'Vợt cầu lông Lining', slug: 'vot-cau-long-lining', isBrand: true, brandId: 'lining' },
+              { id: 'victor', name: 'Vợt cầu lông Victor', slug: 'vot-cau-long-victor', isBrand: true, brandId: 'victor' },
+              { id: 'kumpoo', name: 'Vợt cầu lông Kumpoo', slug: 'vot-cau-long-kumpoo', isBrand: true, brandId: 'kumpoo' },
+              { id: 'mizuno', name: 'Vợt cầu lông Mizuno', slug: 'vot-cau-long-mizuno', isBrand: true, brandId: 'mizuno' },
+            ];
+          } else if (parent.id === 2) {
+            subcategories = [
+              { id: 'yonex', name: 'Giày cầu lông Yonex', slug: 'giay-cau-long-yonex', isBrand: true, brandId: 'yonex' },
+              { id: 'lining', name: 'Giày cầu lông Lining', slug: 'giay-cau-long-lining', isBrand: true, brandId: 'lining' },
+              { id: 'victor', name: 'Giày cầu lông Victor', slug: 'giay-cau-long-victor', isBrand: true, brandId: 'victor' },
+              { id: 'kumpoo', name: 'Giày cầu lông Kumpoo', slug: 'giay-cau-long-kumpoo', isBrand: true, brandId: 'kumpoo' },
+              { id: 'mizuno', name: 'Giày cầu lông Mizuno', slug: 'giay-cau-long-mizuno', isBrand: true, brandId: 'mizuno' },
+            ];
+          }
+          
+          return {
+            ...parent,
+            subcategories
+          };
+        });
+        
+        setMenuCategories(tree);
+      } catch (err) {
+        console.error("Lỗi khi lấy danh mục cho menu:", err);
+      }
+    };
+    fetchCategories();
   }, []);
 
   const handleLogout = () => {
@@ -322,64 +373,58 @@ const Header = () => {
 
       {/* Navigation Menu */}
       <nav className="bg-primary text-white">
-        <div className="container mx-auto px-4 py-2 md:py-0">
+        <div className="container mx-auto px-4 py-2 md:py-0 relative">
           <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold uppercase">
             <li><Link to="/" className="block py-3 hover:text-yellow-300 transition-colors">Trang chủ</Link></li>
             
-            {/* Mega Menu Wrapper */}
+            {/* Mega Menu cho Sản phẩm */}
             <li 
               ref={menuRef}
-              className="group static lg:relative"
-              onClick={() => setIsHovered(!isHovered)}
+              className="group static"
             >
-              <div className="flex items-center py-3 cursor-pointer hover:text-yellow-300 transition-colors">
+              <div 
+                className="flex items-center py-3 cursor-pointer hover:text-yellow-300 transition-colors"
+                onClick={() => setIsHovered(!isHovered)}
+              >
                 <span>Sản phẩm</span>
                 <ChevronDown className="w-4 h-4 ml-1" />
               </div>
 
               {/* Mega Menu Content */}
-              <div className={`absolute top-full left-0 w-full lg:w-[800px] lg:left-1/2 lg:-translate-x-1/2 bg-white text-black shadow-2xl border-t border-gray-100 rounded-b-lg overflow-hidden transition-all duration-300 transform origin-top z-[100] ${isHovered ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}>
-                <div className="p-4 md:p-8 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                  {/* Cột 1: Vợt */}
-                  <div>
-                    <Link to="/category/1" className="text-primary font-bold uppercase mb-4 block hover:underline">Vợt Cầu Lông</Link>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li><Link to="/category/1?brand=yonex" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Vợt cầu lông Yonex</Link></li>
-                      <li><Link to="/category/1?brand=lining" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Vợt cầu lông Lining</Link></li>
-                      <li><Link to="/category/1?brand=victor" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Vợt cầu lông Victor</Link></li>
-                      <li><Link to="/category/1?brand=kumpoo" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Vợt cầu lông Kumpoo</Link></li>
-                      <li><Link to="/category/1?brand=mizuno" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Vợt cầu lông Mizuno</Link></li>
-                    </ul>
-                  </div>
-                  {/* Cột 2: Giày */}
-                  <div>
-                    <Link to="/category/2" className="text-primary font-bold uppercase mb-4 block hover:underline">Giày Cầu Lông</Link>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li><Link to="/category/2?brand=yonex" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Giày cầu lông Yonex</Link></li>
-                      <li><Link to="/category/2?brand=lining" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Giày cầu lông Lining</Link></li>
-                      <li><Link to="/category/2?brand=victor" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Giày cầu lông Victor</Link></li>
-                      <li><Link to="/category/2?brand=kumpoo" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Giày cầu lông Kumpoo</Link></li>
-                      <li><Link to="/category/2?brand=mizuno" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Giày cầu lông Mizuno</Link></li>
-                    </ul>
-                  </div>
-                  {/* Cột 3: Quần áo */}
-                  <div>
-                    <Link to="/category/13" className="text-primary font-bold uppercase mb-4 block hover:underline">Quần Áo Cầu Lông</Link>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li><Link to="/category/6" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Quần áo Cầu Lông nam</Link></li>
-                      <li><Link to="/category/8" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Quần áo Cầu Lông nữ</Link></li>
-                    </ul>
-                  </div>
-                  {/* Cột 4: Phụ kiện */}
-                  <div>
-                    <Link to="/category/5" className="text-primary font-bold uppercase mb-4 block hover:underline">Phụ Kiện Cầu Lông</Link>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li><Link to="/category/7" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Túi vợt Cầu Lông</Link></li>
-                      <li><Link to="/category/9" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Cước Cầu Lông</Link></li>
-                      <li><Link to="/category/10" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Tất Cầu Lông</Link></li>
-                      <li><Link to="/category/11" className="hover:text-primary hover:translate-x-1 transition-transform inline-block">Quấn cán Cầu Lông</Link></li>
-                    </ul>
-                  </div>
+              <div 
+                className={`absolute top-full left-0 w-full bg-white text-black shadow-2xl border-t border-gray-100 rounded-b-lg overflow-hidden transition-all duration-300 transform origin-top z-[100] ${
+                  isHovered ? 'opacity-100 scale-y-100 visible' : 'opacity-0 scale-y-0 invisible pointer-events-none'
+                }`}
+              >
+                <div className="p-6 md:p-8 flex flex-col md:flex-row justify-start md:gap-12 gap-6 container mx-auto">
+                  {menuCategories.map(parent => (
+                    <div key={parent.id} className="min-w-[150px] md:flex-1">
+                      <Link to={`/category/${parent.id}`} className="text-primary font-bold uppercase mb-4 block hover:underline">
+                        {parent.name}
+                      </Link>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        {parent.subcategories && parent.subcategories.map(sub => (
+                          <li key={sub.id}>
+                            {sub.isBrand ? (
+                              <Link to={`/category/${parent.id}?brand=${sub.brandId}`} className="hover:text-primary hover:translate-x-1 transition-transform inline-block">
+                                {sub.name}
+                              </Link>
+                            ) : (
+                              <Link to={`/category/${sub.id}`} className="hover:text-primary hover:translate-x-1 transition-transform inline-block">
+                                {sub.name}
+                              </Link>
+                            )}
+                          </li>
+                        ))}
+                        {(!parent.subcategories || parent.subcategories.length === 0) && (
+                          <li className="text-xs text-gray-400 italic">Chưa có phân loại</li>
+                        )}
+                      </ul>
+                    </div>
+                  ))}
+                  {menuCategories.length === 0 && (
+                    <div className="col-span-full py-4 text-center text-gray-500">Đang tải danh mục...</div>
+                  )}
                 </div>
               </div>
             </li>

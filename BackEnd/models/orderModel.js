@@ -163,13 +163,18 @@ const Order = {
             }
             const order = orderRes.rows[0];
 
-            // Chỉ cho phép hủy khi đơn ở trạng thái pending và chưa thanh toán
-            if (order.status !== 'pending' || order.payment_status === 'paid') {
+            // Cho phép hủy khi đơn ở trạng thái pending (kể cả đã thanh toán qua QR)
+            if (order.status !== 'pending') {
                 throw new Error("Đơn hàng không thể hủy ở trạng thái hiện tại");
             }
 
-            // 2. Cập nhật trạng thái đơn hàng thành 'cancelled'
-            await client.query("UPDATE orders SET status = 'cancelled' WHERE id = $1", [id]);
+            // 2. Cập nhật trạng thái đơn hàng thành 'cancelled' và cập nhật trạng thái thanh toán
+            // Nếu đã thanh toán ('paid') thì chuyển sang 'refunded' (hoàn tiền)
+            let finalPaymentStatus = order.payment_status;
+            if (order.payment_status === 'paid') {
+                finalPaymentStatus = 'refunded';
+            }
+            await client.query("UPDATE orders SET status = 'cancelled', payment_status = $1 WHERE id = $2", [finalPaymentStatus, id]);
 
             // 3. Phục hồi tồn kho sản phẩm
             const itemsRes = await client.query('SELECT variant_id, quantity FROM order_items WHERE order_id = $1', [id]);
