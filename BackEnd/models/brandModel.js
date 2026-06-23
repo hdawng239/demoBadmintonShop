@@ -1,35 +1,17 @@
-const pool = require('../config/db');
-const { generateDynamicUpdate } = require('../utils/queryBuilder');
+// MODEL = định nghĩa Entity Brand: tên bảng, cột được phép cập nhật, và hàm map row.
+// Không chứa SQL (SQL nằm ở repository).
 
-const Brand = {
-    getAll: async () => {
-        const result = await pool.query('SELECT * FROM brands ORDER BY id ASC');
-        return result.rows;
-    },
-    getById: async (id) => {
-        const result = await pool.query('SELECT * FROM brands WHERE id = $1', [id]);
-        return result.rows[0];
-    },
-    create: async (data) => {
-        const { name, logo_url, description } = data;
-        const query = `
-            INSERT INTO brands (name, logo_url, description) 
-            VALUES ($1, $2, $3) RETURNING *
-        `;
-        const result = await pool.query(query, [name, logo_url || null, description || null]);
-        return result.rows[0];
-    },
-    update: async (id, data) => {
-        const { query, values } = generateDynamicUpdate('brands', data, id);
-        if (!query) throw new Error("Không có dữ liệu hợp lệ để cập nhật");
-        
-        const result = await pool.query(query, values);
-        return result.rows[0];
-    },
-    delete: async (id) => {
-        const result = await pool.query('DELETE FROM brands WHERE id = $1 RETURNING *', [id]);
-        return result.rows[0];
-    }
+const TABLE = 'brands';
+
+// Allowlist các cột client được phép cập nhật qua UPDATE (chống mass-assignment).
+const UPDATABLE_FIELDS = ['name', 'logo_url', 'description'];
+
+// Map 1 row thô từ PostgreSQL sang object Brand thống nhất cho toàn hệ thống.
+// Hiện giữ nguyên các cột để không phá vỡ response FE đang dùng; đây là nơi duy nhất
+// để định hình/đổi tên field về sau nếu cần.
+const mapRow = (row) => {
+    if (!row) return null;
+    return { ...row };
 };
 
-module.exports = Brand;
+module.exports = { TABLE, UPDATABLE_FIELDS, mapRow };

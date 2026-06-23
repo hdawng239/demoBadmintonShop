@@ -1,132 +1,43 @@
-const Order = require('../models/orderModel');
+const asyncHandler = require('../utils/asyncHandler');
+const OrderService = require('../services/orderService');
 
-const getAllOrders = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const ordersData = await Order.getAll(page, limit);
-        res.status(200).json(ordersData);
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
+// CONTROLLER = chỉ đọc dữ liệu từ request, gọi service, trả response.
+const getAllOrders = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const result = await OrderService.getAllOrders(page, limit);
+    res.status(200).json(result);
+});
 
-const getOrderById = async (req, res) => {
-    try {
-        const order = await Order.getById(req.params.id);
-        if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
-        res.status(200).json(order);
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
+const getOrderById = asyncHandler(async (req, res) => {
+    const order = await OrderService.getOrderById(req.params.id);
+    res.status(200).json(order);
+});
 
-const getOrdersByUser = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const orders = await Order.getByUserId(userId);
-        res.status(200).json(orders);
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
+const getOrdersByUser = asyncHandler(async (req, res) => {
+    const orders = await OrderService.getOrdersByUser(req.user.id);
+    res.status(200).json(orders);
+});
 
-const createOrder = async (req, res) => {
-    try {
-        const { cartItems, ...orderData } = req.body;
-        
-        // Kiểm tra chống spam: giới hạn số lượng đơn pending + unpaid tối đa là 3 đơn
-        if (orderData.user_id) {
-            const pendingCount = await Order.countPendingOrdersByUser(orderData.user_id);
-            if (pendingCount >= 3) {
-                return res.status(400).json({ 
-                    message: "Bạn đang có quá nhiều đơn hàng chờ xử lý (tối đa 3 đơn). Vui lòng hoàn tất thanh toán hoặc hủy đơn cũ trước khi đặt thêm đơn mới!" 
-                });
-            }
-        }
-        
-        // Gọi Model xử lý toàn bộ transaction hạ tầng DB
-        const orderId = await Order.createWithItems(orderData, cartItems);
-        res.status(201).json({ message: "Đặt hàng thành công trọn vẹn!", orderId });
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống thanh toán", error: error.message });
-    }
-};
+const createOrder = asyncHandler(async (req, res) => {
+    const { cartItems, ...orderData } = req.body;
+    const result = await OrderService.createOrder(orderData, cartItems);
+    res.status(201).json({ message: 'Đặt hàng thành công!', ...result });
+});
 
-const ghnService = require('../services/ghnService');
+const updateOrder = asyncHandler(async (req, res) => {
+    const updated = await OrderService.updateOrder(req.params.id, req.body);
+    res.status(200).json({ message: 'Cập nhật thành công', data: updated });
+});
 
-const updateOrder = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updateData = { ...req.body };
-        
-        const currentOrder = await Order.getById(id);
-        if (!currentOrder) {
-            return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
-        }
+const deleteOrder = asyncHandler(async (req, res) => {
+    await OrderService.deleteOrder(req.params.id);
+    res.status(200).json({ message: 'Đã xóa đơn hàng' });
+});
 
-        // Chặn không cho phép đổi trạng thái giữa Completed và Cancelled
-        if (currentOrder.status === 'completed' && updateData.status === 'cancelled') {
-            return res.status(400).json({ message: "Không thể hủy đơn hàng đã hoàn thành!" });
-        }
-        if (currentOrder.status === 'cancelled' && updateData.status === 'completed') {
-            return res.status(400).json({ message: "Không thể hoàn thành đơn hàng đã hủy!" });
-        }
-        
-        // GHN Integration: If status is updated to shipping, create GHN order
-        if (updateData.status === 'shipping') {
-            if (currentOrder.payment_method !== 'store' && !currentOrder.tracking_code) {
-                try {
-                    const trackingCode = await ghnService.createShippingOrder(currentOrder);
-                    updateData.tracking_code = trackingCode;
-                } catch (ghnError) {
-                    console.error("GHN Error during update:", ghnError);
-                    // Decide if we want to block the update or just skip tracking code. We'll block and return error to alert Admin.
-                    return res.status(400).json({ message: "Lỗi tạo đơn GHN: " + ghnError.message });
-                }
-            }
-        }
-
-        const updated = await Order.update(id, updateData);
-        res.status(200).json({ message: "Cập nhật thành công", data: updated });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
-
-const deleteOrder = async (req, res) => {
-    try {
-        const deleted = await Order.delete(req.params.id);
-        if (!deleted) return res.status(404).json({ message: "Không thấy đơn hàng" });
-        res.status(200).json({ message: "Đã xóa đơn hàng" });
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
-
-const cancelOrder = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        // 1. Kiểm tra đơn hàng tồn tại
-        const order = await Order.getById(id);
-        if (!order) {
-            return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
-        }
-
-        // 2. Xác thực quyền: chỉ Admin hoặc chính khách hàng tạo đơn mới được hủy
-        if (order.user_id !== req.user.id && req.user.role !== 'admin') {
-            return res.status(403).json({ message: "Bạn không có quyền thực hiện hành động này!" });
-        }
-
-        // 3. Thực hiện hủy đơn
-        await Order.cancelOrderById(id);
-        res.status(200).json({ message: "Hủy đơn hàng thành công!" });
-    } catch (error) {
-        console.error("Lỗi hủy đơn hàng:", error);
-        res.status(500).json({ message: error.message || "Lỗi hệ thống", error: error.message });
-    }
-};
+const cancelOrder = asyncHandler(async (req, res) => {
+    const result = await OrderService.cancelOrder(req.params.id, req.user.id, req.user.role);
+    res.status(200).json(result);
+});
 
 module.exports = { getAllOrders, getOrderById, getOrdersByUser, createOrder, updateOrder, deleteOrder, cancelOrder };

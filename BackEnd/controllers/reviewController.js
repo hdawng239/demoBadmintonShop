@@ -1,44 +1,28 @@
-const Review = require('../models/reviewModel');
+const asyncHandler = require('../utils/asyncHandler');
+const ReviewService = require('../services/reviewService');
 
-const getProductReviews = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const reviewsData = await Review.getByProductId(req.params.productId, page, limit);
-        res.status(200).json(reviewsData);
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
+const getProductReviews = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const result = await ReviewService.getProductReviews(req.params.productId, page, limit);
+    res.status(200).json(result);
+});
 
-const getAllReviews = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const reviewsData = await Review.getAll(page, limit);
-        res.status(200).json(reviewsData);
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
+const getAllReviews = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const result = await ReviewService.getAllReviews(page, limit);
+    res.status(200).json(result);
+});
 
-const createReview = async (req, res) => {
-    try {
-        const newReview = await Review.create(req.body);
-        res.status(201).json({ message: "Gửi đánh giá thành công!", data: newReview });
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
+const createReview = asyncHandler(async (req, res) => {
+    const newReview = await ReviewService.createReview(req.body);
+    res.status(201).json({ message: 'Gửi đánh giá thành công!', data: newReview });
+});
 
-const deleteReview = async (req, res) => {
-    try {
-        const deleted = await Review.delete(req.params.id);
-        if (!deleted) return res.status(404).json({ message: "Không tìm thấy đánh giá để xóa" });
-        res.status(200).json({ message: "Đã xóa đánh giá thành công" });
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-    }
-};
+const deleteReview = asyncHandler(async (req, res) => {
+    const deleted = await ReviewService.deleteReview(req.params.id);
+    res.status(200).json({ message: 'Đã xóa đánh giá thành công', data: deleted });
+});
 
 module.exports = { getProductReviews, createReview, deleteReview, getAllReviews };

@@ -19,6 +19,8 @@ const chatRoutes = require('./routes/chatRoutes');
 const variantRoutes = require('./routes/variantRoutes');
 const voucherRoutes = require('./routes/voucherRoutes');
 
+const { notFoundHandler, errorHandler } = require('./middlewares/errorMiddleware');
+
 const cors = require('cors');
 app.use(cors());
 
@@ -44,26 +46,15 @@ app.get('/', (req, res) => {
     res.json({ status: "ok", message: "API is running" });
 });
 
+// 404 cho route không tồn tại + error handler tập trung (phải đặt SAU tất cả route).
+app.use(notFoundHandler);
+app.use(errorHandler);
+
 // Tự động quét và hủy các đơn hàng QR quá hạn 2 phút chưa thanh toán
 setInterval(async () => {
     try {
-        const Order = require('./models/orderModel');
-        const pool = require('./config/db');
-        
-        // Tìm các đơn hàng thanh toán qua QR, chưa thanh toán (unpaid), đang chờ xử lý (pending)
-        // và được tạo quá 2 phút trước (timezone-safe bằng cách so sánh trực tiếp trong DB).
-        const expiredOrdersRes = await pool.query(
-            `SELECT id FROM orders 
-             WHERE LOWER(payment_method) = 'qr' 
-               AND payment_status = 'unpaid' 
-               AND status = 'pending' 
-               AND created_at < NOW() - INTERVAL '2 minutes'`//
-        );
-        
-        for (const row of expiredOrdersRes.rows) {
-            console.log(`[Auto-Cancel] Đơn hàng #${row.id} quá hạn 2 phút chưa thanh toán. Đang tự động hủy...`);
-            await Order.cancelOrderById(row.id);
-        }
+        const OrderService = require('./services/orderService');
+        await OrderService.cancelExpiredQROrders();
     } catch (err) {
         console.error("Lỗi trong quá trình tự động quét hủy đơn hàng QR quá hạn:", err);
     }

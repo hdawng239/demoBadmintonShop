@@ -1,122 +1,17 @@
-const pool = require('../config/db');
-const { generateDynamicUpdate } = require('../utils/queryBuilder');
-const Product = {
-    getAll: async (page, limit, categoryId, brandId, keyword) => {
-        // Tính số bản ghi cần bỏ qua (Offset)
-        const offset = (page - 1) * limit;
+// MODEL = định nghĩa Entity Product: tên bảng, cột được phép cập nhật, hàm map row.
+// Không chứa SQL (SQL nằm ở repository).
 
-        let whereClauses = [];
-        let queryParams = [];
-        
-        if (categoryId) {
-            const index = whereClauses.length + 1;
-            whereClauses.push(`(p.category_id = $${index} OR p.category_id IN (SELECT id FROM categories WHERE parent_id = $${index}))`);
-            queryParams.push(categoryId);
-        }
-        if (brandId) {
-            whereClauses.push(`p.brand_id = $${whereClauses.length + 1}`);
-            queryParams.push(brandId);
-        }
-        if (keyword) {
-            const terms = keyword.trim().split(/\s+/);
-            terms.forEach(term => {
-                whereClauses.push(`p.name ILIKE $${whereClauses.length + 1}`);
-                queryParams.push(`%${term}%`);
-            });
-        }
-        
-        const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+const TABLE = 'products';
 
-        // Lệnh 1: Lấy đúng số lượng sản phẩm của trang đó
-        const dataQuery = `
-            SELECT p.*, b.name AS brand_name, c.name AS category_name 
-            FROM products p
-            LEFT JOIN brands b ON p.brand_id = b.id
-            LEFT JOIN categories c ON p.category_id = c.id
-            ${whereString}
-            ORDER BY p.id ASC
-            LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
-        `;
-        
-        const dataParams = [...queryParams, limit, offset];
-        const dataResult = await pool.query(dataQuery, dataParams);
+// Allowlist các cột client được phép cập nhật qua UPDATE (chống mass-assignment).
+const UPDATABLE_FIELDS = [
+    'category_id', 'brand_id', 'name', 'base_price',
+    'description', 'technical_specs', 'is_active', 'image_url',
+];
 
-        // Lệnh 2: Đếm tổng số sản phẩm
-        const countQuery = `SELECT COUNT(*) FROM products p ${whereString}`;
-        const countResult = await pool.query(countQuery, queryParams);
-        const totalItems = parseInt(countResult.rows[0].count);
-        const totalPages = Math.ceil(totalItems / limit);
-
-        return {
-            totalItems,
-            totalPages,
-            currentPage: page,
-            limit,
-            products: dataResult.rows
-        };
-    },
-    getById: async (id) => {
-        const query = `
-            SELECT p.*, c.name AS category_name, b.name AS brand_name
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            LEFT JOIN brands b ON p.brand_id = b.id
-            WHERE p.id = $1
-        `;
-        const result = await pool.query(query, [id]);
-        const product = result.rows[0];
-        
-        if (product) {
-            const variantQuery = `SELECT * FROM product_variants WHERE product_id = $1 ORDER BY id ASC`;
-            const varResult = await pool.query(variantQuery, [id]);
-            product.variants = varResult.rows;
-        }
-        
-        return product;
-    },
-    create: async (data) => {
-        const { category_id, brand_id, name, base_price, description, technical_specs, is_active, image_url } = data;
-        const query = `
-            INSERT INTO products (category_id, brand_id, name, base_price, description, technical_specs, is_active, image_url) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
-        `;
-        const result = await pool.query(query, [
-            category_id, brand_id, name, base_price, description, 
-            technical_specs ? JSON.stringify(technical_specs) : null, 
-            is_active ?? true,
-            image_url || null
-        ]);
-        
-        const newProduct = result.rows[0];
-        
-        // Tự động tạo 1 phân loại mặc định cho sản phẩm mới (Tồn kho mặc định: 100)
-        const variantQuery = `
-            INSERT INTO product_variants (product_id, variant_name, stock_quantity, price_modifier) 
-            VALUES ($1, $2, $3, $4)
-        `;
-        await pool.query(variantQuery, [newProduct.id, 'Mặc định', 100, 0]);
-        
-        return newProduct;
-    },
-        update: async (id, data) => {
-        // Tự động sinh SQL cho bảng 'products'
-        const { query, values } = generateDynamicUpdate('products', data, id);
-        
-        if (!query) throw new Error("Không có dữ liệu hợp lệ để cập nhật");
-
-        if (data.technical_specs) {
-            const specIndex = Object.keys(data).indexOf('technical_specs');
-            values[specIndex] = JSON.stringify(data.technical_specs);
-        }
-
-        const result = await pool.query(query, values);
-        return result.rows[0];
-    },
-
-    delete: async (id) => {
-        const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
-        return result.rows[0];
-    }
+const mapRow = (row) => {
+    if (!row) return null;
+    return { ...row };
 };
 
-module.exports = Product;
+module.exports = { TABLE, UPDATABLE_FIELDS, mapRow };

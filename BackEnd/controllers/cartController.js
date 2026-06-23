@@ -1,41 +1,35 @@
-const Cart = require('../models/cartModel');
-const CartItem = require('../models/cartItemModel');
+const asyncHandler = require('../utils/asyncHandler');
+const CartService = require('../services/cartService');
 
-const getMyCart = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const cart = await Cart.getByUserId(userId);
-        if (!cart) {
-            return res.status(404).json({ message: "Giỏ hàng trống" });
-        }
-        res.status(200).json(cart);
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
-    }
-};
-const createCart = async (req, res) => {
-    try { res.status(201).json(await Cart.create(req.body.user_id)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+// CONTROLLER = chỉ đọc dữ liệu từ request, gọi service, trả response.
+const getMyCart = asyncHandler(async (req, res) => {
+    const cart = await CartService.getMyCart(req.user.id);
+    res.status(200).json(cart);
+});
 
-const clearCart = async (req, res) => {
-    try { res.status(200).json(await Cart.clearCart(req.params.id)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+const createCart = asyncHandler(async (req, res) => {
+    const cart = await CartService.createCart(req.body.user_id);
+    res.status(201).json(cart);
+});
 
-const addItemToCart = async (req, res) => {
-    try { res.status(201).json(await CartItem.createOrUpdate(req.body)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+const clearCart = asyncHandler(async (req, res) => {
+    const deleted = await CartService.clearCart(req.params.id);
+    res.status(200).json(deleted);
+});
 
-const updateItemQuantity = async (req, res) => {
-    try { res.status(200).json(await CartItem.updateQuantity(req.params.id, req.body.quantity)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+const addItemToCart = asyncHandler(async (req, res) => {
+    const item = await CartService.addItemToCart(req.body);
+    res.status(201).json(item);
+});
 
-const removeItem = async (req, res) => {
-    try { res.status(200).json(await CartItem.delete(req.params.id)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+const updateItemQuantity = asyncHandler(async (req, res) => {
+    const item = await CartService.updateItemQuantity(req.params.id, req.body.quantity);
+    res.status(200).json(item);
+});
+
+const removeItem = asyncHandler(async (req, res) => {
+    const deleted = await CartService.removeItemFromCart(req.params.id);
+    res.status(200).json(deleted);
+});
 
 module.exports = { getMyCart, createCart, clearCart, addItemToCart, updateItemQuantity, removeItem };

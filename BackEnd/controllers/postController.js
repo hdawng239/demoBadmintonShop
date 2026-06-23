@@ -1,37 +1,30 @@
-const Post = require('../models/postModel');
+const asyncHandler = require('../utils/asyncHandler');
+const PostService = require('../services/postService');
 
-const getAllPosts = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const search = req.query.search || '';
-        res.status(200).json(await Post.getAll(page, limit, search));
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
-    }
-};
+// CONTROLLER = chỉ đọc request, gọi service, trả response.
+// Giữ nguyên shape response cũ (create/update/delete trả thẳng object) để FE không vỡ.
+const getAllPosts = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    res.status(200).json(await PostService.getAllPosts(page, limit, search));
+});
 
-const getPostById = async (req, res) => {
-    try {
-        const post = await Post.getById(req.params.id);
-        if (!post) return res.status(404).json({ message: "Không tìm thấy bài viết" });
-        res.status(200).json(post);
-    } catch (err) { res.status(500).json({ error: err.message }); }
-};
+const getPostById = asyncHandler(async (req, res) => {
+    const post = await PostService.getPostById(req.params.id);
+    res.status(200).json(post);
+});
 
-const createPost = async (req, res) => {
-    try { res.status(201).json(await Post.create(req.body)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+const createPost = asyncHandler(async (req, res) => {
+    res.status(201).json(await PostService.createPost(req.body));
+});
 
-const updatePost = async (req, res) => {
-    try { res.status(200).json(await Post.update(req.params.id, req.body)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+const updatePost = asyncHandler(async (req, res) => {
+    res.status(200).json(await PostService.updatePost(req.params.id, req.body));
+});
 
-const deletePost = async (req, res) => {
-    try { res.status(200).json(await Post.delete(req.params.id)); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-};
+const deletePost = asyncHandler(async (req, res) => {
+    res.status(200).json(await PostService.deletePost(req.params.id));
+});
 
 module.exports = { getAllPosts, getPostById, createPost, updatePost, deletePost };
