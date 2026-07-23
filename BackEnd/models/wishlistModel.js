@@ -1,4 +1,4 @@
-const TABLE = 'carts';
+const TABLE = 'wishlists';
 
 const mapRow = (row) => {
     if (!row) return null;

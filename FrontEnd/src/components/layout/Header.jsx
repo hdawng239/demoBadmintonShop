@@ -4,6 +4,7 @@ import { Search, Phone, MapPin, Search as SearchIcon, User, ShoppingCart, Chevro
 import { authService } from '../../services/authService';
 import { cartService } from '../../services/cartService';
 import { productService } from '../../services/productService';
+import { wishlistService } from '../../services/wishlistService';
 import axios from 'axios';
 
 const Header = () => {
@@ -110,12 +111,13 @@ const Header = () => {
       }
     };
 
-    const fetchFavoritesCount = () => {
+    const fetchFavoritesCount = async () => {
       const currentUser = authService.getCurrentUser();
       if (currentUser) {
         try {
-          const favs = JSON.parse(localStorage.getItem(`favorites_${currentUser.id}`)) || [];
-          setFavoritesCount(favs.length);
+          // Đếm số yêu thích từ DB (endpoint /ids nhẹ, chỉ trả mảng product_id).
+          const ids = await wishlistService.getProductIds();
+          setFavoritesCount(ids.length);
         } catch (e) {
           setFavoritesCount(0);
         }
@@ -193,9 +195,8 @@ const Header = () => {
     fetchCategories();
   }, []);
 
-  const handleLogout = () => {
-    authService.logout();
-    window.dispatchEvent(new Event('userUpdated'));
+  const handleLogout = async () => {
+    await authService.logout();
     navigate('/');
   };
 

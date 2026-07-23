@@ -8,6 +8,9 @@ export const authService = {
       const response = await axios.post(`${API_URL}/login`, { email, password });
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        if (response.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.refreshToken);
+        }
         localStorage.setItem('user', JSON.stringify(response.data.user));
         window.dispatchEvent(new Event('userUpdated'));
       }
@@ -32,9 +35,32 @@ export const authService = {
     }
   },
 
-  logout: () => {
+  logout: async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    // Báo backend thu hồi refresh token (không chặn UI nếu lỗi mạng).
+    if (refreshToken) {
+      try {
+        await axios.post(`${API_URL}/logout`, { refreshToken });
+      } catch (_) { /* bỏ qua, vẫn xóa token phía client */ }
+    }
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    window.dispatchEvent(new Event('userUpdated'));
+  },
+
+  // Gọi backend làm mới access token bằng refresh token đang lưu.
+  refreshToken: async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) throw new Error('Không có refresh token');
+    const response = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
+    if (response.data.refreshToken) {
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+    }
+    return response.data.token;
   },
 
   getCurrentUser: () => {

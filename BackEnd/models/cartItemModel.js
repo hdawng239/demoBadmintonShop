@@ -1,5 +1,3 @@
-// MODEL = định nghĩa Entity CartItem: tên bảng, cột được phép cập nhật, hàm map row.
-
 const TABLE = 'cart_items';
 
 const UPDATABLE_FIELDS = ['quantity'];

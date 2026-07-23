@@ -7,8 +7,8 @@ const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
 
 router.get('/', verifyToken, isAdmin, getAllOrders);
 router.get('/my-orders', verifyToken, getOrdersByUser);
-router.get('/:id', getOrderById);
-router.post('/', handleOrderValidation, createOrder); 
+router.get('/:id', verifyToken, getOrderById);
+router.post('/', verifyToken, handleOrderValidation, createOrder);
 router.put('/:id', verifyToken, isAdmin, updateOrder);
 router.delete('/:id', verifyToken, isAdmin, deleteOrder);
 router.post('/:id/cancel', verifyToken, cancelOrder);

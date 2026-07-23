@@ -32,7 +32,7 @@ const AdminLoginPage = () => {
         navigate('/admin');
       } else {
         // Đăng xuất ngay nếu không phải admin
-        authService.logout();
+        await authService.logout();
         setError("Tài khoản của bạn không có quyền truy cập trang quản trị.");
       }
     } catch (err) {

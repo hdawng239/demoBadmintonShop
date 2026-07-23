@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const ReviewService = require('../services/reviewService');
+const { sendSuccess } = require('../utils/response');
 
 const getProductReviews = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
@@ -16,13 +17,19 @@ const getAllReviews = asyncHandler(async (req, res) => {
 });
 
 const createReview = asyncHandler(async (req, res) => {
-    const newReview = await ReviewService.createReview(req.body);
-    res.status(201).json({ message: 'Gửi đánh giá thành công!', data: newReview });
+    const { product_id, rating, comment } = req.body;
+    const newReview = await ReviewService.createReview({
+        user_id: req.user.id,
+        product_id,
+        rating,
+        comment,
+    });
+    sendSuccess(res, { statusCode: 201, message: 'Gửi đánh giá thành công!', data: newReview });
 });
 
 const deleteReview = asyncHandler(async (req, res) => {
     const deleted = await ReviewService.deleteReview(req.params.id);
-    res.status(200).json({ message: 'Đã xóa đánh giá thành công', data: deleted });
+    sendSuccess(res, { message: 'Đã xóa đánh giá thành công', data: deleted });
 });
 
 module.exports = { getProductReviews, createReview, deleteReview, getAllReviews };

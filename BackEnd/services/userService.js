@@ -2,12 +2,13 @@ const UserRepository = require('../repositories/userRepository');
 const AuthService = require('./authService');
 const AppError = require('../utils/AppError');
 
-// SERVICE = tầng nghiệp vụ: kiểm tra điều kiện, validation, điều phối repository.
-// Không biết gì về req/res (HTTP).
 const UserService = {
     getAllUsers: (page, limit, search) => UserRepository.findPaginated(page, limit, search),
 
-    getUserById: async (id) => {
+    getUserById: async (id, currentUser) => {
+        if (currentUser.role !== 'admin' && currentUser.id !== parseInt(id)) {
+            throw new AppError(403, 'Bạn không có quyền xem thông tin của người dùng này!');
+        }
         const user = await UserRepository.findById(id);
         if (!user) throw new AppError(404, 'Không tìm thấy người dùng');
         return user;
@@ -16,22 +17,16 @@ const UserService = {
     createUser: async (data) => {
         const { password, email, phone } = data;
 
-        // Validate email
         if (!email || !email.endsWith('@gmail.com')) {
             throw new AppError(400, 'Email bắt buộc phải là định dạng @gmail.com');
         }
-
-        // Validate phone
         if (phone && !/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
             throw new AppError(400, 'Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
         }
-
-        // Validate password
         if (!password) {
             throw new AppError(400, 'Mật khẩu là bắt buộc!');
         }
 
-        // Check uniqueness
         const existingEmail = await UserRepository.findByEmail(email);
         if (existingEmail) {
             throw new AppError(409, 'Email này đã được sử dụng!');
@@ -43,7 +38,6 @@ const UserService = {
             }
         }
 
-        // Hash password
         const hashedPassword = await AuthService.hashPassword(password);
 
         try {
@@ -55,27 +49,47 @@ const UserService = {
     },
 
     updateUser: async (id, data, currentUser) => {
+        if (currentUser.role !== 'admin' && currentUser.id !== parseInt(id)) {
+            throw new AppError(403, 'Bạn không có quyền chỉnh sửa thông tin của người dùng này!');
+        }
+
         const updateData = { ...data };
 
-        // Validate email
         if (updateData.email && !updateData.email.endsWith('@gmail.com')) {
             throw new AppError(400, 'Email bắt buộc phải là định dạng @gmail.com');
         }
-
-        // Validate phone
         if (updateData.phone && !/^0(3|5|7|8|9)\d{8}$/.test(updateData.phone)) {
             throw new AppError(400, 'Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
         }
 
-        // Chỉ admin mới được sửa role
+        // Chỉ admin mới được đổi role
         if (updateData.role && currentUser?.role !== 'admin') {
             delete updateData.role;
         }
 
-        // Hash password nếu có
+        // Đổi mật khẩu an toàn
         if (updateData.password) {
+            // Kiểm tra độ dài tối thiểu
+            if (updateData.password.length < 6) {
+                throw new AppError(400, 'Mật khẩu mới phải có ít nhất 6 ký tự!');
+            }
+
+            // Nếu không phải Admin, bắt buộc phải cung cấp mật khẩu hiện tại để xác minh danh tính
+            if (currentUser.role !== 'admin') {
+                if (!data.currentPassword) {
+                    throw new AppError(400, 'Vui lòng cung cấp mật khẩu hiện tại để đổi mật khẩu mới!');
+                }
+                const user = await UserRepository.findByEmail(currentUser.email);
+                if (!user) throw new AppError(404, 'Tài khoản không tồn tại!');
+                const isMatch = await AuthService.comparePassword(data.currentPassword, user.password_hash);
+                if (!isMatch) {
+                    throw new AppError(400, 'Mật khẩu hiện tại không chính xác!');
+                }
+            }
+
             updateData.password_hash = await AuthService.hashPassword(updateData.password);
             delete updateData.password;
+            delete updateData.currentPassword;
         }
 
         try {

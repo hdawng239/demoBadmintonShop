@@ -9,7 +9,7 @@ const handleSepayWebhook = async (req, res) => {
             || req.headers['apikey']
             || req.query.apikey;
 
-        if (apiKey !== process.env.KEY_SEPAY) {
+        if (!process.env.KEY_SEPAY || process.env.KEY_SEPAY.trim() === "" || apiKey !== process.env.KEY_SEPAY) {
             return res.status(401).json({ success: false, message: 'Unauthorized: Invalid API Key' });
         }
 

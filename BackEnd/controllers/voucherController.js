@@ -1,11 +1,12 @@
 const asyncHandler = require('../utils/asyncHandler');
 const VoucherService = require('../services/voucherService');
+const { sendSuccess } = require('../utils/response');
 
-// CONTROLLER = chỉ đọc request, gọi service, trả response. Không chứa business logic.
 const applyVoucher = asyncHandler(async (req, res) => {
     const { code, cartTotal } = req.body;
     const result = await VoucherService.applyVoucher(code, cartTotal);
-    res.status(200).json({ message: 'Áp dụng mã giảm giá thành công!', ...result });
+    // FE đọc discountAmount/discountType ở top-level nên giữ qua legacy
+    sendSuccess(res, { message: 'Áp dụng mã giảm giá thành công!', data: result, legacy: result });
 });
 
 const getActiveVouchers = asyncHandler(async (req, res) => {
@@ -24,17 +25,17 @@ const getVoucherById = asyncHandler(async (req, res) => {
 
 const createVoucher = asyncHandler(async (req, res) => {
     const newVoucher = await VoucherService.createVoucher(req.body);
-    res.status(201).json({ message: 'Tạo voucher mới thành công!', data: newVoucher });
+    sendSuccess(res, { statusCode: 201, message: 'Tạo voucher mới thành công!', data: newVoucher });
 });
 
 const updateVoucher = asyncHandler(async (req, res) => {
     const updated = await VoucherService.updateVoucher(req.params.id, req.body);
-    res.status(200).json({ message: 'Cập nhật thành công!', data: updated });
+    sendSuccess(res, { message: 'Cập nhật thành công!', data: updated });
 });
 
 const deleteVoucher = asyncHandler(async (req, res) => {
     await VoucherService.deleteVoucher(req.params.id);
-    res.status(200).json({ message: 'Đã xóa voucher thành công!' });
+    sendSuccess(res, { message: 'Đã xóa voucher thành công!' });
 });
 
 module.exports = {

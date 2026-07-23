@@ -2,7 +2,6 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/voucherModel');
 
-// REPOSITORY = CHỈ chứa SQL thuần cho bảng vouchers.
 const VoucherRepository = {
     findAll: async (page = 1, limit = 10) => {
         const offset = (page - 1) * limit;
@@ -38,7 +37,6 @@ const VoucherRepository = {
         return res.rows.map(mapRow);
     },
 
-    // Nhận object đã được service chuẩn hoá (normalize) trước khi lưu.
     create: async (v) => {
         const res = await pool.query(
             `INSERT INTO ${TABLE} (
@@ -67,7 +65,7 @@ const VoucherRepository = {
         return mapRow(res.rows[0]);
     },
 
-    // Dùng trong transaction đặt hàng (truyền client của transaction vào).
+    // Gọi trong transaction đặt hàng, nhận client của transaction
     incrementUsedCount: async (client, code) => {
         const res = await client.query(
             `UPDATE ${TABLE} SET used_count = used_count + 1 WHERE UPPER(code) = UPPER($1) RETURNING *`,

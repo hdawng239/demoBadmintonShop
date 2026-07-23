@@ -2,20 +2,24 @@ const OrderRepository = require('../repositories/orderRepository');
 const ghnService = require('./ghnService');
 const AppError = require('../utils/AppError');
 
-// SERVICE = tầng nghiệp vụ: validation, chống spam, tích hợp GHN, điều phối repository.
 const OrderService = {
     getAllOrders: (page, limit) => OrderRepository.findPaginated(page, limit),
 
-    getOrderById: async (id) => {
+    getOrderById: async (id, userId, userRole) => {
         const order = await OrderRepository.findById(id);
         if (!order) throw new AppError(404, 'Không tìm thấy đơn hàng');
+
+        // Chỉ admin hoặc chính chủ đơn được xem
+        if (userRole !== 'admin' && order.user_id !== userId) {
+            throw new AppError(403, 'Bạn không có quyền xem đơn hàng này!');
+        }
         return order;
     },
 
     getOrdersByUser: (userId) => OrderRepository.findByUserId(userId),
 
     createOrder: async (orderData, cartItems) => {
-        // Chống spam: tối đa 3 đơn pending+unpaid
+        // Chống spam: tối đa 3 đơn pending chưa thanh toán
         if (orderData.user_id) {
             const pendingCount = await OrderRepository.countPendingUnpaidByUser(orderData.user_id);
             if (pendingCount >= 3) {
@@ -30,8 +34,7 @@ const OrderService = {
             const orderId = await OrderRepository.createWithItems(orderData, cartItems);
             return { orderId };
         } catch (err) {
-            // Chuyển lỗi từ transaction (hết hàng, ngừng kinh doanh...) thành AppError để
-            // trả về message cụ thể cho client thay vì "Lỗi hệ thống" chung chung.
+            // Lỗi từ transaction (hết hàng...) chuyển thành AppError để trả message cụ thể
             if (err.isOperational) throw err;
             throw new AppError(400, err.message);
         }
@@ -49,7 +52,7 @@ const OrderService = {
             throw new AppError(400, 'Không thể hoàn thành đơn hàng đã hủy!');
         }
 
-        // GHN Integration: nếu chuyển sang shipping, tạo đơn GHN
+        // Chuyển sang shipping thì tạo đơn GHN lấy mã vận đơn
         if (updateData.status === 'shipping') {
             if (currentOrder.payment_method !== 'store' && !currentOrder.tracking_code) {
                 try {
@@ -89,7 +92,6 @@ const OrderService = {
         }
     },
 
-    // Xử lý thanh toán Sepay (dùng cho sepayController)
     handleSepayPayment: async (orderId, transferAmount) => {
         const order = await OrderRepository.findById(orderId);
         if (!order) throw new AppError(404, 'Order not found');
@@ -102,7 +104,7 @@ const OrderService = {
         throw new AppError(400, 'Insufficient transfer amount');
     },
 
-    // Cho scheduler: tự động hủy đơn QR quá hạn
+    // Scheduler gọi định kỳ để hủy đơn QR quá hạn chưa thanh toán
     cancelExpiredQROrders: async () => {
         const expiredIds = await OrderRepository.findExpiredQR();
         for (const id of expiredIds) {

@@ -1,4 +1,4 @@
-const TABLE = 'carts';
+const TABLE = 'refresh_tokens';
 
 const mapRow = (row) => {
     if (!row) return null;

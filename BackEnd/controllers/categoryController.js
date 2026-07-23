@@ -1,7 +1,8 @@
 const asyncHandler = require('../utils/asyncHandler');
 const CategoryService = require('../services/categoryService');
+const { sendSuccess } = require('../utils/response');
 
-// CONTROLLER = chỉ đọc request, gọi service, trả response.
+// getAll/getById giữ nguyên hình dạng cũ vì FE đọc trực tiếp
 const getAllCategories = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -17,17 +18,17 @@ const getCategoryById = asyncHandler(async (req, res) => {
 
 const createCategory = asyncHandler(async (req, res) => {
     const newCategory = await CategoryService.createCategory(req.body);
-    res.status(201).json({ message: 'Tạo danh mục thành công', data: newCategory });
+    sendSuccess(res, { statusCode: 201, message: 'Tạo danh mục thành công', data: newCategory });
 });
 
 const updateCategory = asyncHandler(async (req, res) => {
     const updated = await CategoryService.updateCategory(req.params.id, req.body);
-    res.status(200).json({ message: 'Cập nhật danh mục thành công', data: updated });
+    sendSuccess(res, { message: 'Cập nhật danh mục thành công', data: updated });
 });
 
 const deleteCategory = asyncHandler(async (req, res) => {
     const deleted = await CategoryService.deleteCategory(req.params.id);
-    res.status(200).json({ message: 'Xóa danh mục thành công', data: deleted });
+    sendSuccess(res, { message: 'Xóa danh mục thành công', data: deleted });
 });
 
 module.exports = { getAllCategories, getCategoryById, createCategory, updateCategory, deleteCategory };

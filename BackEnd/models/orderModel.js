@@ -1,5 +1,3 @@
-// MODEL = định nghĩa Entity Order: tên bảng, cột được phép cập nhật, hàm map row.
-
 const TABLE = 'orders';
 
 const UPDATABLE_FIELDS = [

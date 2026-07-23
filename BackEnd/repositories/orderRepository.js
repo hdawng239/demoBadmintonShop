@@ -2,8 +2,6 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/orderModel');
 
-// REPOSITORY = tầng truy cập dữ liệu cho orders và order_items.
-// Bao gồm transaction cho createWithItems và cancelById.
 const OrderRepository = {
     findPaginated: async (page, limit) => {
         const offset = (page - 1) * limit;
@@ -38,9 +36,19 @@ const OrderRepository = {
             [userId]
         );
         const orders = result.rows.map(mapRow);
+        if (orders.length === 0) return orders;
 
+        // Lấy items của tất cả đơn trong 1 query cho đỡ N+1
+        const orderIds = orders.map((o) => o.id);
+        const items = await OrderRepository._findItemsByOrderIds(orderIds);
+
+        const itemsByOrder = new Map();
+        for (const item of items) {
+            if (!itemsByOrder.has(item.order_id)) itemsByOrder.set(item.order_id, []);
+            itemsByOrder.get(item.order_id).push(item);
+        }
         for (const order of orders) {
-            order.items = await OrderRepository._findItemsByOrderId(order.id);
+            order.items = itemsByOrder.get(order.id) || [];
         }
         return orders;
     },
@@ -57,21 +65,38 @@ const OrderRepository = {
         return result.rows;
     },
 
+    _findItemsByOrderIds: async (orderIds) => {
+        const query = `
+            SELECT oi.*, p.name AS product_name, pv.variant_name, p.image_url, p.technical_specs
+            FROM order_items oi
+            JOIN product_variants pv ON oi.variant_id = pv.id
+            JOIN products p ON pv.product_id = p.id
+            WHERE oi.order_id = ANY($1)
+        `;
+        const result = await pool.query(query, [orderIds]);
+        return result.rows;
+    },
+
     // Transaction: tạo đơn hàng + items + trừ kho + tăng lượt dùng voucher
     createWithItems: async (orderData, cartItems) => {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
 
+            // Địa chỉ kho mặc định lấy từ .env
+            const defaultDistrictId = process.env.SHOP_DISTRICT_ID || null;
+            const defaultWardCode = process.env.SHOP_WARD_CODE || null;
+
             // 1. Insert order
             const insertOrderQuery = `
                 INSERT INTO ${TABLE} (user_id, payment_method, total_amount, shipping_name, shipping_phone, shipping_address, to_district_id, to_ward_code, voucher_code, discount_amount)
-                VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 1442), COALESCE($8, '21012'), $9, $10) RETURNING id
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
             `;
             const orderValues = [
                 orderData.user_id, orderData.payment_method, orderData.total_amount,
                 orderData.shipping_name, orderData.shipping_phone, orderData.shipping_address,
-                orderData.to_district_id || null, orderData.to_ward_code || null,
+                orderData.to_district_id || defaultDistrictId,
+                orderData.to_ward_code || defaultWardCode,
                 orderData.voucher_code || null, parseFloat(orderData.discount_amount || 0),
             ];
             const orderResult = await client.query(insertOrderQuery, orderValues);

@@ -2,14 +2,13 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/productModel');
 
-// REPOSITORY = tầng truy cập dữ liệu: CHỈ chứa SQL thuần cho bảng products.
-// Không chứa business logic, không xử lý req/res.
 const ProductRepository = {
     findPaginated: async (page, limit, categoryId, brandId, keyword) => {
         const offset = (page - 1) * limit;
         const whereClauses = [];
         const queryParams = [];
 
+        // Lọc theo category cha thì lấy luôn sản phẩm của các category con
         if (categoryId) {
             const idx = whereClauses.length + 1;
             whereClauses.push(`(p.category_id = $${idx} OR p.category_id IN (SELECT id FROM categories WHERE parent_id = $${idx}))`);
@@ -20,7 +19,9 @@ const ProductRepository = {
             queryParams.push(brandId);
         }
         if (keyword) {
-            const terms = keyword.trim().split(/\s+/);
+            // Giới hạn độ dài từ khóa tối đa 100 ký tự và lấy tối đa 5 từ để tránh DoS
+            const cleanKeyword = String(keyword).substring(0, 100).trim();
+            const terms = cleanKeyword.split(/\s+/).slice(0, 5);
             terms.forEach((term) => {
                 whereClauses.push(`p.name ILIKE $${whereClauses.length + 1}`);
                 queryParams.push(`%${term}%`);
@@ -99,7 +100,6 @@ const ProductRepository = {
 
     update: async (id, data) => {
         const updateData = { ...data };
-        // Chuyển technical_specs sang JSON string nếu là object
         if (updateData.technical_specs && typeof updateData.technical_specs === 'object') {
             updateData.technical_specs = JSON.stringify(updateData.technical_specs);
         }
@@ -114,7 +114,7 @@ const ProductRepository = {
         return mapRow(result.rows[0]);
     },
 
-    // ── Dùng cho search-by-image ────────────────────────────
+    // Dùng cho search bằng hình ảnh
     findCatalogForSearch: async () => {
         const query = `
             SELECT p.id, p.name, p.description, c.name AS category_name, b.name AS brand_name

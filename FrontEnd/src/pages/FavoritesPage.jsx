@@ -2,40 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
+import { wishlistService } from '../services/wishlistService';
 import Pagination from '../components/Pagination';
 import { Trash2, Heart, Eye } from 'lucide-react';
 
 const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const navigate = useNavigate();
+
   useEffect(() => {
     const user = authService.getCurrentUser();
     if (!user) {
       navigate('/login');
       return;
     }
-    const key = `favorites_${user.id}`;
-    try {
-      const favs = JSON.parse(localStorage.getItem(key)) || [];
+    // Tải danh sách yêu thích từ DB (thay cho localStorage).
+    const loadFavorites = async () => {
+      setIsLoading(true);
+      const favs = await wishlistService.getWishlist();
       setFavorites(favs);
-    } catch (e) {
-      setFavorites([]);
-    }
+      setIsLoading(false);
+    };
+    loadFavorites();
   }, [navigate]);
 
-  const handleRemoveFavorite = (productId) => {
-    const user = authService.getCurrentUser();
-    if (!user) return;
-    const key = `favorites_${user.id}`;
+  const handleRemoveFavorite = async (productId) => {
+    // Cập nhật lạc quan (optimistic): bỏ khỏi UI ngay, gọi API nền.
+    const previous = favorites;
+    setFavorites(favorites.filter(item => item.id !== productId));
     try {
-      const updated = favorites.filter(item => item.id !== productId);
-      localStorage.setItem(key, JSON.stringify(updated));
-      setFavorites(updated);
+      await wishlistService.remove(productId);
       window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (e) {
       console.error("Lỗi xóa yêu thích:", e);
+      setFavorites(previous); // lỗi thì khôi phục lại
     }
   };
 
@@ -62,7 +65,12 @@ const FavoritesPage = () => {
             Sản Phẩm Yêu Thích Của Bạn
           </h1>
 
-          {!hasItems ? (
+          {isLoading ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+              <div className="w-12 h-12 border-4 border-red-100 border-t-red-500 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-500">Đang tải danh sách yêu thích...</p>
+            </div>
+          ) : !hasItems ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
               <div className="w-24 h-24 bg-red-50 text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Heart className="w-12 h-12 fill-current" />

@@ -5,6 +5,7 @@ import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { authService } from '../services/authService';
 import { cartService } from '../services/cartService';
+import { wishlistService } from '../services/wishlistService';
 import { Star, ShoppingCart, CheckCircle, Gift, ArrowLeft, ArrowRight, XCircle, Heart } from 'lucide-react';
 
 const ProductDetailPage = () => {
@@ -30,59 +31,35 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // Check if product is in favorites
+  // Kiểm tra sản phẩm có trong wishlist (DB) không.
   useEffect(() => {
     const userId = currentUser?.id;
     if (userId && product) {
-      try {
-        const key = `favorites_${userId}`;
-        const favs = JSON.parse(localStorage.getItem(key)) || [];
-        const exists = favs.some(item => item.id === product.id);
-        setIsFavorite(exists);
-      } catch (e) {
-        setIsFavorite(false);
-      }
+      wishlistService.getProductIds()
+        .then(ids => setIsFavorite(ids.includes(product.id)))
+        .catch(() => setIsFavorite(false));
     } else {
       setIsFavorite(false);
     }
   }, [product, currentUser?.id]);
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = async () => {
     if (!currentUser) {
       showToast('Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích!', 'error');
       return;
     }
-    
+
+    // Cập nhật lạc quan để nút phản hồi tức thì, rồi đồng bộ với server.
+    const prev = isFavorite;
+    setIsFavorite(!prev);
     try {
-      const key = `favorites_${currentUser.id}`;
-      const favs = JSON.parse(localStorage.getItem(key)) || [];
-      const exists = favs.some(item => item.id === product.id);
-      
-      let updatedFavs;
-      if (exists) {
-        updatedFavs = favs.filter(item => item.id !== product.id);
-        showToast('Đã xóa khỏi danh sách yêu thích!', 'success');
-      } else {
-        const favItem = {
-          id: product.id,
-          name: product.name,
-          base_price: product.base_price,
-          sale_price: product.sale_price,
-          image_url: product.image_url,
-          brand_name: product.brand_name,
-          category_name: product.category_name,
-          category_id: product.category_id,
-          created_at: new Date().toISOString()
-        };
-        updatedFavs = [favItem, ...favs];
-        showToast('Đã thêm vào danh sách yêu thích!', 'success');
-      }
-      
-      localStorage.setItem(key, JSON.stringify(updatedFavs));
-      setIsFavorite(!exists);
+      const result = await wishlistService.toggle(product.id);
+      setIsFavorite(result.isFavorite);
+      showToast(result.message, 'success');
       window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
       console.error("Lỗi cập nhật yêu thích:", error);
+      setIsFavorite(prev); // lỗi thì trả lại trạng thái cũ
       showToast("Có lỗi xảy ra.", 'error');
     }
   };

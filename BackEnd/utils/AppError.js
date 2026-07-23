@@ -1,11 +1,9 @@
-// Lỗi nghiệp vụ có HTTP status rõ ràng, do Service/Controller chủ động ném ra.
-// Error middleware sẽ bắt và trả về response chuẩn.
-// Phân biệt với lỗi hệ thống (bug, lỗi DB ngoài dự kiến) để không lộ chi tiết nội bộ.
+// Lỗi nghiệp vụ có status code rõ ràng, service/controller chủ động ném ra
 class AppError extends Error {
     constructor(statusCode, message) {
         super(message);
         this.statusCode = statusCode;
-        this.isOperational = true; // lỗi chủ động, đã lường trước
+        this.isOperational = true;
         Error.captureStackTrace(this, this.constructor);
     }
 }

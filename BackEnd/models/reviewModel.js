@@ -1,8 +1,5 @@
-// MODEL = định nghĩa Entity Review: tên bảng, cột được phép cập nhật, hàm map row.
-
 const TABLE = 'reviews';
 
-// Review thường chỉ tạo/xóa, không update. Nhưng để dự phòng.
 const UPDATABLE_FIELDS = ['rating', 'comment'];
 
 const mapRow = (row) => {

@@ -18,13 +18,35 @@ const sepayRoutes = require('./routes/sepayRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const variantRoutes = require('./routes/variantRoutes');
 const voucherRoutes = require('./routes/voucherRoutes');
+const wishlistRoutes = require('./routes/wishlistRoutes');
 
 const { notFoundHandler, errorHandler } = require('./middlewares/errorMiddleware');
+const { globalLimiter } = require('./middlewares/rateLimiter');
 
+// ── Bảo mật ──────────────────────────────────────────────
+const helmet = require('helmet');
+app.use(helmet()); // gắn ~12 HTTP security header (chống clickjacking, ẩn X-Powered-By...)
+
+// CORS: chỉ cho phép các origin trong FRONTEND_URL (danh sách ngăn cách bởi dấu phẩy).
+// Nếu không cấu hình -> cho phép tất cả (tiện cho dev), nên set ở production.
 const cors = require('cors');
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
+    : null;
+app.use(cors({
+    origin: (origin, callback) => {
+        // Cho phép request không có origin (Postman, mobile app, server-to-server).
+        if (!origin || !allowedOrigins) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error('Không được phép bởi CORS'));
+    },
+    credentials: true,
+}));
 
 app.use(express.json());
+
+// Rate limit toàn cục cho mọi API (chống lạm dụng chung).
+app.use('/api', globalLimiter);
 
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
@@ -41,6 +63,7 @@ app.use('/api/sepay', sepayRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/variants', variantRoutes);
 app.use('/api/vouchers', voucherRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 app.get('/', (req, res) => {
     res.json({ status: "ok", message: "API is running" });

@@ -12,9 +12,9 @@ const pool = new Pool({
 
 pool.connect((err, client, release) => {
     if (err) {
-        console.error('❌ Lỗi kết nối PostgreSQL:', err.stack);
+        console.error(' Lỗi kết nối PostgreSQL:', err.stack);
     } else {
-        console.log('✅ Đã kết nối Database thành công!');
+        console.log('Đã kết nối Database thành công!');
     }
     if (client) release();
 });

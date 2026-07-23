@@ -1,8 +1,37 @@
-# Ignore Backend dependencies and secrets
-BackEnd/node_modules/
-BackEnd/.env
-FrontEnd/node_modules/
-FrontEnd/.env
-# Ignore operational systems files
+# 1. Thu muc cai dat & thu vien
+node_modules/
+**/node_modules/
+
+# 2. Thu muc build & sang loc dau ra
+dist/
+dist-ssr/
+build/
+**/dist/
+
+# 3. File bien moi truong & bao mat
+.env
+.env.*
+!.env.example
+*.env
+**/.env
+
+# 4. File log & debug
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 5. File rac He thong, Database Dump & Trinh soan thao (IDE)
+*.sql
 .DS_Store
 Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

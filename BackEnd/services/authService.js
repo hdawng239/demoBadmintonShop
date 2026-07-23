@@ -1,15 +1,20 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const UserRepository = require('../repositories/userRepository');
+const RefreshTokenRepository = require('../repositories/refreshTokenRepository');
 const AppError = require('../utils/AppError');
 require('dotenv').config();
 
-// SERVICE = tầng nghiệp vụ auth: đăng ký, đăng nhập, captcha, quên/đặt lại mật khẩu.
-// Không biết gì về req/res (HTTP).
+const ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '15m';
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+const REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+// Chỉ lưu hash của refresh token vào DB, không lưu token thô
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 const AuthService = {
-    // ── Mã hóa ──────────────────────────────────────────────
     hashPassword: async (plainPassword) => {
         const saltRounds = 10;
         return await bcrypt.hash(plainPassword, saltRounds);
@@ -19,15 +24,40 @@ const AuthService = {
         return await bcrypt.compare(plainPassword, hashedPassword);
     },
 
-    generateToken: (user) => {
+    generateAccessToken: (user) => {
         return jwt.sign(
             { id: user.id, role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            { expiresIn: ACCESS_EXPIRES_IN }
         );
     },
 
-    // ── Captcha ─────────────────────────────────────────────
+    // Alias tên cũ, một số chỗ vẫn gọi generateToken
+    generateToken: (user) => AuthService.generateAccessToken(user),
+
+    generateRefreshToken: (user) => {
+        const token = jwt.sign(
+            { id: user.id, type: 'refresh' },
+            REFRESH_SECRET,
+            { expiresIn: REFRESH_EXPIRES_IN }
+        );
+        // Lấy exp từ token để tính expires_at lưu DB
+        const decoded = jwt.decode(token);
+        return {
+            token,
+            tokenHash: hashToken(token),
+            expiresAt: new Date(decoded.exp * 1000),
+        };
+    },
+
+    // Cấp cặp access + refresh token, lưu hash refresh vào DB
+    _issueTokens: async (user) => {
+        const accessToken = AuthService.generateAccessToken(user);
+        const { token: refreshToken, tokenHash, expiresAt } = AuthService.generateRefreshToken(user);
+        await RefreshTokenRepository.create(user.id, tokenHash, expiresAt);
+        return { accessToken, refreshToken };
+    },
+
     _generateRandomString: (length) => {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let result = '';
@@ -42,8 +72,11 @@ const AuthService = {
         const question = AuthService._generateRandomString(length);
         const answer = question.toUpperCase();
 
+        // Băm đáp án với Hmac để tránh bị bot giải mã JWT đọc trộm
+        const answerHash = crypto.createHmac('sha256', process.env.JWT_SECRET).update(answer).digest('hex');
+
         const captchaToken = jwt.sign(
-            { answer },
+            { answerHash },
             process.env.JWT_SECRET,
             { expiresIn: '3m' }
         );
@@ -51,9 +84,7 @@ const AuthService = {
         return { question, captchaToken };
     },
 
-    // ── Đăng ký ─────────────────────────────────────────────
     register: async ({ full_name, email, password, phone, address }) => {
-        // Validate
         if (!email || !email.endsWith('@gmail.com')) {
             throw new AppError(400, 'Email bắt buộc phải là định dạng @gmail.com');
         }
@@ -64,7 +95,6 @@ const AuthService = {
             throw new AppError(400, 'Địa chỉ là bắt buộc');
         }
 
-        // Kiểm tra trùng
         const existingUser = await UserRepository.findByEmail(email);
         if (existingUser) {
             throw new AppError(409, 'Email này đã được sử dụng!');
@@ -74,7 +104,6 @@ const AuthService = {
             throw new AppError(409, 'Số điện thoại này đã được sử dụng!');
         }
 
-        // Hash & tạo
         const hashedPassword = await AuthService.hashPassword(password);
 
         try {
@@ -92,7 +121,6 @@ const AuthService = {
         }
     },
 
-    // ── Đăng nhập ───────────────────────────────────────────
     login: async (email, password) => {
         const user = await UserRepository.findByIdentifier(email);
         if (!user) {
@@ -104,10 +132,12 @@ const AuthService = {
             throw new AppError(401, 'Tài khoản hoặc mật khẩu không chính xác!');
         }
 
-        const token = AuthService.generateToken(user);
+        const { accessToken, refreshToken } = await AuthService._issueTokens(user);
 
         return {
-            token,
+            token: accessToken, // FE cũ đọc field 'token'
+            accessToken,
+            refreshToken,
             user: {
                 id: user.id,
                 full_name: user.full_name,
@@ -119,14 +149,62 @@ const AuthService = {
         };
     },
 
-    // ── Quên mật khẩu ───────────────────────────────────────
+    refreshAccessToken: async (refreshToken) => {
+        if (!refreshToken) {
+            throw new AppError(400, 'Thiếu refresh token!');
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(refreshToken, REFRESH_SECRET);
+        } catch (err) {
+            throw new AppError(401, 'Refresh token không hợp lệ hoặc đã hết hạn!');
+        }
+        if (decoded.type !== 'refresh') {
+            throw new AppError(401, 'Token không phải là refresh token!');
+        }
+
+        // Đối chiếu DB: phải tồn tại, chưa bị thu hồi, chưa hết hạn
+        const tokenHash = hashToken(refreshToken);
+        const stored = await RefreshTokenRepository.findByHash(tokenHash);
+        if (!stored || stored.revoked || new Date(stored.expires_at) < new Date()) {
+            throw new AppError(401, 'Refresh token không hợp lệ hoặc đã bị thu hồi!');
+        }
+
+        const user = await UserRepository.findById(decoded.id);
+        if (!user) {
+            throw new AppError(401, 'Tài khoản không còn tồn tại!');
+        }
+
+        // Rotate: thu hồi token cũ rồi cấp cặp mới
+        await RefreshTokenRepository.revokeByHash(tokenHash);
+        const tokens = await AuthService._issueTokens(user);
+
+        return {
+            token: tokens.accessToken,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+        };
+    },
+
+    logout: async (refreshToken) => {
+        if (refreshToken) {
+            await RefreshTokenRepository.revokeByHash(hashToken(refreshToken));
+        }
+        return { message: 'Đăng xuất thành công!' };
+    },
+
     _verifyCaptcha: (captchaAnswer, captchaToken) => {
         if (!captchaToken || captchaAnswer === undefined || captchaAnswer === '') {
             throw new AppError(400, 'Vui lòng hoàn thành mã Captcha!');
         }
         try {
             const decoded = jwt.verify(captchaToken, process.env.JWT_SECRET);
-            if (captchaAnswer.trim().toUpperCase() !== decoded.answer) {
+            const userAnswerHash = crypto.createHmac('sha256', process.env.JWT_SECRET)
+                .update(captchaAnswer.trim().toUpperCase())
+                .digest('hex');
+
+            if (userAnswerHash !== decoded.answerHash) {
                 throw new AppError(400, 'Mã Captcha không chính xác!');
             }
         } catch (err) {
@@ -136,7 +214,7 @@ const AuthService = {
     },
 
     _sendOTPEmail: async (email, otp) => {
-        // Test mode: chưa cấu hình Gmail
+        // Chưa cấu hình Gmail thì in OTP ra console để test
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
             console.log(`\n======================================================`);
             console.log(`[TEST MODE] OTP khôi phục mật khẩu cho ${email} là: ${otp}`);
@@ -181,16 +259,14 @@ const AuthService = {
             throw new AppError(400, 'Vui lòng nhập email của bạn!');
         }
 
-        // Verify captcha
         AuthService._verifyCaptcha(captchaAnswer, captchaToken);
 
-        // Tìm user
         const user = await UserRepository.findByEmail(email);
         if (!user) {
             throw new AppError(404, 'Không tìm thấy tài khoản nào liên kết với email này!');
         }
 
-        // Tạo OTP 6 số, hết hạn 5 phút
+        // OTP 6 số, hết hạn 5 phút
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 5 * 60 * 1000);
 
@@ -209,19 +285,16 @@ const AuthService = {
         return { message: 'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến!' };
     },
 
-    // ── Đặt lại mật khẩu ─────────────────────────────────────
     resetPassword: async (email, otp, newPassword) => {
         if (!email || !otp || !newPassword) {
             throw new AppError(400, 'Vui lòng điền đầy đủ các thông tin bắt buộc!');
         }
 
-        // Tìm user
         const user = await UserRepository.findByEmail(email);
         if (!user) {
             throw new AppError(404, 'Không tìm thấy tài khoản tương ứng!');
         }
 
-        // Kiểm tra OTP
         if (!user.otp_code || user.otp_code !== otp) {
             throw new AppError(400, 'Mã xác nhận (OTP) không chính xác!');
         }
@@ -232,7 +305,6 @@ const AuthService = {
             throw new AppError(400, 'Mã OTP đã hết hiệu lực, vui lòng lấy mã mới!');
         }
 
-        // Hash & cập nhật
         const hashedPassword = await AuthService.hashPassword(newPassword);
         await UserRepository.resetPasswordWithOTP(email, hashedPassword);
 

@@ -2,8 +2,6 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow, mapRowInternal } = require('../models/userModel');
 
-// REPOSITORY = tầng truy cập dữ liệu: CHỈ chứa SQL thuần cho bảng users.
-// Không chứa business logic, không xử lý req/res.
 const UserRepository = {
     findPaginated: async (page = 1, limit = 10, search = '') => {
         const offset = (page - 1) * limit;
@@ -50,13 +48,13 @@ const UserRepository = {
         return mapRow(result.rows[0]);
     },
 
-    // Dùng cho auth: trả về toàn bộ row (gồm password_hash) để xác thực.
+    // Trả cả password_hash để auth so sánh mật khẩu
     findByEmail: async (email) => {
         const result = await pool.query(`SELECT * FROM ${TABLE} WHERE email = $1`, [email]);
         return mapRowInternal(result.rows[0]);
     },
 
-    // Dùng cho login: tìm bằng email hoặc số điện thoại.
+    // Login bằng email hoặc số điện thoại
     findByIdentifier: async (identifier) => {
         const result = await pool.query(
             `SELECT * FROM ${TABLE} WHERE email = $1 OR phone = $1`,
@@ -89,7 +87,6 @@ const UserRepository = {
         return mapRow(result.rows[0]);
     },
 
-    // Auth helpers
     updateOTP: async (email, otp, expires) => {
         const result = await pool.query(
             `UPDATE ${TABLE} SET otp_code = $1, otp_expires = $2 WHERE email = $3 RETURNING id`,

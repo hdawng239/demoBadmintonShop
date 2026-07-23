@@ -1,25 +1,25 @@
 const asyncHandler = require('../utils/asyncHandler');
 const VariantService = require('../services/variantService');
+const { sendSuccess } = require('../utils/response');
 
-// CONTROLLER = chỉ đọc dữ liệu từ request, gọi service, trả response.
 const getVariantsByProduct = asyncHandler(async (req, res) => {
     const variants = await VariantService.getVariantsByProduct(req.params.productId);
-    res.status(200).json({ data: variants });
+    sendSuccess(res, { data: variants });
 });
 
 const createVariant = asyncHandler(async (req, res) => {
     const newVariant = await VariantService.createVariant(req.body);
-    res.status(201).json({ message: 'Đã thêm phân loại', data: newVariant });
+    sendSuccess(res, { statusCode: 201, message: 'Đã thêm phân loại', data: newVariant });
 });
 
 const updateVariant = asyncHandler(async (req, res) => {
     const updated = await VariantService.updateVariant(req.params.id, req.body);
-    res.status(200).json({ message: 'Đã cập nhật phân loại', data: updated });
+    sendSuccess(res, { message: 'Đã cập nhật phân loại', data: updated });
 });
 
 const deleteVariant = asyncHandler(async (req, res) => {
     const deleted = await VariantService.deleteVariant(req.params.id);
-    res.status(200).json({ message: 'Đã xóa phân loại', data: deleted });
+    sendSuccess(res, { message: 'Đã xóa phân loại', data: deleted });
 });
 
 module.exports = { getVariantsByProduct, createVariant, updateVariant, deleteVariant };

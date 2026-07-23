@@ -79,6 +79,22 @@ const CartRepository = {
         );
         return CartItemModel.mapRow(result.rows[0]);
     },
+
+    findCartById: async (id) => {
+        const result = await pool.query(
+            `SELECT * FROM ${CartModel.TABLE} WHERE id = $1`,
+            [id]
+        );
+        return CartModel.mapRow(result.rows[0]);
+    },
+
+    findItemById: async (id) => {
+        const result = await pool.query(
+            `SELECT ci.*, c.user_id FROM ${CartItemModel.TABLE} ci JOIN ${CartModel.TABLE} c ON ci.cart_id = c.id WHERE ci.id = $1`,
+            [id]
+        );
+        return result.rows[0] || null;
+    },
 };
 
 module.exports = CartRepository;

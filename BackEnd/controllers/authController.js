@@ -1,33 +1,43 @@
 const asyncHandler = require('../utils/asyncHandler');
 const AuthService = require('../services/authService');
+const { sendSuccess } = require('../utils/response');
 
-// CONTROLLER = chỉ đọc dữ liệu từ request, gọi service, trả response.
-// Không chứa business logic, không truy cập DB trực tiếp.
+// Auth trả nhiều field ở top-level (token, user...) mà FE đang đọc nên giữ qua legacy
 const register = asyncHandler(async (req, res) => {
     const newUser = await AuthService.register(req.body);
-    res.status(201).json({ message: 'Đăng ký tài khoản thành công!', data: newUser });
+    sendSuccess(res, { statusCode: 201, message: 'Đăng ký tài khoản thành công!', data: newUser });
 });
 
 const login = asyncHandler(async (req, res) => {
     const result = await AuthService.login(req.body.email, req.body.password);
-    res.status(200).json({ message: 'Đăng nhập thành công!', ...result });
+    sendSuccess(res, { message: 'Đăng nhập thành công!', data: result, legacy: result });
 });
 
 const getCaptcha = asyncHandler(async (req, res) => {
     const result = AuthService.getCaptcha();
-    res.status(200).json(result);
+    sendSuccess(res, { data: result, legacy: result });
 });
 
 const forgotPassword = asyncHandler(async (req, res) => {
     const { email, captchaAnswer, captchaToken } = req.body;
     const result = await AuthService.forgotPassword(email, captchaAnswer, captchaToken);
-    res.status(200).json(result);
+    sendSuccess(res, { message: result.message, data: result, legacy: result });
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
     const { email, otp, newPassword } = req.body;
     const result = await AuthService.resetPassword(email, otp, newPassword);
-    res.status(200).json(result);
+    sendSuccess(res, { message: result.message, data: result, legacy: result });
 });
 
-module.exports = { register, login, getCaptcha, forgotPassword, resetPassword };
+const refreshToken = asyncHandler(async (req, res) => {
+    const result = await AuthService.refreshAccessToken(req.body.refreshToken);
+    sendSuccess(res, { message: 'Làm mới token thành công!', data: result, legacy: result });
+});
+
+const logout = asyncHandler(async (req, res) => {
+    const result = await AuthService.logout(req.body.refreshToken);
+    sendSuccess(res, { message: result.message, data: result, legacy: result });
+});
+
+module.exports = { register, login, getCaptcha, forgotPassword, resetPassword, refreshToken, logout };

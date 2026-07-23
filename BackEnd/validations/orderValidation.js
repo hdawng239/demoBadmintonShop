@@ -1,6 +1,6 @@
 const validateOrderCreate = (data) => {
     const errors = [];
-    if (!data.user_id) errors.push("Thiếu mã người dùng (user_id)");
+    // user_id KHÔNG kiểm tra ở đây: server tự lấy từ token (req.user.id), không tin client gửi.
     if (!data.shipping_name) errors.push("Tên người nhận không được trống");
     if (!data.shipping_phone) errors.push("Số điện thoại nhận hàng không được trống");
     if (!data.shipping_address) errors.push("Địa chỉ giao hàng không được trống");
