@@ -214,12 +214,14 @@ const AuthService = {
     },
 
     _sendOTPEmail: async (email, otp) => {
-        // Chưa cấu hình Gmail thì in OTP ra console để test
+        // Chưa cấu hình Gmail thì in OTP ra console để test (chỉ trong môi trường dev)
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-            console.log(`\n======================================================`);
-            console.log(`[TEST MODE] OTP khôi phục mật khẩu cho ${email} là: ${otp}`);
-            console.log(`======================================================\n`);
-            return { testMode: true, otp };
+            if (process.env.NODE_ENV !== 'production') {
+                console.log(`\n======================================================`);
+                console.log(`[DEV TEST MODE] OTP khôi phục mật khẩu cho ${email} là: ${otp}`);
+                console.log(`======================================================\n`);
+            }
+            return { sent: false };
         }
 
         const transporter = nodemailer.createTransport({
@@ -251,7 +253,7 @@ const AuthService = {
         };
 
         await transporter.sendMail(mailOptions);
-        return { testMode: false };
+        return { sent: true };
     },
 
     forgotPassword: async (email, captchaAnswer, captchaToken) => {
@@ -272,15 +274,7 @@ const AuthService = {
 
         await UserRepository.updateOTP(email, otp, expires);
 
-        const result = await AuthService._sendOTPEmail(email, otp);
-
-        if (result.testMode) {
-            return {
-                message: 'Mã OTP đã được tạo (Chế độ thử nghiệm: chưa cấu hình Gmail trong .env).',
-                testMode: true,
-                otp: result.otp,
-            };
-        }
+        await AuthService._sendOTPEmail(email, otp);
 
         return { message: 'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến!' };
     },

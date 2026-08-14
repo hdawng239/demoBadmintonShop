@@ -77,7 +77,7 @@ const OrderRepository = {
         return result.rows;
     },
 
-    // Transaction: tạo đơn hàng + items + trừ kho + tăng lượt dùng voucher
+    // Transaction: tạo đơn hàng + items + trừ kho + tăng lượt dùng voucher + tính toán giá an toàn từ DB
     createWithItems: async (orderData, cartItems) => {
         const client = await pool.connect();
         try {
@@ -87,43 +87,21 @@ const OrderRepository = {
             const defaultDistrictId = process.env.SHOP_DISTRICT_ID || null;
             const defaultWardCode = process.env.SHOP_WARD_CODE || null;
 
-            // 1. Insert order
-            const insertOrderQuery = `
-                INSERT INTO ${TABLE} (user_id, payment_method, total_amount, shipping_name, shipping_phone, shipping_address, to_district_id, to_ward_code, voucher_code, discount_amount)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
-            `;
-            const orderValues = [
-                orderData.user_id, orderData.payment_method, orderData.total_amount,
-                orderData.shipping_name, orderData.shipping_phone, orderData.shipping_address,
-                orderData.to_district_id || defaultDistrictId,
-                orderData.to_ward_code || defaultWardCode,
-                orderData.voucher_code || null, parseFloat(orderData.discount_amount || 0),
-            ];
-            const orderResult = await client.query(insertOrderQuery, orderValues);
-            const newOrderId = orderResult.rows[0].id;
-
-            // 1b. Tăng used_count voucher
-            if (orderData.voucher_code) {
-                await client.query(
-                    'UPDATE vouchers SET used_count = used_count + 1 WHERE UPPER(code) = UPPER($1)',
-                    [orderData.voucher_code]
-                );
-            }
-
-            // 2. Insert order_items và trừ kho
+            // 1. Kiểm tra tồn kho, active, lấy giá chuẩn từ DB và trừ kho
             const checkStockQuery = `
-                SELECT pv.variant_name, pv.stock_quantity, p.is_active, p.name AS product_name
+                SELECT pv.id, pv.variant_name, pv.stock_quantity, pv.price_modifier,
+                       p.base_price, p.is_active, p.name AS product_name
                 FROM product_variants pv
                 JOIN products p ON pv.product_id = p.id
                 WHERE pv.id = $1 FOR UPDATE
             `;
             const updateStockQuery = 'UPDATE product_variants SET stock_quantity = stock_quantity - $1 WHERE id = $2';
-            const insertItemsQuery = `
-                INSERT INTO order_items (order_id, variant_id, quantity, price_at_time)
-                VALUES ($1, $2, $3, $4)
-            `;
+
+            const preparedItems = [];
+            let subtotal = 0;
 
             for (const item of cartItems) {
+                const quantity = parseInt(item.quantity) || 1;
                 const stockRes = await client.query(checkStockQuery, [item.variant_id]);
                 if (stockRes.rows.length === 0) {
                     throw new Error(`Sản phẩm phân loại ID ${item.variant_id} không tồn tại.`);
@@ -134,12 +112,116 @@ const OrderRepository = {
                     throw new Error(`Sản phẩm "${variantInfo.product_name}" đã ngừng kinh doanh.`);
                 }
 
-                if (variantInfo.stock_quantity < item.quantity) {
+                if (variantInfo.stock_quantity < quantity) {
                     throw new Error(`Sản phẩm "${variantInfo.product_name} (${variantInfo.variant_name})" chỉ còn ${variantInfo.stock_quantity} cái.`);
                 }
 
-                await client.query(updateStockQuery, [item.quantity, item.variant_id]);
-                await client.query(insertItemsQuery, [newOrderId, item.variant_id, item.quantity, item.price]);
+                // Tính giá thật từ DB: base_price + price_modifier
+                const basePrice = parseFloat(variantInfo.base_price) || 0;
+                const priceModifier = parseFloat(variantInfo.price_modifier) || 0;
+                const trueItemPrice = Math.max(0, basePrice + priceModifier);
+
+                subtotal += trueItemPrice * quantity;
+                preparedItems.push({
+                    variant_id: item.variant_id,
+                    quantity,
+                    price_at_time: trueItemPrice,
+                });
+
+                await client.query(updateStockQuery, [quantity, item.variant_id]);
+            }
+
+            // 2. Kiểm tra và áp dụng Voucher (nếu có)
+            let actualDiscountAmount = 0;
+            let validVoucherCode = null;
+
+            if (orderData.voucher_code && String(orderData.voucher_code).trim() !== '') {
+                const voucherCodeClean = String(orderData.voucher_code).trim().toUpperCase();
+                const voucherRes = await client.query(
+                    'SELECT * FROM vouchers WHERE UPPER(code) = UPPER($1) FOR UPDATE',
+                    [voucherCodeClean]
+                );
+
+                if (voucherRes.rows.length === 0) {
+                    throw new Error('Mã giảm giá không tồn tại.');
+                }
+
+                const voucher = voucherRes.rows[0];
+                if (!voucher.is_active) {
+                    throw new Error('Mã giảm giá hiện tại đang bị khóa.');
+                }
+
+                const now = new Date();
+                if (now < new Date(voucher.start_date)) {
+                    throw new Error('Mã giảm giá chưa đến thời gian áp dụng.');
+                }
+                if (now > new Date(voucher.end_date)) {
+                    throw new Error('Mã giảm giá đã hết hạn sử dụng.');
+                }
+
+                if (parseInt(voucher.used_count) >= parseInt(voucher.usage_limit)) {
+                    throw new Error('Mã giảm giá đã hết lượt sử dụng trên hệ thống.');
+                }
+
+                const minVal = parseFloat(voucher.min_order_value || 0);
+                if (subtotal < minVal) {
+                    throw new Error(`Đơn hàng tối thiểu phải đạt ${minVal.toLocaleString()} ₫ để áp dụng mã giảm giá này.`);
+                }
+
+                const discountVal = parseFloat(voucher.discount_value);
+                if (voucher.discount_type === 'fixed' || voucher.discount_type === 'shipping') {
+                    actualDiscountAmount = discountVal;
+                } else if (voucher.discount_type === 'percentage') {
+                    actualDiscountAmount = subtotal * (discountVal / 100);
+                    if (voucher.max_discount) {
+                        const maxD = parseFloat(voucher.max_discount);
+                        if (actualDiscountAmount > maxD) actualDiscountAmount = maxD;
+                    }
+                }
+
+                if (voucher.discount_type !== 'shipping' && actualDiscountAmount > subtotal) {
+                    actualDiscountAmount = subtotal;
+                }
+
+                validVoucherCode = voucher.code;
+
+                // Tăng lượt dùng voucher
+                await client.query(
+                    'UPDATE vouchers SET used_count = used_count + 1 WHERE id = $1',
+                    [voucher.id]
+                );
+            }
+
+            // 3. Tính toán tổng số tiền thanh toán thực tế
+            const finalTotalAmount = Math.max(0, subtotal - actualDiscountAmount);
+
+            // 4. Insert Order
+            const insertOrderQuery = `
+                INSERT INTO ${TABLE} (user_id, payment_method, total_amount, shipping_name, shipping_phone, shipping_address, to_district_id, to_ward_code, voucher_code, discount_amount)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+            `;
+            const orderValues = [
+                orderData.user_id,
+                orderData.payment_method || 'cod',
+                finalTotalAmount,
+                orderData.shipping_name,
+                orderData.shipping_phone,
+                orderData.shipping_address,
+                orderData.to_district_id || defaultDistrictId,
+                orderData.to_ward_code || defaultWardCode,
+                validVoucherCode,
+                actualDiscountAmount,
+            ];
+            const orderResult = await client.query(insertOrderQuery, orderValues);
+            const newOrderId = orderResult.rows[0].id;
+
+            // 5. Insert Order Items
+            const insertItemsQuery = `
+                INSERT INTO order_items (order_id, variant_id, quantity, price_at_time)
+                VALUES ($1, $2, $3, $4)
+            `;
+            for (const item of preparedItems) {
+                await client.query(insertItemsQuery, [newOrderId, item.variant_id, item.quantity, item.price_at_time]);
             }
 
             await client.query('COMMIT');

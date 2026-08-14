@@ -48,6 +48,12 @@ const UserRepository = {
         return mapRow(result.rows[0]);
     },
 
+    // Trả cả password_hash để xác thực đổi mật khẩu
+    findByIdInternal: async (id) => {
+        const result = await pool.query(`SELECT * FROM ${TABLE} WHERE id = $1`, [id]);
+        return mapRowInternal(result.rows[0]);
+    },
+
     // Trả cả password_hash để auth so sánh mật khẩu
     findByEmail: async (email) => {
         const result = await pool.query(`SELECT * FROM ${TABLE} WHERE email = $1`, [email]);

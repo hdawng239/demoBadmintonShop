@@ -17,7 +17,7 @@ const getUserById = asyncHandler(async (req, res) => {
 });
 
 const createUser = asyncHandler(async (req, res) => {
-    const newUser = await UserService.createUser(req.body);
+    const newUser = await UserService.createUser(req.body, req.user);
     sendSuccess(res, { statusCode: 201, message: 'Tạo tài khoản thành công', data: newUser });
 });
 

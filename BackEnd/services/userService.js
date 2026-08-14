@@ -14,7 +14,7 @@ const UserService = {
         return user;
     },
 
-    createUser: async (data) => {
+    createUser: async (data, currentUser) => {
         const { password, email, phone } = data;
 
         if (!email || !email.endsWith('@gmail.com')) {
@@ -39,9 +39,11 @@ const UserService = {
         }
 
         const hashedPassword = await AuthService.hashPassword(password);
+        // Chỉ admin mới được phép chỉ định role
+        const role = currentUser?.role === 'admin' && data.role ? data.role : 'customer';
 
         try {
-            return await UserRepository.create({ ...data, password: hashedPassword });
+            return await UserRepository.create({ ...data, role, password: hashedPassword });
         } catch (err) {
             if (err.code === '23505') throw new AppError(409, 'Email hoặc số điện thoại đã tồn tại!');
             throw err;
@@ -79,7 +81,7 @@ const UserService = {
                 if (!data.currentPassword) {
                     throw new AppError(400, 'Vui lòng cung cấp mật khẩu hiện tại để đổi mật khẩu mới!');
                 }
-                const user = await UserRepository.findByEmail(currentUser.email);
+                const user = await UserRepository.findByIdInternal(currentUser.id);
                 if (!user) throw new AppError(404, 'Tài khoản không tồn tại!');
                 const isMatch = await AuthService.comparePassword(data.currentPassword, user.password_hash);
                 if (!isMatch) {
