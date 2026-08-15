@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const EmailService = require('./emailService');
 const UserRepository = require('../repositories/userRepository');
 const RefreshTokenRepository = require('../repositories/refreshTokenRepository');
 const AppError = require('../utils/AppError');
@@ -213,49 +213,6 @@ const AuthService = {
         }
     },
 
-    _sendOTPEmail: async (email, otp) => {
-        // Chưa cấu hình Gmail thì in OTP ra console để test (chỉ trong môi trường dev)
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-            if (process.env.NODE_ENV !== 'production') {
-                console.log(`\n======================================================`);
-                console.log(`[DEV TEST MODE] OTP khôi phục mật khẩu cho ${email} là: ${otp}`);
-                console.log(`======================================================\n`);
-            }
-            return { sent: false };
-        }
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD,
-            },
-        });
-
-        const mailOptions = {
-            from: `"Cửa hàng Badminton Shop" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Mã xác nhận khôi phục mật khẩu',
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; max-width: 600px; margin: 0 auto; border-radius: 10px;">
-                    <h2 style="color: #ea580c; text-align: center; text-transform: uppercase;">Khôi Phục Mật Khẩu</h2>
-                    <p>Chào bạn,</p>
-                    <p>Bạn nhận được email này vì bạn (hoặc ai đó) đã gửi yêu cầu khôi phục mật khẩu tài khoản của mình trên hệ thống của chúng tôi.</p>
-                    <div style="background-color: #fff7ed; border: 1px dashed #ea580c; padding: 15px; text-align: center; margin: 20px 0; border-radius: 5px;">
-                        <span style="font-size: 24px; font-weight: bold; color: #ea580c; letter-spacing: 5px;">${otp}</span>
-                    </div>
-                    <p>Mã xác nhận (OTP) này có hiệu lực trong vòng <b>5 phút</b>. Sau thời gian này, mã sẽ không còn tác dụng.</p>
-                    <p>Nếu bạn không gửi yêu cầu này, vui lòng bỏ qua email và mật khẩu của bạn sẽ được giữ nguyên.</p>
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;"/>
-                    <p style="font-size: 12px; color: #888; text-align: center;">Đây là email tự động, vui lòng không phản hồi lại email này.</p>
-                </div>
-            `,
-        };
-
-        await transporter.sendMail(mailOptions);
-        return { sent: true };
-    },
-
     forgotPassword: async (email, captchaAnswer, captchaToken) => {
         if (!email) {
             throw new AppError(400, 'Vui lòng nhập email của bạn!');
@@ -274,7 +231,7 @@ const AuthService = {
 
         await UserRepository.updateOTP(email, otp, expires);
 
-        await AuthService._sendOTPEmail(email, otp);
+        await EmailService.sendOtpEmail(email, otp);
 
         return { message: 'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến!' };
     },

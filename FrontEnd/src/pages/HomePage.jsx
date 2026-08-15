@@ -107,8 +107,9 @@ const PRO_MARKETING_SERVICES = [
 ];
 
 const HomePage = () => {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [newArrivals, setNewArrivals] = useState([]);
+  const [rackets, setRackets] = useState([]);
+  const [shoes, setShoes] = useState([]);
+  const [accessories, setAccessories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Hero Slide State
@@ -134,16 +135,22 @@ const HomePage = () => {
     const fetchHomeData = async () => {
       setLoading(true);
       try {
-        const [prodRes] = await Promise.all([
-          productService.getAllProducts(1, 12)
+        const [racketRes, shoeRes, accRes] = await Promise.all([
+          productService.getAllProducts(1, 8, 1, null, null, null, null, 'newest'),
+          productService.getAllProducts(1, 8, 2, null, null, null, null, 'newest'),
+          productService.getAllProducts(1, 8, 5, null, null, null, null, 'newest'),
         ]);
 
-        const raw = prodRes?.products || prodRes?.data || prodRes || [];
-        const allProds = Array.isArray(raw) ? raw : (Array.isArray(prodRes?.data) ? prodRes.data : []);
-        setFeaturedProducts(allProds.slice(0, 8));
-        setNewArrivals(allProds.slice(4, 12));
+        const extractList = (res) => {
+          const raw = res?.products || res?.data || res || [];
+          return Array.isArray(raw) ? raw : (Array.isArray(res?.data) ? res.data : []);
+        };
+
+        setRackets(extractList(racketRes));
+        setShoes(extractList(shoeRes));
+        setAccessories(extractList(accRes));
       } catch (err) {
-        console.error('Lỗi tải trang chủ:', err);
+        console.error('Lỗi tải dữ liệu trang chủ:', err);
       } finally {
         setLoading(false);
       }
@@ -348,7 +355,7 @@ const HomePage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {featuredProducts.map((p) => (
+            {rackets.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
@@ -407,7 +414,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 5. New Arrivals Grid */}
+      {/* 5. Shoes Grid */}
       <section className="py-14 max-w-7xl mx-auto px-4 lg:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
@@ -415,7 +422,7 @@ const HomePage = () => {
               <Zap size={16} /> Mới Lên Kệ
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
-              Dụng Cụ Cầu Lông Mới Nhất
+              Giày Cầu Lông Chuyên Dụng Mới Nhất
             </h2>
           </div>
 
@@ -423,7 +430,7 @@ const HomePage = () => {
             to="/category/2"
             className="inline-flex items-center gap-1 text-sm font-bold text-zinc-800 dark:text-zinc-200 hover:text-[#ea580c] transition-colors"
           >
-            <span>Xem giày & phụ kiện</span>
+            <span>Xem tất cả giày</span>
             <ChevronRight size={16} />
           </Link>
         </div>
@@ -436,12 +443,50 @@ const HomePage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {newArrivals.map((p) => (
+            {shoes.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
         )}
       </section>
+
+      {/* 6. Accessories & String Grid */}
+      {accessories.length > 0 && (
+        <section className="py-14 max-w-7xl mx-auto px-4 lg:px-6 border-t border-zinc-100 dark:border-zinc-800/80">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-sky-600 dark:text-sky-400 mb-1">
+                <Sparkles size={16} /> Phụ Kiện & Cước Đan
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+                Túi Vợt, Cước & Phụ Kiện Chính Hãng
+              </h2>
+            </div>
+
+            <Link
+              to="/category/5"
+              className="inline-flex items-center gap-1 text-sm font-bold text-zinc-800 dark:text-zinc-200 hover:text-[#ea580c] transition-colors"
+            >
+              <span>Xem tất cả phụ kiện</span>
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-80 bg-zinc-200/60 dark:bg-zinc-800/60 rounded-3xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {accessories.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </MainLayout>
   );
 };
