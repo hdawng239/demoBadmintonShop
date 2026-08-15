@@ -1,6 +1,8 @@
 # 1. Thu muc cai dat & thu vien
 node_modules/
 **/node_modules/
+.vite/
+**/.vite/
 
 # 2. Thu muc build & sang loc dau ra
 dist/
@@ -23,7 +25,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# 5. File rac He thong, Database Dump & Trinh soan thao (IDE)
+# 5. File rac He thong, Database Dump, AI Agent & IDE
 *.sql
 .DS_Store
 Thumbs.db
@@ -35,5 +37,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
-
-FrontEnd/
+.agents/
+**/.agents/
+FEv2/
