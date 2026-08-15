@@ -306,9 +306,9 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Quick Mobile Category Carousel (Lướt nhanh danh mục trên điện thoại) */}
-      <div className="w-full max-w-full bg-white dark:bg-[#0f1015] border-b border-zinc-200/80 dark:border-zinc-800/80 py-3 px-4 overflow-x-auto scrollbar-none transition-colors">
-        <div className="inline-flex items-center gap-2 min-w-full sm:min-w-0">
+      {/* Quick Mobile Category Carousel (Chỉ dành riêng cho điện thoại - Ẩn trên máy tính) */}
+      <div className="md:hidden w-full max-w-full bg-white dark:bg-[#0f1015] border-b border-zinc-200/80 dark:border-zinc-800/80 py-3 px-4 overflow-x-auto scrollbar-none transition-colors">
+        <div className="inline-flex items-center gap-2 min-w-full">
           {QUICK_MOBILE_CATEGORIES.map((cat, i) => (
             <Link
               key={i}
