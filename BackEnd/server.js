@@ -19,6 +19,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const variantRoutes = require('./routes/variantRoutes');
 const voucherRoutes = require('./routes/voucherRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 const { notFoundHandler, errorHandler } = require('./middlewares/errorMiddleware');
 const { globalLimiter } = require('./middlewares/rateLimiter');
@@ -31,14 +32,22 @@ app.use(helmet()); // gắn ~12 HTTP security header (chống clickjacking, ẩn
 // Nếu không cấu hình -> cho phép tất cả (tiện cho dev), nên set ở production.
 const cors = require('cors');
 const allowedOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
+    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim().replace(/\/$/, ''))
     : null;
 app.use(cors({
     origin: (origin, callback) => {
-        // Cho phép request không có origin (Postman, mobile app, server-to-server).
-        if (!origin || !allowedOrigins) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error('Không được phép bởi CORS'));
+        // Cho phép request không có origin (Postman, server-to-server...) hoặc khi không set FRONTEND_URL
+        if (!origin || !allowedOrigins || allowedOrigins.includes('*')) return callback(null, true);
+        const cleanOrigin = origin.replace(/\/$/, '');
+        if (
+            allowedOrigins.includes(cleanOrigin) ||
+            cleanOrigin.includes('vercel.app') ||
+            cleanOrigin.includes('localhost') ||
+            cleanOrigin.includes('127.0.0.1')
+        ) {
+            return callback(null, true);
+        }
+        return callback(new Error('Không được phép bởi CORS: ' + origin));
     },
     credentials: true,
 }));
@@ -64,6 +73,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/variants', variantRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get('/', (req, res) => {
     res.json({ status: "ok", message: "API is running" });

@@ -1,14 +1,41 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import MainLayout from '../components/layout/MainLayout';
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const ContactPage = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    message: '',
+  });
+  const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSent(true);
-    setTimeout(() => setSent(false), 4000);
+    setLoading(true);
+    setError('');
+    setSent(false);
+
+    try {
+      await axios.post(`${API_BASE}/contact`, formData);
+      setSent(true);
+      setFormData({ name: '', phone: '', email: '', message: '' });
+      setTimeout(() => setSent(false), 6000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Có lỗi xảy ra khi gửi lời nhắn. Vui lòng thử lại sau!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,7 +77,13 @@ const ContactPage = () => {
 
             {sent && (
               <div className="p-3.5 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 rounded-xl text-xs text-lime-700 dark:text-lime-300 flex items-center gap-2">
-                <CheckCircle2 size={16} /> Cảm ơn bạn! Chúng tôi sẽ phản hồi sớm nhất có thể.
+                <CheckCircle2 size={16} /> Cảm ơn bạn! Chúng tôi đã nhận được lời nhắn và sẽ phản hồi sớm nhất có thể.
+              </div>
+            )}
+
+            {error && (
+              <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+                <AlertCircle size={16} /> {error}
               </div>
             )}
 
@@ -58,33 +91,55 @@ const ContactPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input 
                   required 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="Họ và tên *" 
                   className="px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
                 />
                 <input 
-                  required 
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
                   type="tel" 
-                  placeholder="Số điện thoại *" 
+                  placeholder="Số điện thoại" 
                   className="px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
                 />
               </div>
               <input 
                 required 
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 type="email" 
                 placeholder="Địa chỉ Email *" 
                 className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
               />
               <textarea 
                 required 
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
                 rows="4" 
                 placeholder="Nội dung lời nhắn..." 
                 className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
               />
               <button 
                 type="submit" 
-                className="px-6 py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
+                disabled={loading}
+                className="px-6 py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
               >
-                Gửi liên hệ
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Đang gửi...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={15} />
+                    <span>Gửi liên hệ</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
