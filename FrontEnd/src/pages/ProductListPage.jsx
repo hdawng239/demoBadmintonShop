@@ -406,77 +406,114 @@ const ProductListPage = () => {
             </div>
           </aside>
 
-          {/* Mobile Filter Modal */}
+          {/* Mobile Filter Modal / Drawer */}
           {isMobileFilterOpen && (
-            <div className="fixed inset-0 bg-black/60 z-50 flex justify-end lg:hidden animate-in fade-in duration-200">
-              <div className="w-80 bg-white dark:bg-[#12131a] h-full p-6 space-y-6 overflow-y-auto text-zinc-900 dark:text-white">
-                <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                  <h3 className="font-bold text-base">Bộ Lọc Sản Phẩm</h3>
-                  <button onClick={() => setIsMobileFilterOpen(false)} className="p-1 text-zinc-500 cursor-pointer">
-                    <X size={20} />
-                  </button>
-                </div>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex justify-end lg:hidden animate-in fade-in duration-200">
+              <div className="w-[85vw] max-w-sm bg-white dark:bg-[#12131a] h-full p-5 space-y-5 overflow-y-auto text-zinc-900 dark:text-white flex flex-col justify-between shadow-2xl">
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                    <h3 className="font-extrabold text-base flex items-center gap-2">
+                      <SlidersHorizontal size={17} className="text-[#ea580c]" /> Bộ Lọc Sản Phẩm
+                    </h3>
+                    <button 
+                      onClick={() => setIsMobileFilterOpen(false)} 
+                      className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
 
-                {activeSubGroup && (
+                  {activeSubGroup && (
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{activeSubGroup.title}</h4>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {activeSubGroup.options.map(opt => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              handleSubCategoryClick(opt.id);
+                              setIsMobileFilterOpen(false);
+                            }}
+                            className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                              String(categoryId) === String(opt.id) ? 'bg-[#ea580c] text-white shadow-xs' : 'text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700'
+                            }`}
+                          >
+                            {opt.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{activeSubGroup.title}</h4>
-                    <div className="space-y-1">
-                      {activeSubGroup.options.map(opt => (
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Thương hiệu</h4>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => { setSelectedBrand(''); setPage(1); }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          !selectedBrand 
+                            ? 'bg-[#ea580c] text-white border-[#ea580c]' 
+                            : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        Tất cả
+                      </button>
+                      {brands.map(b => {
+                        const isChecked = Boolean(selectedBrand) && (
+                          String(selectedBrand) === String(b.id) || 
+                          String(selectedBrand).toLowerCase() === String(b.name).toLowerCase()
+                        );
+                        return (
+                          <button
+                            key={b.id}
+                            onClick={() => { setSelectedBrand(String(b.id)); setPage(1); }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                              isChecked 
+                                ? 'bg-[#ea580c] text-white border-[#ea580c]' 
+                                : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                            }`}
+                          >
+                            {b.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Mức giá</h4>
+                    <div className="flex flex-col gap-1.5">
+                      {PRICE_RANGES.map((range, idx) => (
                         <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => {
-                            handleSubCategoryClick(opt.id);
-                            setIsMobileFilterOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold ${
-                            String(categoryId) === String(opt.id) ? 'bg-[#ea580c] text-white' : 'text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800'
+                          key={idx}
+                          onClick={() => { setSelectedPriceRange(range); setPage(1); }}
+                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                            selectedPriceRange.label === range.label
+                              ? 'bg-[#ea580c] text-white border-[#ea580c]'
+                              : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
                           }`}
                         >
-                          {opt.name}
+                          {range.label}
                         </button>
                       ))}
                     </div>
                   </div>
-                )}
-
-                <div className="space-y-2">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Thương hiệu</h4>
-                  <label className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 py-1">
-                    <input
-                      type="radio"
-                      name="m_brand"
-                      checked={!selectedBrand}
-                      onChange={() => { setSelectedBrand(''); setPage(1); setIsMobileFilterOpen(false); }}
-                    />
-                    <span>Tất cả thương hiệu</span>
-                  </label>
-                  {brands.map(b => (
-                    <label key={b.id} className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 py-1">
-                      <input
-                        type="radio"
-                        name="m_brand"
-                        checked={String(selectedBrand) === String(b.id) || String(selectedBrand).toLowerCase() === String(b.name).toLowerCase()}
-                        onChange={() => { setSelectedBrand(String(b.id)); setPage(1); setIsMobileFilterOpen(false); }}
-                      />
-                      <span>{b.name}</span>
-                    </label>
-                  ))}
                 </div>
 
-                <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Mức giá</h4>
-                  {PRICE_RANGES.map((range, idx) => (
-                    <label key={idx} className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 py-1">
-                      <input
-                        type="radio"
-                        name="m_price"
-                        checked={selectedPriceRange.label === range.label}
-                        onChange={() => { setSelectedPriceRange(range); setPage(1); setIsMobileFilterOpen(false); }}
-                      />
-                      <span>{range.label}</span>
-                    </label>
-                  ))}
+                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-2">
+                  <button
+                    onClick={() => { handleResetFilters(); setIsMobileFilterOpen(false); }}
+                    className="flex-1 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    Đặt lại
+                  </button>
+                  <button
+                    onClick={() => setIsMobileFilterOpen(false)}
+                    className="flex-1 py-2.5 bg-[#ea580c] text-white text-xs font-bold rounded-xl shadow-md shadow-orange-500/25 cursor-pointer"
+                  >
+                    Áp dụng
+                  </button>
                 </div>
               </div>
             </div>
@@ -485,14 +522,14 @@ const ProductListPage = () => {
           {/* Product Listing Main Area */}
           <main className="lg:col-span-9">
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="h-80 bg-zinc-200/60 dark:bg-zinc-800/60 rounded-3xl animate-pulse" />
+                  <div key={i} className="h-64 sm:h-80 bg-zinc-200/60 dark:bg-zinc-800/60 rounded-2xl sm:rounded-3xl animate-pulse" />
                 ))}
               </div>
             ) : products.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
                   {products.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

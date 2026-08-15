@@ -405,6 +405,34 @@ const Header = () => {
           </div>
 
         </div>
+
+        {/* Mobile Quick Search Bar (Dành riêng cho điện thoại) */}
+        <div className="md:hidden pt-2.5 pb-0.5">
+          <form onSubmit={handleSearch} className="flex items-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-300/80 dark:border-zinc-700/80 rounded-full pl-3 pr-1 py-1 focus-within:border-[#ea580c] transition-all shadow-xs">
+            <Search size={15} className="text-zinc-400 shrink-0" />
+            <input
+              type="text"
+              placeholder="Tìm vợt, giày, cước, phụ kiện..."
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              className="w-full bg-transparent px-2.5 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => navigate('/search-image')}
+              className="p-1.5 text-zinc-400 hover:text-[#ea580c] rounded-full transition-colors shrink-0 cursor-pointer"
+              title="Tìm bằng hình ảnh AI"
+            >
+              <Camera size={15} />
+            </button>
+            <button
+              type="submit"
+              className="ml-1 px-3 py-1 bg-[#ea580c] text-white text-[11px] font-bold rounded-full transition-colors shrink-0 uppercase tracking-wider cursor-pointer"
+            >
+              Tìm
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* 3. Category Strip (Desktop Mega Navigation + Slide Transition) */}

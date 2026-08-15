@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import BottomNav from './BottomNav';
 import ChatBot from '../common/ChatBot';
 import { themeService } from '../../services/themeService';
 
@@ -54,10 +55,11 @@ const MainLayout = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fb] dark:bg-[#0b0c10] text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
       <Header />
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full pb-16 md:pb-0">
         {children}
       </main>
       <Footer />
+      <BottomNav />
       <ChatBot />
     </div>
   );

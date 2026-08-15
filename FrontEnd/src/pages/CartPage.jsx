@@ -579,6 +579,42 @@ const CartPage = () => {
           </div>
         )}
       </div>
+
+      {/* Mobile Sticky Bottom Checkout Bar */}
+      {items.length > 0 && (
+        <div className="md:hidden fixed bottom-[52px] left-0 right-0 z-30 bg-white/95 dark:bg-[#12131a]/95 backdrop-blur-xl border-t border-zinc-200/80 dark:border-zinc-800/80 p-2.5 px-4 flex items-center justify-between gap-3 shadow-[0_-4px_25px_rgba(0,0,0,0.12)]">
+          <button 
+            onClick={handleToggleSelectAll}
+            className="flex items-center gap-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer select-none"
+          >
+            <input
+              type="checkbox"
+              checked={selectedIds.size === items.length && items.length > 0}
+              onChange={() => {}}
+              className="w-4 h-4 accent-[#ea580c] rounded cursor-pointer"
+            />
+            <span>Tất cả ({items.length})</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Tổng thanh toán:</p>
+              <p className="text-sm font-black text-[#ea580c] leading-tight">
+                {finalTotal.toLocaleString('vi-VN')} ₫
+              </p>
+            </div>
+
+            <button
+              onClick={handleProceedToCheckout}
+              disabled={selectedItems.length === 0}
+              className="px-4 py-2.5 bg-[#ea580c] hover:bg-[#c2410c] disabled:opacity-40 text-white text-xs font-extrabold uppercase tracking-wider rounded-xl shadow-md shadow-orange-500/25 flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+            >
+              <span>Mua ({selectedItems.length})</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

@@ -656,8 +656,8 @@ const ProductDetailPage = () => {
         {/* Section 4: Related Products */}
         {relatedProducts.length > 0 && (
           <div className="space-y-6">
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">Sản phẩm cùng phân khúc</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+            <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white tracking-tight">Sản phẩm cùng phân khúc</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
               {relatedProducts.map(p => (
                 <ProductCard key={p.id} product={p} />
               ))}
@@ -666,6 +666,40 @@ const ProductDetailPage = () => {
         )}
 
       </div>
+
+      {/* Mobile Sticky Bottom Action Bar */}
+      {product && (
+        <div className="md:hidden fixed bottom-[52px] left-0 right-0 z-30 bg-white/95 dark:bg-[#12131a]/95 backdrop-blur-xl border-t border-zinc-200/80 dark:border-zinc-800/80 p-2.5 px-3 flex items-center gap-2 shadow-[0_-4px_25px_rgba(0,0,0,0.12)]">
+          <button
+            onClick={() => handleFavoriteClick()}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
+              isFavorite 
+                ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-200 text-rose-500' 
+                : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500'
+            }`}
+            title="Yêu thích"
+          >
+            <Heart size={18} className={isFavorite ? 'fill-current' : ''} />
+          </button>
+
+          <button
+            onClick={() => handleAddToCart(false)}
+            disabled={product.is_active === false || (selectedVariant && selectedVariant.stock_quantity <= 0)}
+            className="flex-1 py-2.5 bg-zinc-900 dark:bg-zinc-800 hover:bg-zinc-800 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+          >
+            <ShoppingBag size={15} />
+            <span>Thêm giỏ</span>
+          </button>
+
+          <button
+            onClick={() => handleAddToCart(true)}
+            disabled={product.is_active === false || (selectedVariant && selectedVariant.stock_quantity <= 0)}
+            className="flex-1 py-2.5 bg-[#ea580c] hover:bg-[#c2410c] text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-orange-500/25 transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            <span>Mua ngay</span>
+          </button>
+        </div>
+      )}
     </MainLayout>
   );
 };
