@@ -24,6 +24,13 @@
     --text-muted: #94a3b8;
   }
 
+  html, body, #root {
+    max-width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
+  }
+
   body {
     font-family: var(--font-primary);
     -webkit-font-smoothing: antialiased;

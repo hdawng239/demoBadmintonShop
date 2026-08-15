@@ -104,9 +104,9 @@ const AdminLayout = ({ children }) => {
       <aside className={`fixed md:sticky top-0 left-0 h-screen bg-[#121318] text-zinc-300 flex flex-col z-40 transition-all duration-300 ease-in-out border-r border-zinc-800/80 shadow-2xl ${
         isMobileOpen 
           ? 'translate-x-0 w-64' 
-          : isCollapsed 
-          ? '-translate-x-full md:w-0 md:opacity-0 md:pointer-events-none' 
-          : 'translate-x-0 w-64'
+          : '-translate-x-full md:translate-x-0'
+      } ${
+        isCollapsed ? 'md:w-0 md:opacity-0 md:pointer-events-none' : 'w-64'
       }`}>
         
         {/* Brand Header */}

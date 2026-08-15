@@ -80,9 +80,9 @@ const BottomNav = () => {
     },
     {
       name: currentUser ? 'Tài khoản' : 'Đăng nhập',
-      path: currentUser ? (currentUser.role === 'admin' ? '/admin' : '/profile') : '/login',
+      path: currentUser ? '/profile' : '/login',
       icon: User,
-      isActive: ['/profile', '/login', '/register', '/my-orders', '/admin'].includes(location.pathname),
+      isActive: ['/profile', '/login', '/register', '/my-orders'].includes(location.pathname),
     },
   ];
 

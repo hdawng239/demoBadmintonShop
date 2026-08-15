@@ -263,8 +263,8 @@ const Header = () => {
             </form>
           </div>
 
-          {/* Action Icons (Wishlist, Cart, Theme Toggle, Single Arrow Toggle, User) */}
-          <div className="flex items-center space-x-2 sm:space-x-3.5">
+          {/* Action Icons Desktop (Wishlist, Cart, Theme Toggle, Single Arrow Toggle, User) */}
+          <div className="hidden md:flex items-center space-x-2 sm:space-x-3.5">
             
             {/* Wishlist Button */}
             <Link
@@ -306,7 +306,7 @@ const Header = () => {
             {/* Single Elegant Header Collapse Arrow Button (Desktop) */}
             <button
               onClick={toggleHeaderCollapse}
-              className="hidden md:flex p-2 text-zinc-500 dark:text-zinc-400 hover:text-[#ea580c] dark:hover:text-[#ea580c] hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-full border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer shadow-xs"
+              className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-[#ea580c] dark:hover:text-[#ea580c] hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-full border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer shadow-xs"
               title={isHeaderCollapsed ? "Mở rộng thanh menu điều hướng" : "Thu gọn thanh menu (Tối ưu không gian Laptop)"}
             >
               {isHeaderCollapsed ? (
@@ -316,7 +316,7 @@ const Header = () => {
               )}
             </button>
 
-            {/* User Account / Auth */}
+            {/* User Account / Auth Desktop */}
             <div className="relative">
               {currentUser ? (
                 <button
@@ -341,7 +341,7 @@ const Header = () => {
                 </Link>
               )}
 
-              {/* User Dropdown Menu */}
+              {/* User Dropdown Menu Desktop */}
               {isUserMenuOpen && currentUser && (
                 <div 
                   className="absolute right-0 mt-2 w-52 bg-white dark:bg-[#121318] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-xs"
@@ -394,11 +394,23 @@ const Header = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Action Icons Mobile (Theme Toggle + Hamburger) */}
+          <div className="flex md:hidden items-center gap-1.5 shrink-0">
+            {/* Theme Toggle Icon Button */}
+            <button
+              onClick={handleToggleTheme}
+              className="p-2 text-zinc-600 dark:text-zinc-300 hover:text-[#ea580c] dark:hover:text-white rounded-full transition-colors cursor-pointer"
+              title={theme === 'dark' ? 'Giao diện Sáng' : 'Giao diện Tối'}
+            >
+              {theme === 'dark' ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-sky-500" />}
+            </button>
 
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
+              className="p-2 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
             >
               {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -407,7 +419,7 @@ const Header = () => {
         </div>
 
         {/* Mobile Quick Search Bar (Dành riêng cho điện thoại) */}
-        <div className="md:hidden pt-2.5 pb-0.5">
+        <div className="md:hidden pt-2 pb-0.5">
           <form onSubmit={handleSearch} className="flex items-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-300/80 dark:border-zinc-700/80 rounded-full pl-3 pr-1 py-1 focus-within:border-[#ea580c] transition-all shadow-xs">
             <Search size={15} className="text-zinc-400 shrink-0" />
             <input

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
-import { User, Lock, Phone, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Lock, Phone, Mail, CheckCircle2, AlertCircle, SlidersHorizontal, ArrowRight } from 'lucide-react';
 
 const ProfilePage = () => {
   const currentUser = authService.getCurrentUser();
@@ -68,9 +69,27 @@ const ProfilePage = () => {
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight mb-8">
-          Tài Khoản Của Tôi
-        </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+              Tài Khoản Của Tôi
+            </h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Quản lý thông tin hồ sơ và mật khẩu tài khoản
+            </p>
+          </div>
+
+          {currentUser?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-900 dark:bg-zinc-800 hover:bg-[#ea580c] dark:hover:bg-[#ea580c] text-white text-xs font-bold rounded-2xl shadow-sm transition-colors self-start sm:self-auto"
+            >
+              <SlidersHorizontal size={15} />
+              <span>Vào Trang Quản Trị Admin</span>
+              <ArrowRight size={14} />
+            </Link>
+          )}
+        </div>
 
         {msg.text && (
           <div className={`p-4 rounded-2xl text-xs flex items-center gap-2 mb-6 border ${

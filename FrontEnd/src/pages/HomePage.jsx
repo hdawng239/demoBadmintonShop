@@ -307,8 +307,8 @@ const HomePage = () => {
       </section>
 
       {/* Quick Mobile Category Carousel (Lướt nhanh danh mục trên điện thoại) */}
-      <div className="bg-white dark:bg-[#0f1015] border-b border-zinc-200/80 dark:border-zinc-800/80 py-3.5 px-4 overflow-x-auto scrollbar-none transition-colors">
-        <div className="flex items-center gap-2 max-w-7xl mx-auto min-w-max">
+      <div className="w-full max-w-full bg-white dark:bg-[#0f1015] border-b border-zinc-200/80 dark:border-zinc-800/80 py-3 px-4 overflow-x-auto scrollbar-none transition-colors">
+        <div className="inline-flex items-center gap-2 min-w-full sm:min-w-0">
           {QUICK_MOBILE_CATEGORIES.map((cat, i) => (
             <Link
               key={i}
