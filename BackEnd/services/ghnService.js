@@ -20,16 +20,18 @@ const GHNService = {
     },
 
     getDistricts: async (provinceId) => {
-        const response = await axios.get(
-            `${GHN_API_URL}/master-data/district?province_id=${provinceId}`,
+        const response = await axios.post(
+            `${GHN_API_URL}/master-data/district`,
+            { province_id: parseInt(provinceId) },
             { headers: getHeaders() }
         );
         return response.data;
     },
 
     getWards: async (districtId) => {
-        const response = await axios.get(
-            `${GHN_API_URL}/master-data/ward?district_id=${districtId}`,
+        const response = await axios.post(
+            `${GHN_API_URL}/master-data/ward`,
+            { district_id: parseInt(districtId) },
             { headers: getHeaders() }
         );
         return response.data;

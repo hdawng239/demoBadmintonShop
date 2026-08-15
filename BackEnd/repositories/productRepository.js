@@ -3,32 +3,65 @@ const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/productModel');
 
 const ProductRepository = {
-    findPaginated: async (page, limit, categoryId, brandId, keyword) => {
+    findPaginated: async (page = 1, limit = 12, categoryId = null, brandId = null, keyword = null, minPrice = null, maxPrice = null, sortBy = 'newest', isActive = true) => {
         const offset = (page - 1) * limit;
         const whereClauses = [];
         const queryParams = [];
 
+        // Lọc theo trạng thái kinh doanh (Ẩn / Hiện). Nếu isActive = null => Admin lấy toàn bộ
+        if (isActive !== null && isActive !== undefined) {
+            const idx = queryParams.length + 1;
+            whereClauses.push(`p.is_active = $${idx}`);
+            queryParams.push(Boolean(isActive));
+        }
+
         // Lọc theo category cha thì lấy luôn sản phẩm của các category con
         if (categoryId) {
-            const idx = whereClauses.length + 1;
+            const idx = queryParams.length + 1;
             whereClauses.push(`(p.category_id = $${idx} OR p.category_id IN (SELECT id FROM categories WHERE parent_id = $${idx}))`);
-            queryParams.push(categoryId);
+            queryParams.push(parseInt(categoryId));
         }
+
         if (brandId) {
-            whereClauses.push(`p.brand_id = $${whereClauses.length + 1}`);
-            queryParams.push(brandId);
+            const idx = queryParams.length + 1;
+            const isNum = !isNaN(parseInt(brandId)) && String(parseInt(brandId)) === String(brandId).trim();
+            if (isNum) {
+                whereClauses.push(`p.brand_id = $${idx}`);
+                queryParams.push(parseInt(brandId));
+            } else {
+                whereClauses.push(`b.name ILIKE $${idx}`);
+                queryParams.push(`%${brandId}%`);
+            }
         }
+
         if (keyword) {
-            // Giới hạn độ dài từ khóa tối đa 100 ký tự và lấy tối đa 5 từ để tránh DoS
             const cleanKeyword = String(keyword).substring(0, 100).trim();
             const terms = cleanKeyword.split(/\s+/).slice(0, 5);
             terms.forEach((term) => {
-                whereClauses.push(`p.name ILIKE $${whereClauses.length + 1}`);
+                const idx = queryParams.length + 1;
+                whereClauses.push(`p.name ILIKE $${idx}`);
                 queryParams.push(`%${term}%`);
             });
         }
 
+        if (minPrice !== undefined && minPrice !== null && minPrice !== '') {
+            const idx = queryParams.length + 1;
+            whereClauses.push(`p.base_price >= $${idx}`);
+            queryParams.push(parseFloat(minPrice));
+        }
+
+        if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '') {
+            const idx = queryParams.length + 1;
+            whereClauses.push(`p.base_price <= $${idx}`);
+            queryParams.push(parseFloat(maxPrice));
+        }
+
         const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        let orderClause = 'ORDER BY p.id ASC';
+        if (sortBy === 'newest') orderClause = 'ORDER BY p.created_at DESC NULLS LAST, p.id DESC';
+        if (sortBy === 'price-asc') orderClause = 'ORDER BY p.base_price ASC';
+        if (sortBy === 'price-desc') orderClause = 'ORDER BY p.base_price DESC';
 
         const dataQuery = `
             SELECT p.*, b.name AS brand_name, c.name AS category_name
@@ -36,13 +69,18 @@ const ProductRepository = {
             LEFT JOIN brands b ON p.brand_id = b.id
             LEFT JOIN categories c ON p.category_id = c.id
             ${whereString}
-            ORDER BY p.id ASC
+            ${orderClause}
             LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
         `;
 
         const dataResult = await pool.query(dataQuery, [...queryParams, limit, offset]);
 
-        const countQuery = `SELECT COUNT(*) FROM ${TABLE} p ${whereString}`;
+        const countQuery = `
+            SELECT COUNT(*) 
+            FROM ${TABLE} p 
+            LEFT JOIN brands b ON p.brand_id = b.id
+            ${whereString}
+        `;
         const countResult = await pool.query(countQuery, queryParams);
         const totalItems = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalItems / limit);
@@ -58,10 +96,10 @@ const ProductRepository = {
 
     findById: async (id) => {
         const query = `
-            SELECT p.*, c.name AS category_name, b.name AS brand_name
+            SELECT p.*, b.name AS brand_name, c.name AS category_name
             FROM ${TABLE} p
-            LEFT JOIN categories c ON p.category_id = c.id
             LEFT JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.id = $1
         `;
         const result = await pool.query(query, [id]);
@@ -77,35 +115,47 @@ const ProductRepository = {
     },
 
     create: async (data) => {
-        const { category_id, brand_id, name, base_price, description, technical_specs, is_active, image_url } = data;
         const query = `
-            INSERT INTO ${TABLE} (category_id, brand_id, name, base_price, description, technical_specs, is_active, image_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
+            INSERT INTO ${TABLE} (name, category_id, brand_id, base_price, description, image_url, technical_specs, is_active)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING *
         `;
-        const result = await pool.query(query, [
-            category_id, brand_id, name, base_price, description,
-            technical_specs ? JSON.stringify(technical_specs) : null,
-            is_active ?? true,
-            image_url || null,
-        ]);
+        const values = [
+            data.name,
+            data.category_id,
+            data.brand_id,
+            data.base_price,
+            data.description || null,
+            data.image_url || null,
+            data.technical_specs || null,
+            data.is_active !== undefined ? data.is_active : true,
+        ];
+        const result = await pool.query(query, values);
         return mapRow(result.rows[0]);
     },
 
     createDefaultVariant: async (productId) => {
-        await pool.query(
-            'INSERT INTO product_variants (product_id, variant_name, stock_quantity, price_modifier) VALUES ($1, $2, $3, $4)',
-            [productId, 'Mặc định', 100, 0]
-        );
+        const query = `
+            INSERT INTO product_variants (product_id, variant_name, stock_quantity, price_modifier, attributes)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `;
+        const values = [productId, 'Mặc định', 10, 0, null];
+        const result = await pool.query(query, values);
+        return result.rows[0];
     },
 
     update: async (id, data) => {
-        const updateData = { ...data };
-        if (updateData.technical_specs && typeof updateData.technical_specs === 'object') {
-            updateData.technical_specs = JSON.stringify(updateData.technical_specs);
-        }
-        const { query, values } = generateDynamicUpdate(TABLE, updateData, id, UPDATABLE_FIELDS);
-        if (!query) return null;
-        const result = await pool.query(query, values);
+        const { setClause, values } = generateDynamicUpdate(data, UPDATABLE_FIELDS);
+        if (!setClause) return null;
+
+        const query = `
+            UPDATE ${TABLE} 
+            SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = $${values.length + 1} 
+            RETURNING *
+        `;
+        const result = await pool.query(query, [...values, id]);
         return mapRow(result.rows[0]);
     },
 
@@ -114,30 +164,16 @@ const ProductRepository = {
         return mapRow(result.rows[0]);
     },
 
-    // Dùng cho search bằng hình ảnh
     findCatalogForSearch: async () => {
-        const query = `
-            SELECT p.id, p.name, p.description, c.name AS category_name, b.name AS brand_name
-            FROM ${TABLE} p
-            LEFT JOIN categories c ON p.category_id = c.id
-            LEFT JOIN brands b ON p.brand_id = b.id
-            WHERE p.is_active = true
-        `;
-        const result = await pool.query(query);
+        const result = await pool.query(
+            `SELECT p.id, p.name, p.image_url, b.name AS brand, c.name AS category 
+             FROM ${TABLE} p
+             LEFT JOIN brands b ON p.brand_id = b.id
+             LEFT JOIN categories c ON p.category_id = c.id
+             WHERE p.is_active = true AND p.image_url IS NOT NULL`
+        );
         return result.rows;
-    },
-
-    findByIds: async (ids) => {
-        const query = `
-            SELECT p.*, b.name AS brand_name, c.name AS category_name
-            FROM ${TABLE} p
-            LEFT JOIN brands b ON p.brand_id = b.id
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.id = ANY($1) AND p.is_active = true
-        `;
-        const result = await pool.query(query, [ids]);
-        return result.rows.map(mapRow);
-    },
+    }
 };
 
 module.exports = ProductRepository;

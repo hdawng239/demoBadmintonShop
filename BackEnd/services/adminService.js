@@ -33,27 +33,33 @@ const AdminService = {
             case 'week':
                 start = new Date();
                 start.setDate(now.getDate() - 7);
-                end = now;
+                start.setHours(0, 0, 0, 0);
+                end = new Date();
+                end.setHours(23, 59, 59, 999);
                 break;
             case 'month':
                 start = new Date();
                 start.setDate(now.getDate() - 30);
-                end = now;
+                start.setHours(0, 0, 0, 0);
+                end = new Date();
+                end.setHours(23, 59, 59, 999);
                 break;
             case 'year':
-                start = new Date(now.getFullYear(), 0, 1);
-                end = now;
+                start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+                end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
                 break;
             case 'custom':
                 start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
                 start.setHours(0, 0, 0, 0);
-                end = endDate ? new Date(endDate) : now;
+                end = endDate ? new Date(endDate) : new Date();
                 end.setHours(23, 59, 59, 999);
                 break;
             default:
                 start = new Date();
                 start.setDate(now.getDate() - 30);
-                end = now;
+                start.setHours(0, 0, 0, 0);
+                end = new Date();
+                end.setHours(23, 59, 59, 999);
         }
 
         // Chạy song song tất cả query

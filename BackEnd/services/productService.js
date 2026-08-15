@@ -3,10 +3,9 @@ const { analyzeProductImage } = require('./aiService');
 const AppError = require('../utils/AppError');
 
 // SERVICE = tầng nghiệp vụ: kiểm tra điều kiện, điều phối repository, gọi AI service.
-// Không biết gì về req/res (HTTP).
 const ProductService = {
-    getAllProducts: (page, limit, categoryId, brandId, keyword) =>
-        ProductRepository.findPaginated(page, limit, categoryId, brandId, keyword),
+    getAllProducts: (page, limit, categoryId, brandId, keyword, minPrice, maxPrice, sortBy, isActive = true) =>
+        ProductRepository.findPaginated(page, limit, categoryId, brandId, keyword, minPrice, maxPrice, sortBy, isActive),
 
     getProductById: async (id) => {
         const product = await ProductRepository.findById(id);
@@ -34,23 +33,10 @@ const ProductService = {
         return deleted;
     },
 
-    // ── Tìm kiếm bằng hình ảnh ─────────────────────────────
     searchByImage: async (base64Image) => {
-        // 1. Lấy danh mục sản phẩm
         const productList = await ProductRepository.findCatalogForSearch();
-        if (productList.length === 0) return [];
-
-        // 2. Gọi AI phân tích
-        const matchedIds = await analyzeProductImage(base64Image, productList);
-        if (!matchedIds || matchedIds.length === 0) return [];
-
-        // 3. Lấy chi tiết sản phẩm khớp
-        const detailsRows = await ProductRepository.findByIds(matchedIds);
-
-        // 4. Sắp xếp theo thứ tự AI trả về
-        return matchedIds
-            .map((id) => detailsRows.find((p) => p.id === id))
-            .filter(Boolean);
+        const geminiResult = await analyzeProductImage(base64Image, productList);
+        return geminiResult;
     },
 };
 
