@@ -2,26 +2,43 @@ const VoucherRepository = require('../repositories/voucherRepository');
 const AppError = require('../utils/AppError');
 
 // Chuẩn hoá dữ liệu voucher khi tạo mới
-const normalizeForCreate = (data) => ({
-    code: String(data.code).trim().toUpperCase(),
-    description: data.description || '',
-    discount_type: data.discount_type, // 'fixed' | 'percentage' | 'shipping'
-    discount_value: parseFloat(data.discount_value),
-    min_order_value: parseFloat(data.min_order_value || 0),
-    max_discount: data.max_discount ? parseFloat(data.max_discount) : null,
-    usage_limit: parseInt(data.usage_limit || 1),
-    start_date: new Date(data.start_date),
-    end_date: new Date(data.end_date),
-    is_active: data.is_active !== undefined ? data.is_active : true,
-});
+const normalizeForCreate = (data) => {
+    let type = data.discount_type;
+    if (type === 'fixed_amount') type = 'fixed';
+    if (type === 'free_shipping' || type === 'freeship') type = 'shipping';
+
+    return {
+        code: String(data.code).trim().toUpperCase(),
+        description: data.description || '',
+        discount_type: type || 'percentage', // 'fixed' | 'percentage' | 'shipping'
+        discount_value: parseFloat(data.discount_value || 0),
+        min_order_value: parseFloat(data.min_order_value !== undefined ? data.min_order_value : (data.min_order_amount || 0)),
+        max_discount: data.max_discount !== undefined ? (data.max_discount ? parseFloat(data.max_discount) : null) : (data.max_discount_amount ? parseFloat(data.max_discount_amount) : null),
+        usage_limit: parseInt(data.usage_limit || 100),
+        start_date: new Date(data.start_date),
+        end_date: new Date(data.end_date),
+        is_active: data.is_active !== undefined ? data.is_active : true,
+    };
+};
 
 // Chuẩn hoá khi cập nhật, chỉ đụng field có trong payload
 const normalizeForUpdate = (data) => {
     const d = { ...data };
     if (d.code) d.code = d.code.trim().toUpperCase();
-    if (d.discount_value !== undefined) d.discount_value = parseFloat(d.discount_value);
-    if (d.min_order_value !== undefined) d.min_order_value = parseFloat(d.min_order_value);
-    if (d.max_discount !== undefined) d.max_discount = d.max_discount ? parseFloat(d.max_discount) : null;
+    if (d.discount_type) {
+        if (d.discount_type === 'fixed_amount') d.discount_type = 'fixed';
+        if (d.discount_type === 'free_shipping' || d.discount_type === 'freeship') d.discount_type = 'shipping';
+    }
+    if (d.discount_value !== undefined) d.discount_value = parseFloat(d.discount_value || 0);
+    if (d.min_order_value !== undefined || d.min_order_amount !== undefined) {
+        d.min_order_value = parseFloat(d.min_order_value !== undefined ? d.min_order_value : (d.min_order_amount || 0));
+        delete d.min_order_amount;
+    }
+    if (d.max_discount !== undefined || d.max_discount_amount !== undefined) {
+        const val = d.max_discount !== undefined ? d.max_discount : d.max_discount_amount;
+        d.max_discount = val ? parseFloat(val) : null;
+        delete d.max_discount_amount;
+    }
     if (d.usage_limit !== undefined) d.usage_limit = parseInt(d.usage_limit);
     if (d.start_date !== undefined) d.start_date = new Date(d.start_date);
     if (d.end_date !== undefined) d.end_date = new Date(d.end_date);
@@ -58,7 +75,7 @@ const VoucherService = {
         let discountAmount = 0;
         const discountVal = parseFloat(voucher.discount_value);
 
-        if (voucher.discount_type === 'fixed') {
+        if (voucher.discount_type === 'fixed' || voucher.discount_type === 'fixed_amount') {
             discountAmount = discountVal;
         } else if (voucher.discount_type === 'percentage') {
             discountAmount = total * (discountVal / 100);
@@ -66,13 +83,13 @@ const VoucherService = {
                 const maxD = parseFloat(voucher.max_discount);
                 if (discountAmount > maxD) discountAmount = maxD;
             }
-        } else if (voucher.discount_type === 'shipping') {
-            // Giảm tiền ship, FE tự trừ vào phí vận chuyển
+        } else if (voucher.discount_type === 'shipping' || voucher.discount_type === 'freeship' || voucher.discount_type === 'free_shipping') {
+            // Giảm phí vận chuyển (Freeship)
             discountAmount = discountVal;
         }
 
-        // Không cho giảm vượt quá tổng đơn (trừ shipping do FE cap theo phí ship)
-        if (voucher.discount_type !== 'shipping' && discountAmount > total) {
+        // Không cho giảm vượt quá tổng đơn (trừ shipping)
+        if (voucher.discount_type !== 'shipping' && voucher.discount_type !== 'freeship' && voucher.discount_type !== 'free_shipping' && discountAmount > total) {
             discountAmount = total;
         }
 
@@ -82,6 +99,7 @@ const VoucherService = {
             discountValue: discountVal,
             discountAmount,
             minOrderValue: minVal,
+            maxDiscount: voucher.max_discount,
         };
     },
 

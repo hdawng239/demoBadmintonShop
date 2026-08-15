@@ -2,12 +2,12 @@ const asyncHandler = require('../utils/asyncHandler');
 const PostService = require('../services/postService');
 
 // CONTROLLER = chỉ đọc request, gọi service, trả response.
-// Giữ nguyên shape response cũ (create/update/delete trả thẳng object) để FE không vỡ.
 const getAllPosts = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || '';
-    res.status(200).json(await PostService.getAllPosts(page, limit, search));
+    const publishedOnly = req.query.publishedOnly === 'true';
+    res.status(200).json(await PostService.getAllPosts(page, limit, search, publishedOnly));
 });
 
 const getPostById = asyncHandler(async (req, res) => {
@@ -16,7 +16,7 @@ const getPostById = asyncHandler(async (req, res) => {
 });
 
 const createPost = asyncHandler(async (req, res) => {
-    res.status(201).json(await PostService.createPost(req.body));
+    res.status(201).json(await PostService.createPost(req.body, req.user));
 });
 
 const updatePost = asyncHandler(async (req, res) => {

@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-primary: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    
+    --bg-page: #f8f9fb;
+    --bg-surface: #ffffff;
+    --bg-surface-subtle: #f1f3f7;
+    --border-color: #e4e4e7;
+    --text-main: #09090b;
+    --text-muted: #52525b;
+  }
+
+  .dark {
+    --bg-page: #090a0e;
+    --bg-surface: #12131a;
+    --bg-surface-subtle: #181a24;
+    --border-color: #232532;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+
+  body {
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GLOBAL THEME UTILITIES
+   ───────────────────────────────────────────────────────────── */
+.bg-primary {
+  background-color: #ea580c !important;
+}
+.text-primary {
+  color: #ea580c !important;
+}
+.border-primary {
+  border-color: #ea580c !important;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #090a0e !important;
+  color: #f8fafc !important;
+}
+
+/* Smooth Scroll Reveal (Bóng mờ & Trượt nhẹ) */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(4px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.reveal-on-scroll.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Stagger animation delay helpers */
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
+
+/* Custom modern utilities */
+.card-hover-effect {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0c0d10;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333644;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}

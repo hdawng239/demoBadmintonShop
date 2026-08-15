@@ -17,7 +17,7 @@ const AdminRepository = {
 
     countCompletedOrders: async (start, end) => {
         const result = await pool.query(
-            "SELECT COUNT(*) as count FROM orders WHERE status = 'completed' AND created_at BETWEEN $1 AND $2",
+            "SELECT COUNT(*) as count FROM orders WHERE (status = 'completed' OR payment_status = 'paid') AND created_at BETWEEN $1 AND $2",
             [start, end]
         );
         return parseInt(result.rows[0].count);
@@ -25,7 +25,7 @@ const AdminRepository = {
 
     sumCompletedRevenue: async (start, end) => {
         const result = await pool.query(
-            "SELECT SUM(total_amount) as total FROM orders WHERE status = 'completed' AND created_at BETWEEN $1 AND $2",
+            "SELECT SUM(total_amount) as total FROM orders WHERE (status = 'completed' OR payment_status = 'paid') AND created_at BETWEEN $1 AND $2",
             [start, end]
         );
         return result.rows[0].total ? parseFloat(result.rows[0].total) : 0;
@@ -41,7 +41,7 @@ const AdminRepository = {
             `SELECT SUM(oi.quantity) as count
              FROM order_items oi
              JOIN orders o ON oi.order_id = o.id
-             WHERE o.status = 'completed' AND o.created_at BETWEEN $1 AND $2`,
+             WHERE (o.status = 'completed' OR o.payment_status = 'paid') AND o.created_at BETWEEN $1 AND $2`,
             [start, end]
         );
         return result.rows[0].count ? parseInt(result.rows[0].count) : 0;
@@ -55,7 +55,7 @@ const AdminRepository = {
                        SUM(total_amount) as revenue,
                        COUNT(*) as orders
                 FROM orders
-                WHERE status = 'completed' AND created_at BETWEEN $1 AND $2
+                WHERE (status = 'completed' OR payment_status = 'paid') AND created_at BETWEEN $1 AND $2
                 GROUP BY TO_CHAR(created_at, 'MM/YYYY'), DATE_TRUNC('month', created_at)
                 ORDER BY DATE_TRUNC('month', created_at) ASC
             `;
@@ -65,7 +65,7 @@ const AdminRepository = {
                        SUM(total_amount) as revenue,
                        COUNT(*) as orders
                 FROM orders
-                WHERE status = 'completed' AND created_at BETWEEN $1 AND $2
+                WHERE (status = 'completed' OR payment_status = 'paid') AND created_at BETWEEN $1 AND $2
                 GROUP BY TO_CHAR(created_at, 'DD/MM'), DATE_TRUNC('day', created_at)
                 ORDER BY DATE_TRUNC('day', created_at) ASC
             `;
@@ -81,10 +81,10 @@ const AdminRepository = {
                    COUNT(o.id) as total_orders
             FROM orders o
             JOIN users u ON o.user_id = u.id
-            WHERE o.status = 'completed' AND o.created_at BETWEEN $1 AND $2
+            WHERE (o.status = 'completed' OR o.payment_status = 'paid') AND o.created_at BETWEEN $1 AND $2
             GROUP BY u.id, u.full_name, u.email
             ORDER BY total_spent DESC
-            LIMIT 3
+            LIMIT 5
         `;
         const result = await pool.query(query, [start, end]);
         return result.rows.map((row) => ({
@@ -105,10 +105,10 @@ const AdminRepository = {
             JOIN orders o ON oi.order_id = o.id
             JOIN product_variants pv ON oi.variant_id = pv.id
             JOIN products p ON pv.product_id = p.id
-            WHERE o.status = 'completed' AND o.created_at BETWEEN $1 AND $2
+            WHERE (o.status = 'completed' OR o.payment_status = 'paid') AND o.created_at BETWEEN $1 AND $2
             GROUP BY p.id, p.name, p.image_url
             ORDER BY total_sold DESC
-            LIMIT 3
+            LIMIT 5
         `;
         const result = await pool.query(query, [start, end]);
         return result.rows.map((row) => ({

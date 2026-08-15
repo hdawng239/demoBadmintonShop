@@ -4,13 +4,18 @@ const { sendSuccess, sendError } = require('../utils/response');
 
 const getAllProducts = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const categoryId = req.query.categoryId || null;
-    const brandId = req.query.brandId || null;
-    const keyword = req.query.keyword || null;
+    const limit = parseInt(req.query.limit) || 12;
+    const categoryId = req.query.categoryId || req.query.category_id || null;
+    const brandId = req.query.brandId || req.query.brand || null;
+    const keyword = req.query.keyword || req.query.search || null;
+    const minPrice = req.query.minPrice !== undefined ? req.query.minPrice : null;
+    const maxPrice = req.query.maxPrice !== undefined ? req.query.maxPrice : null;
+    const sortBy = req.query.sortBy || 'newest';
 
-    const result = await ProductService.getAllProducts(page, limit, categoryId, brandId, keyword);
-    // legacy giữ hình dạng cũ (products, totalItems...) cho FE hiện tại
+    const isAdmin = req.query.isAdmin === 'true' || req.query.all === 'true' || req.query.includeHidden === 'true';
+    const isActive = isAdmin ? null : true;
+
+    const result = await ProductService.getAllProducts(page, limit, categoryId, brandId, keyword, minPrice, maxPrice, sortBy, isActive);
     sendSuccess(res, {
         data: result.products,
         meta: {
