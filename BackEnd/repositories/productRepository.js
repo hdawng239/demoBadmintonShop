@@ -170,9 +170,24 @@ const ProductRepository = {
              FROM ${TABLE} p
              LEFT JOIN brands b ON p.brand_id = b.id
              LEFT JOIN categories c ON p.category_id = c.id
-             WHERE p.is_active = true AND p.image_url IS NOT NULL`
+             WHERE p.is_active = true`
         );
         return result.rows;
+    },
+
+    findByIds: async (ids) => {
+        if (!ids || !ids.length) return [];
+        const query = `
+            SELECT p.*, b.name AS brand_name, c.name AS category_name
+            FROM ${TABLE} p
+            LEFT JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE p.id = ANY($1::int[]) AND p.is_active = true
+        `;
+        const result = await pool.query(query, [ids]);
+        const rows = result.rows;
+        // Giữ đúng thứ tự ưu tiên độ khớp mà AI đã xếp hạng
+        return ids.map(id => rows.find(r => r.id === id)).filter(Boolean);
     }
 };
 

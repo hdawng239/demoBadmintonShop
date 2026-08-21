@@ -131,7 +131,7 @@ const UserOrdersPage = () => {
                   {/* Order Top Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 gap-2">
                     <div className="flex items-center gap-3 text-xs flex-wrap">
-                      <span className="font-black text-sm text-zinc-900 dark:text-white font-mono">#{order.id}</span>
+                      <span className="font-black text-sm text-zinc-900 dark:text-white font-mono">#NARO-{order.id}</span>
                       <span className="text-zinc-400">•</span>
                       <span className="text-zinc-500 dark:text-zinc-400">
                         {order.created_at ? new Date(order.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '---'}

@@ -19,9 +19,12 @@ const handleSepayWebhook = async (req, res) => {
             return res.status(200).json({ success: true, message: 'Not an incoming transfer, ignored' });
         }
 
-        // Extract Order ID from content/code (format: DH<number>)
+        // Extract Order ID from content/code (format: NARO<number>, NR<number>, DH<number>)
         let orderId = null;
-        const match = (content && content.match(/DH(\d+)/i)) || (code && code.match(/DH(\d+)/i)) || (code && code.match(/\d+/));
+        const match = (content && content.match(/(?:NARO|NR|NB|DH)[-\s]?(\d+)/i)) 
+                   || (code && code.match(/(?:NARO|NR|NB|DH)[-\s]?(\d+)/i)) 
+                   || (content && content.match(/DH(\d+)/i))
+                   || (code && code.match(/\d+/));
 
         if (match && match[1]) {
             orderId = parseInt(match[1]);

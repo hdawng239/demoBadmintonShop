@@ -28,7 +28,7 @@ const OrderSuccessPage = () => {
           {orderId && (
             <div className="p-4 bg-zinc-50 dark:bg-[#181a24] rounded-2xl border border-zinc-200 dark:border-zinc-800 text-xs">
               <span className="text-zinc-500 dark:text-zinc-400">Mã đơn hàng:</span>
-              <p className="text-base font-black text-zinc-900 dark:text-white font-mono mt-0.5">#{orderId}</p>
+              <p className="text-base font-black text-zinc-900 dark:text-white font-mono mt-0.5">#NARO-{orderId}</p>
             </div>
           )}
 

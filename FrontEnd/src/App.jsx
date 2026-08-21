@@ -49,6 +49,7 @@ function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/payment-qr" element={<PaymentQRPage />} />
+        <Route path="/payment-qr/:orderId" element={<PaymentQRPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:id" element={<NewsDetailPage />} />
         <Route path="/franchise" element={<FranchisePage />} />

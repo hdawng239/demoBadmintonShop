@@ -186,14 +186,6 @@ const GuidePage = () => {
                     <p className="text-amber-700 dark:text-amber-400"><strong>Lưu ý:</strong> {w.cons}</p>
                   </div>
                 </div>
-
-                <Link
-                  to={`/category/1`}
-                  className="w-full py-2.5 bg-zinc-900 dark:bg-zinc-800 hover:bg-[#ea580c] dark:hover:bg-[#ea580c] text-white text-xs font-bold uppercase tracking-wider rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <span>Xem vợt {w.code}</span>
-                  <ArrowRight size={14} />
-                </Link>
               </div>
             ))}
           </div>
@@ -235,14 +227,6 @@ const GuidePage = () => {
                       <strong>Dòng vợt tiêu biểu:</strong> {b.rackets}
                     </div>
                   </div>
-
-                  <Link
-                    to="/category/1"
-                    className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-[#ea580c] hover:underline"
-                  >
-                    <span>Khám phá sản phẩm</span>
-                    <ChevronRight size={16} />
-                  </Link>
                 </div>
               );
             })}

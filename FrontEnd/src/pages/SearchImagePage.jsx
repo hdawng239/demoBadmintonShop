@@ -12,20 +12,66 @@ const SearchImagePage = () => {
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
-  const handleFile = (file) => {
+  // Tối ưu nén ảnh xuống kích thước chuẩn AI (max 800px) giúp giảm dung lượng 100 lần, gửi lên server siêu tốc
+  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.85) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
+  const handleFile = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setError('Vui lòng chọn file hình ảnh (JPG, PNG, WEBP)!');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result;
-      setImagePreview(base64);
-      performSearch(base64);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Nén ảnh tức thì trên trình duyệt
+      const compressedBase64 = await compressImage(file);
+      setImagePreview(compressedBase64);
+      performSearch(compressedBase64);
+    } catch (err) {
+      console.error('Lỗi nén ảnh:', err);
+      // Fallback nếu trình duyệt lỗi canvas
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result;
+        setImagePreview(base64);
+        performSearch(base64);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const performSearch = async (base64) => {
@@ -34,10 +80,15 @@ const SearchImagePage = () => {
     setResults([]);
     try {
       const res = await productService.searchByImage(base64);
-      setResults(Array.isArray(res) ? res : (res?.products || res?.data || []));
+      const items = Array.isArray(res) ? res : (res?.products || res?.data || []);
+      if (items.length === 0) {
+        setError('Không tìm thấy sản phẩm tương đồng trong cửa hàng. Bạn hãy thử chụp góc khác nhé!');
+      } else {
+        setResults(items);
+      }
     } catch (err) {
       console.error(err);
-      setError('AI không thể nhận diện cây vợt này. Hãy thử chụp ảnh gần hơn hoặc đủ ánh sáng hơn!');
+      setError('AI không thể nhận diện sản phẩm này. Hãy thử chụp ảnh gần hơn hoặc đủ ánh sáng hơn!');
     } finally {
       setLoading(false);
     }

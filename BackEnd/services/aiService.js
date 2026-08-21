@@ -66,6 +66,7 @@ const AiService = {
 
         const systemInstruction = BASE_SYSTEM_INSTRUCTION + productCatalogCache;
 
+        // Sử dụng model gemini-3.1-flash-lite chuẩn như trong commit b7462d7 (phản hồi siêu nhanh và ổn định)
         const model = genAI.getGenerativeModel({
             model: 'gemini-3.1-flash-lite',
             systemInstruction,
@@ -73,7 +74,7 @@ const AiService = {
 
         const chat = model.startChat({
             history: formattedHistory,
-            generationConfig: { maxOutputTokens: 1000, temperature: 0.5 },
+            generationConfig: { maxOutputTokens: 600, temperature: 0.4 },
         });
 
         const result = await chat.sendMessage(message);
@@ -97,33 +98,59 @@ const AiService = {
     analyzeProductImage: async (base64ImageString, productList) => {
         const { mimeType, data } = AiService._parseBase64Image(base64ImageString);
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
-
         const imagePart = {
             inlineData: { data, mimeType },
         };
 
-        const prompt = `Bạn là chuyên gia nhận diện dụng cụ, giày và phụ kiện cầu lông tại Naro Shop.
+        const compactCatalog = (productList || []).map(p => ({
+            id: p.id,
+            name: p.name,
+            brand: p.brand,
+            category: p.category
+        }));
+
+        const prompt = `Bạn là chuyên gia nhận diện dụng cụ, vợt, giày và phụ kiện cầu lông tại Naro Shop.
 Dưới đây là danh sách sản phẩm thực tế đang có trong kho của chúng tôi:
-${JSON.stringify(productList, null, 2)}
+${JSON.stringify(compactCatalog)}
 
 Nhiệm vụ của bạn là:
-1. Nhìn vào hình ảnh được cung cấp. Phân tích loại sản phẩm, màu sắc, kiểu dáng, thương hiệu, tên hoặc họa tiết trên đó.
-2. Tìm kiếm trong danh sách sản phẩm trên xem sản phẩm nào khớp nhất hoặc có độ tương đồng cao nhất.
-3. Lập danh sách các ID sản phẩm khớp nhất hoặc tương đồng nhất theo thứ tự giảm dần của độ khớp (tối đa 12 sản phẩm).
-4. CHỈ TRẢ VỀ kết quả dưới dạng một mảng JSON thuần túy chứa các số ID sản phẩm, ví dụ: [3, 15, 8]. Không thêm bất cứ giải thích nào, không bao bọc bằng khối mã hay ký tự xuống dòng dư thừa.`;
+1. Nhìn vào hình ảnh được cung cấp. Phân tích loại sản phẩm (vợt, giày, áo, túi, phụ kiện...), màu sắc, kiểu dáng, thương hiệu (Yonex, Victor, Li-Ning, Mizuno, Kumpoo...), tên dòng vợt hoặc họa tiết.
+2. Tìm kiếm trong danh sách sản phẩm trên xem những sản phẩm nào khớp nhất hoặc có độ tương đồng cao nhất.
+3. Lập danh sách các ID sản phẩm khớp nhất theo thứ tự giảm dần của độ khớp (tối đa 6 sản phẩm).
+4. CHỈ TRẢ VỀ kết quả dưới dạng một mảng JSON các số ID sản phẩm, ví dụ: [3, 15, 8]. Không thêm bất cứ giải thích nào khác.`;
 
-        const result = await model.generateContent([prompt, imagePart]);
-        const responseText = result.response.text();
+        const parseResult = (text) => {
+            let cleanText = text.trim();
+            const jsonMatch = cleanText.match(/\[[\s\d,]*\]/);
+            if (jsonMatch) {
+                cleanText = jsonMatch[0];
+            } else if (cleanText.startsWith('```')) {
+                cleanText = cleanText.replace(/^```(json)?/, '').replace(/```$/, '').trim();
+            }
+            const matchedIds = JSON.parse(cleanText);
+            if (Array.isArray(matchedIds)) {
+                return matchedIds.map(Number).filter((id) => !isNaN(id));
+            }
+            return [];
+        };
 
-        let cleanText = responseText.trim();
-        if (cleanText.startsWith('```')) {
-            cleanText = cleanText.replace(/^```(json)?/, '').replace(/```$/, '').trim();
-        }
-
-        const matchedIds = JSON.parse(cleanText);
-        if (Array.isArray(matchedIds)) {
-            return matchedIds.map(Number).filter((id) => !isNaN(id));
+        // Ưu tiên gemini-3.1-flash-lite / gemini-3.6-flash để đạt tốc độ nhận diện nhanh nhất (2-3s)
+        const candidateModels = ['gemini-3.1-flash-lite', 'gemini-3.6-flash'];
+        
+        for (const modelName of candidateModels) {
+            try {
+                const model = genAI.getGenerativeModel({ 
+                    model: modelName,
+                    generationConfig: { maxOutputTokens: 100, temperature: 0.1 }
+                });
+                const result = await model.generateContent([prompt, imagePart]);
+                const ids = parseResult(result.response.text());
+                if (ids && ids.length > 0) {
+                    return ids;
+                }
+            } catch (err) {
+                continue;
+            }
         }
         return [];
     },

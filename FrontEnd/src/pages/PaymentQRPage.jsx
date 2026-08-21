@@ -1,26 +1,59 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import { Check, Copy, AlertCircle, Clock, QrCode, ArrowRight } from 'lucide-react';
+import { Check, Copy, AlertCircle, Clock, QrCode, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 
 const PaymentQRPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { orderId: paramOrderId } = useParams();
+
+  const orderFromState = location.state?.order;
+  const orderId = paramOrderId || orderFromState?.id || location.state?.orderId;
+  
+  const [totalAmount, setTotalAmount] = useState(
+    orderFromState?.total_amount || location.state?.totalAmount || 0
+  );
   const [copiedField, setCopiedField] = useState('');
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+  const [isLoading, setIsLoading] = useState(!totalAmount && !!orderId);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const order = location.state?.order;
-  const orderId = order?.id || location.state?.orderId;
-  const totalAmount = order?.total_amount || location.state?.totalAmount;
-
+  // 1. Fetch Order details if accessed directly or reloaded
   useEffect(() => {
-    if (!orderId || !totalAmount) {
+    if (!orderId) {
       navigate('/');
+      return;
+    }
+
+    const fetchOrderDetails = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const ord = res.data?.data || res.data;
+        if (ord) {
+          setTotalAmount(parseFloat(ord.total_amount || 0));
+          if (ord.payment_status === 'paid') {
+            navigate('/order-success', { state: { order: ord } });
+          }
+        }
+      } catch (err) {
+        console.error('Lỗi tải chi tiết đơn hàng:', err);
+        setErrorMessage('Không thể tải thông tin đơn hàng hoặc đơn hàng không tồn tại.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!totalAmount) {
+      fetchOrderDetails();
     }
   }, [orderId, totalAmount, navigate]);
 
-  // Countdown timer
+  // 2. Countdown timer
   useEffect(() => {
     if (!orderId) return;
     const timer = setInterval(() => {
@@ -35,7 +68,7 @@ const PaymentQRPage = () => {
     return () => clearInterval(timer);
   }, [orderId]);
 
-  // Polling check order status every 4 seconds
+  // 3. Polling check order status every 3 seconds
   useEffect(() => {
     if (!orderId) return;
     const interval = setInterval(async () => {
@@ -51,19 +84,17 @@ const PaymentQRPage = () => {
           navigate('/order-success', { state: { order: ord } });
         }
       } catch (err) {
-        console.error(err);
+        // Silent polling error
       }
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [orderId, navigate]);
 
-  if (!orderId || !totalAmount) return null;
-
   const bankStk = '0338780204';
   const bankName = 'DO HAI DANG';
   const bankId = 'MB';
-  const content = `DH${orderId}`;
+  const content = `NARO${orderId}`;
 
   const qrUrl = `https://qr.sepay.vn/img?acc=${bankStk}&bank=${bankId}&amount=${totalAmount}&des=${content}`;
 
@@ -79,6 +110,32 @@ const PaymentQRPage = () => {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
+          <Loader2 size={36} className="animate-spin text-[#ea580c] mx-auto" />
+          <p className="text-sm font-bold text-zinc-600 dark:text-zinc-300">Đang khởi tạo mã thanh toán VietQR...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <MainLayout>
+        <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
+          <AlertCircle size={44} className="text-rose-500 mx-auto" />
+          <h2 className="text-lg font-black text-zinc-900 dark:text-white">Không tìm thấy đơn hàng</h2>
+          <p className="text-xs text-zinc-500">{errorMessage}</p>
+          <Link to="/" className="inline-block px-5 py-2.5 bg-[#ea580c] text-white rounded-xl text-xs font-bold">
+            Về trang chủ
+          </Link>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto px-4 lg:px-6 py-10">
@@ -87,7 +144,7 @@ const PaymentQRPage = () => {
           {/* Header */}
           <div className="text-center space-y-2 border-b border-zinc-100 dark:border-zinc-800 pb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-950/40 text-[#ea580c] rounded-full text-xs font-bold uppercase tracking-wider">
-              <QrCode size={15} /> Thanh toán tự động SePay
+              <QrCode size={15} /> Thanh toán tự động SePay VietQR
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
               Quét Mã QR Để Thanh Toán
@@ -102,11 +159,25 @@ const PaymentQRPage = () => {
             {/* QR Code Stage */}
             <div className="md:col-span-6 flex flex-col items-center">
               <div className="p-4 bg-white border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-3xl shadow-xs relative">
-                <img
-                  src={qrUrl}
-                  alt="VietQR Payment"
-                  className="w-64 h-64 object-contain rounded-2xl"
-                />
+                {timeLeft > 0 ? (
+                  <img
+                    src={qrUrl}
+                    alt="VietQR Payment"
+                    className="w-64 h-64 object-contain rounded-2xl"
+                  />
+                ) : (
+                  <div className="w-64 h-64 flex flex-col items-center justify-center text-center p-4 bg-zinc-50 rounded-2xl">
+                    <AlertCircle size={36} className="text-rose-500 mb-2" />
+                    <p className="text-xs font-bold text-zinc-800">Mã QR đã hết hạn</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">Vui lòng tải lại hoặc tạo đơn hàng mới</p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="mt-3 px-3 py-1.5 bg-[#ea580c] text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                    >
+                      <RotateCcw size={13} /> Làm mới mã
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Countdown */}
@@ -157,7 +228,7 @@ const PaymentQRPage = () => {
               <div className="flex justify-between items-center bg-white dark:bg-[#12131a] p-3 rounded-xl border border-zinc-200 dark:border-zinc-700">
                 <div>
                   <span className="text-zinc-400 dark:text-zinc-500 block text-[10px] uppercase">Số tiền</span>
-                  <span className="font-black text-[#ea580c] text-base">{parseInt(totalAmount).toLocaleString('vi-VN')} ₫</span>
+                  <span className="font-black text-[#ea580c] text-base">{parseInt(totalAmount || 0).toLocaleString('vi-VN')} ₫</span>
                 </div>
                 <button
                   onClick={() => handleCopy(String(totalAmount), 'amount')}

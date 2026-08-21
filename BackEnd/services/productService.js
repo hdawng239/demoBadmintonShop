@@ -35,8 +35,11 @@ const ProductService = {
 
     searchByImage: async (base64Image) => {
         const productList = await ProductRepository.findCatalogForSearch();
-        const geminiResult = await analyzeProductImage(base64Image, productList);
-        return geminiResult;
+        if (!productList || productList.length === 0) return [];
+        const matchedIds = await analyzeProductImage(base64Image, productList);
+        if (!matchedIds || matchedIds.length === 0) return [];
+        const products = await ProductRepository.findByIds(matchedIds);
+        return products;
     },
 };
 
