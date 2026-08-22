@@ -63,10 +63,10 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-zinc-800 flex flex-col md:flex-row antialiased relative">
+    <div className="h-screen w-full overflow-hidden bg-[#f4f5f7] text-zinc-800 flex flex-col md:flex-row antialiased relative">
       
       {/* Mobile Topbar */}
-      <div className="md:hidden bg-[#121318] text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
+      <div className="md:hidden bg-[#121318] text-white p-4 flex items-center justify-between shrink-0 z-50 shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-[#ea580c] flex items-center justify-center font-black text-white text-sm">
             N
@@ -101,7 +101,7 @@ const AdminLayout = ({ children }) => {
       )}
 
       {/* Sidebar Navigation */}
-      <aside className={`fixed md:sticky top-0 left-0 h-screen bg-[#121318] text-zinc-300 flex flex-col z-40 transition-all duration-300 ease-in-out border-r border-zinc-800/80 shadow-2xl ${
+      <aside className={`fixed md:relative top-0 left-0 h-full bg-[#121318] text-zinc-300 flex flex-col z-40 transition-all duration-300 ease-in-out border-r border-zinc-800/80 shadow-2xl shrink-0 ${
         isMobileOpen 
           ? 'translate-x-0 w-64' 
           : '-translate-x-full md:translate-x-0'
@@ -199,8 +199,8 @@ const AdminLayout = ({ children }) => {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#f4f5f7] transition-all duration-300">
+      {/* Main Content Area (Scrolls independently with full-height background) */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto bg-[#f4f5f7] transition-all duration-300">
         <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
           {children}
         </main>

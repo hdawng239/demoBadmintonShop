@@ -24,6 +24,16 @@
     --text-muted: #94a3b8;
   }
 
+  html {
+    font-size: 17px; /* Tăng 1-2px toàn diện cho toàn bộ cỡ chữ trên website */
+  }
+
+  @media (max-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
   html, body, #root {
     max-width: 100%;
     overflow-x: hidden;
@@ -37,6 +47,8 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg-page);
     color: var(--text-main);
+    font-size: 1rem;
+    line-height: 1.6;
     transition: background-color 0.25s ease, color 0.25s ease;
   }
 
@@ -66,6 +78,42 @@ html.dark {
 html.dark body {
   background-color: #090a0e !important;
   color: #f8fafc !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DARK MODE ARTICLE TYPOGRAPHY (Khắc phục bài viết tin tức)
+   ───────────────────────────────────────────────────────────── */
+.dark .article-content,
+.dark .article-content p,
+.dark .article-content span,
+.dark .article-content li,
+.dark .article-content div {
+  color: #e2e8f0 !important; /* Màu xám trắng sáng đọc rất rõ */
+}
+
+.dark .article-content h1,
+.dark .article-content h2,
+.dark .article-content h3,
+.dark .article-content h4,
+.dark .article-content strong,
+.dark .article-content b {
+  color: #ffffff !important; /* Tiêu đề trắng sáng nổi bật */
+  border-bottom-color: #ea580c !important;
+}
+
+.dark .article-content p.lead {
+  color: #cbd5e1 !important;
+}
+
+.dark .article-content blockquote {
+  background-color: rgba(234, 88, 12, 0.12) !important;
+  border-left-color: #ea580c !important;
+  color: #fdba74 !important;
+  border-radius: 0 1rem 1rem 0 !important;
+}
+
+.dark .article-content hr {
+  border-color: #27272a !important;
 }
 
 /* Smooth Scroll Reveal (Bóng mờ & Trượt nhẹ) */

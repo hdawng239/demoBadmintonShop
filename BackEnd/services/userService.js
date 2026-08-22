@@ -4,9 +4,8 @@ const AppError = require('../utils/AppError');
 
 // SERVICE = tầng nghiệp vụ: xử lý logic, kiểm tra quyền, hash password, validate nghiệp vụ.
 const UserService = {
-    getAllUsers: async (page = 1, limit = 10, search = null) => {
-        const offset = (page - 1) * limit;
-        return await UserRepository.findAll(limit, offset, search);
+    getAllUsers: async (page = 1, limit = 10, search = '') => {
+        return await UserRepository.findPaginated(page, limit, search);
     },
 
     getUserById: async (id) => {

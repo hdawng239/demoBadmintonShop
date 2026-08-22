@@ -76,7 +76,7 @@ const NewsDetailPage = () => {
 
         {/* Formatted article body */}
         <div 
-          className="prose dark:prose-invert max-w-none text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 space-y-4"
+          className="article-content prose dark:prose-invert max-w-none text-base leading-relaxed text-zinc-700 dark:text-zinc-300 space-y-4"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
       </article>

@@ -12,16 +12,18 @@ const UserRepository = {
             FROM ${TABLE}
         `;
         const countParams = [];
-        const dataParams = [limit, offset];
+        const dataParams = [];
 
-        if (search) {
-            countQuery += ' WHERE full_name ILIKE $1 OR email ILIKE $1';
-            dataQuery += ' WHERE full_name ILIKE $3 OR email ILIKE $3';
-            countParams.push(`%${search}%`);
-            dataParams.push(`%${search}%`);
+        if (search && search.trim() !== '') {
+            countQuery += ' WHERE full_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1';
+            dataQuery += ' WHERE full_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1';
+            countParams.push(`%${search.trim()}%`);
+            dataParams.push(`%${search.trim()}%`);
         }
 
-        dataQuery += ' ORDER BY id ASC LIMIT $1 OFFSET $2';
+        const paramIdx = dataParams.length;
+        dataQuery += ` ORDER BY id ASC LIMIT $${paramIdx + 1} OFFSET $${paramIdx + 2}`;
+        dataParams.push(limit, offset);
 
         const countResult = await pool.query(countQuery, countParams);
         const totalItems = parseInt(countResult.rows[0].count);
@@ -30,7 +32,7 @@ const UserRepository = {
         const result = await pool.query(dataQuery, dataParams);
 
         return {
-            data: result.rows,
+            data: result.rows.map(mapRow),
             pagination: {
                 totalItems,
                 totalPages,
