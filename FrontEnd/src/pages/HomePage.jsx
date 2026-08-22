@@ -183,8 +183,9 @@ const HomePage = () => {
             
             {/* Left Content */}
             <div className="lg:col-span-7 space-y-4 sm:space-y-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[11px] sm:text-xs font-bold text-[#ea580c] dark:text-lime-400 uppercase tracking-wider shadow-xs">
-                <Sparkles size={13} /> Bộ sưu tập Vợt Thi Đấu 2026
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 dark:bg-orange-950/40 border border-orange-500/30 text-[11px] sm:text-xs font-black text-[#ea580c] dark:text-orange-400 uppercase tracking-wider shadow-xs">
+                <Flame size={14} className="text-[#ea580c] animate-pulse" />
+                <span>Bộ Sưu Tập Vợt Thi Đấu 2026</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-zinc-950 dark:text-white">

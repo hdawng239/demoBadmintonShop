@@ -1,18 +1,14 @@
 # Naro Badminton Shop
-
 Website thương mại điện tử chuyên kinh doanh vợt, giày và phụ kiện cầu lông chính hãng. Dự án hỗ trợ tính phí vận chuyển tự động qua Giao Hàng Nhanh (GHN), thanh toán quét mã VietQR và trang quản trị Admin.
-
 ---
-
 ## 💻 Tech Stack
-
 - **Frontend**: React 19, Vite, Tailwind CSS, Lucide Icons, Axios, React Router 7
 - **Backend**: Node.js, Express.js, PostgreSQL (`pg`)
-- **Tích hợp**: GHN API (Vận chuyển), VietQR / SePay (Thanh toán), Gemini API (Tìm kiếm hình ảnh)
-
+- **Tích hợp**: GHN API (Shipping), VietQR / SePay (Payment), Gemini API (Chat/Search Imgage), Resend (Send Email)
+- **Deploy**: Render (BackEnd), Vercel (FrontEnd), Supabase (Database)
 ---
 
-## ✨ Tính năng chính
+## Tính năng chính
 
 ### Khách hàng
 - Xem danh mục sản phẩm phân cấp, lọc theo hãng (Yonex, Lining, Victor, Kumpoo...), tầm giá, trọng lượng (3U/4U/5U).
@@ -26,11 +22,9 @@ Website thương mại điện tử chuyên kinh doanh vợt, giày và phụ ki
 - Quản lý sản phẩm (biến thể, tồn kho, ẩn/hiện sản phẩm).
 - Xử lý đơn hàng, đổi trạng thái giao hàng, in hóa đơn.
 - Quản lý mã giảm giá, bài viết tin tức, danh mục và phân quyền tài khoản.
-
 ---
 
 ## 🚀 Cài đặt & Khởi chạy
-
 ### 1. Cấu hình Backend
 ```bash
 cd BackEnd
@@ -73,27 +67,4 @@ VITE_API_URL=http://localhost:5000/api
 Chạy ứng dụng:
 ```bash
 npm run dev
-```
-
----
-
-## 📁 Cấu trúc thư mục
-
-```text
-├── BackEnd/
-│   ├── config/          # Kết nối cơ sở dữ liệu
-│   ├── controllers/     # Điều hướng Request / Response
-│   ├── models/          # Schema dữ liệu
-│   ├── repositories/    # Truy vấn PostgreSQL
-│   ├── routes/          # API Endpoints
-│   ├── services/        # Logic nghiệp vụ
-│   └── app.js           # Server entry point
-│
-└── FrontEnd/
-    ├── public/          # Static assets
-    └── src/
-        ├── components/  # Reusable UI components
-        ├── pages/       # Storefront & Admin pages
-        ├── services/    # API clients (Axios)
-        └── App.jsx      # Routing
 ```

@@ -4,9 +4,8 @@ const AppError = require('../utils/AppError');
 
 // SERVICE = tầng nghiệp vụ: xử lý logic, kiểm tra quyền, hash password, validate nghiệp vụ.
 const UserService = {
-    getAllUsers: async (page = 1, limit = 10, search = null) => {
-        const offset = (page - 1) * limit;
-        return await UserRepository.findAll(limit, offset, search);
+    getAllUsers: async (page = 1, limit = 10, search = '') => {
+        return await UserRepository.findPaginated(page, limit, search);
     },
 
     getUserById: async (id) => {
@@ -24,18 +23,22 @@ const UserService = {
             throw new AppError(400, 'Vui lòng điền đầy đủ các thông tin bắt buộc (username, email, password, full_name)!');
         }
 
-        if (!data.email.endsWith('@gmail.com')) {
-            throw new AppError(400, 'Email bắt buộc phải là định dạng @gmail.com');
+        if (!data.email || !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(data.email.trim())) {
+            throw new AppError(400, 'Email bắt buộc phải đúng định dạng @gmail.com (ví dụ: yourname@gmail.com)!');
         }
 
-        if (data.phone && !/^0(3|5|7|8|9)\d{8}$/.test(data.phone)) {
-            throw new AppError(400, 'Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
+        if (data.phone && !/^0(3|5|7|8|9)\d{8}$/.test(data.phone.trim())) {
+            throw new AppError(400, 'Số điện thoại phải có đúng 10 chữ số và bắt đầu bằng số 0 (Ví dụ: 0912345678)!');
         }
 
         const role = data.role && ['customer', 'admin'].includes(data.role) ? data.role : 'customer';
 
         if (data.password.length < 6) {
             throw new AppError(400, 'Mật khẩu phải có ít nhất 6 ký tự!');
+        }
+
+        if (data.password.length > 50) {
+            throw new AppError(400, 'Mật khẩu không được vượt quá 50 ký tự!');
         }
 
         const hashedPassword = await AuthService.hashPassword(data.password);
@@ -55,11 +58,11 @@ const UserService = {
 
         const updateData = { ...data };
 
-        if (updateData.email && !updateData.email.endsWith('@gmail.com')) {
-            throw new AppError(400, 'Email bắt buộc phải là định dạng @gmail.com');
+        if (updateData.email && !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(updateData.email.trim())) {
+            throw new AppError(400, 'Email bắt buộc phải đúng định dạng @gmail.com (ví dụ: yourname@gmail.com)!');
         }
-        if (updateData.phone && !/^0(3|5|7|8|9)\d{8}$/.test(updateData.phone)) {
-            throw new AppError(400, 'Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
+        if (updateData.phone && !/^0(3|5|7|8|9)\d{8}$/.test(updateData.phone.trim())) {
+            throw new AppError(400, 'Số điện thoại phải có đúng 10 chữ số và bắt đầu bằng số 0 (Ví dụ: 0912345678)!');
         }
 
         // Chỉ admin mới được đổi role

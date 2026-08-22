@@ -106,8 +106,8 @@ const SearchImagePage = () => {
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
         {/* Header */}
         <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-zinc-950 dark:bg-zinc-800 text-lime-400 rounded-full text-xs font-bold uppercase tracking-wider">
-            <Sparkles size={14} /> AI Visual Search
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-orange-500/10 dark:bg-orange-950/40 border border-orange-500/30 text-[#ea580c] dark:text-orange-400 rounded-full text-xs font-black uppercase tracking-wider">
+            <Camera size={14} className="text-[#ea580c]" /> Công Nghệ Nhận Diện Hình Ảnh
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white tracking-tight">
             Tìm Vợt Bằng Hình Ảnh

@@ -82,6 +82,18 @@ const CheckoutPage = () => {
       if (user.phone) setRecipientPhone(user.phone);
       if (user.address) setAddressDetail(user.address);
 
+      // Fetch fresh profile from API to ensure address is always accurate
+      if (user.id) {
+        userService.getUserById(user.id).then(res => {
+          const freshUser = res?.data || res;
+          if (freshUser) {
+            if (freshUser.full_name) setRecipientName(freshUser.full_name);
+            if (freshUser.phone) setRecipientPhone(freshUser.phone);
+            if (freshUser.address) setAddressDetail(freshUser.address);
+          }
+        }).catch(() => {});
+      }
+
       // Fetch GHN Provinces
       ghnService.getProvinces().then(res => {
         if (res?.data) setProvinces(res.data);
@@ -375,7 +387,7 @@ const CheckoutPage = () => {
           </div>
         )}
 
-        <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <form noValidate onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Left Column: Customer & Delivery & Payment */}
           <div className="lg:col-span-7 space-y-6">
@@ -394,6 +406,7 @@ const CheckoutPage = () => {
                   <input
                     type="text"
                     required
+                    maxLength={50}
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
                     placeholder="Nguyễn Văn A"
@@ -408,10 +421,11 @@ const CheckoutPage = () => {
                   <input
                     type="tel"
                     required
+                    maxLength={10}
                     value={recipientPhone}
-                    onChange={(e) => setRecipientPhone(e.target.value)}
+                    onChange={(e) => setRecipientPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="0987654321"
-                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs text-zinc-900 dark:text-white font-medium outline-none focus:border-[#ea580c]"
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs text-zinc-900 dark:text-white font-medium outline-none focus:border-[#ea580c] font-mono"
                   />
                 </div>
               </div>
@@ -493,6 +507,7 @@ const CheckoutPage = () => {
                     <input
                       type="text"
                       required
+                      maxLength={255}
                       value={addressDetail}
                       onChange={(e) => setAddressDetail(e.target.value)}
                       placeholder="Số 45 ngõ 12..."
@@ -508,6 +523,7 @@ const CheckoutPage = () => {
                 </label>
                 <textarea
                   rows="2"
+                  maxLength={500}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Ví dụ: Căng cước Yonex BG65 10.5kg, gọi trước khi giao..."

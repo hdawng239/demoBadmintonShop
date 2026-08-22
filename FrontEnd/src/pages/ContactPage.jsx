@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import MainLayout from '../components/layout/MainLayout';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { validateFullName, validateEmail, validatePhone } from '../utils/validation';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -12,27 +13,71 @@ const ContactPage = () => {
     email: '',
     message: '',
   });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
+
+  const clearFieldError = (field) => {
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    clearFieldError(name);
+    if (name === 'phone') {
+      const onlyNums = value.replace(/\D/g, '').slice(0, 10);
+      setFormData({ ...formData, phone: onlyNums });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setServerError('');
     setSent(false);
 
+    const errors = {};
+    const nameErr = validateFullName(formData.name);
+    if (nameErr) errors.name = nameErr;
+
+    const emailErr = validateEmail(formData.email);
+    if (emailErr) errors.email = emailErr;
+
+    if (formData.phone && formData.phone.trim()) {
+      const phoneErr = validatePhone(formData.phone, { required: false });
+      if (phoneErr) errors.phone = phoneErr;
+    }
+
+    if (!formData.message || !formData.message.trim()) {
+      errors.message = 'Vui lòng nhập nội dung lời nhắn!';
+    } else if (formData.message.trim().length < 5) {
+      errors.message = 'Nội dung lời nhắn quá ngắn (tối thiểu 5 ký tự)!';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
+    setLoading(true);
+
     try {
-      await axios.post(`${API_BASE}/contact`, formData);
+      await axios.post(`${API_BASE}/contact`, {
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        message: formData.message.trim(),
+      });
       setSent(true);
       setFormData({ name: '', phone: '', email: '', message: '' });
       setTimeout(() => setSent(false), 6000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra khi gửi lời nhắn. Vui lòng thử lại sau!');
+      setServerError(err.response?.data?.message || 'Có lỗi xảy ra khi gửi lời nhắn. Vui lòng thử lại sau!');
     } finally {
       setLoading(false);
     }
@@ -76,54 +121,109 @@ const ContactPage = () => {
             <h3 className="font-bold text-base text-zinc-900 dark:text-white">Gửi lời nhắn cho chúng tôi</h3>
 
             {sent && (
-              <div className="p-3.5 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 rounded-xl text-xs text-lime-700 dark:text-lime-300 flex items-center gap-2">
-                <CheckCircle2 size={16} /> Cảm ơn bạn! Chúng tôi đã nhận được lời nhắn và sẽ phản hồi sớm nhất có thể.
+              <div className="p-3.5 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 rounded-xl text-xs text-lime-700 dark:text-lime-300 flex items-center gap-2 animate-in fade-in duration-200">
+                <CheckCircle2 size={16} className="shrink-0" />
+                <span>Cảm ơn bạn! Chúng tôi đã nhận được lời nhắn và sẽ phản hồi sớm nhất có thể.</span>
               </div>
             )}
 
-            {error && (
-              <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
-                <AlertCircle size={16} /> {error}
+            {serverError && (
+              <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2 animate-in fade-in duration-200">
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{serverError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            <form noValidate onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input 
-                  required 
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Họ và tên *" 
-                  className="px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
-                />
-                <input 
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  type="tel" 
-                  placeholder="Số điện thoại" 
-                  className="px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
-                />
+                <div>
+                  <input 
+                    maxLength={50}
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Họ và tên *" 
+                    className={`w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border rounded-xl outline-none transition-all ${
+                      fieldErrors.name 
+                        ? 'border-rose-500 ring-2 ring-rose-500/10 text-zinc-900 dark:text-white' 
+                        : 'border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:border-[#ea580c]'
+                    }`}
+                  />
+                  {fieldErrors.name && (
+                    <p className="mt-1.5 text-[11px] font-semibold text-rose-500 dark:text-rose-400 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <AlertCircle size={12} className="shrink-0" />
+                      <span>{fieldErrors.name}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <input 
+                    name="phone"
+                    maxLength={10}
+                    value={formData.phone}
+                    onChange={handleChange}
+                    type="tel" 
+                    placeholder="Số điện thoại" 
+                    className={`w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border rounded-xl outline-none font-mono transition-all ${
+                      fieldErrors.phone 
+                        ? 'border-rose-500 ring-2 ring-rose-500/10 text-zinc-900 dark:text-white' 
+                        : 'border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:border-[#ea580c]'
+                    }`}
+                  />
+                  {fieldErrors.phone && (
+                    <p className="mt-1.5 text-[11px] font-semibold text-rose-500 dark:text-rose-400 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <AlertCircle size={12} className="shrink-0" />
+                      <span>{fieldErrors.phone}</span>
+                    </p>
+                  )}
+                </div>
               </div>
-              <input 
-                required 
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                type="email" 
-                placeholder="Địa chỉ Email *" 
-                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
-              />
-              <textarea 
-                required 
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows="4" 
-                placeholder="Nội dung lời nhắn..." 
-                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]" 
-              />
+
+              <div>
+                <input 
+                  maxLength={100}
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  type="email" 
+                  placeholder="Địa chỉ Email (Ví dụ: yourname@gmail.com) *" 
+                  className={`w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border rounded-xl outline-none transition-all ${
+                    fieldErrors.email 
+                      ? 'border-rose-500 ring-2 ring-rose-500/10 text-zinc-900 dark:text-white' 
+                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:border-[#ea580c]'
+                  }`}
+                />
+                {fieldErrors.email && (
+                  <p className="mt-1.5 text-[11px] font-semibold text-rose-500 dark:text-rose-400 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <AlertCircle size={12} className="shrink-0" />
+                    <span>{fieldErrors.email}</span>
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <textarea 
+                  maxLength={1000}
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows="4" 
+                  placeholder="Nội dung lời nhắn (tối đa 1000 ký tự)... *" 
+                  className={`w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border rounded-xl outline-none transition-all ${
+                    fieldErrors.message 
+                      ? 'border-rose-500 ring-2 ring-rose-500/10 text-zinc-900 dark:text-white' 
+                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:border-[#ea580c]'
+                  }`}
+                />
+                {fieldErrors.message && (
+                  <p className="mt-1.5 text-[11px] font-semibold text-rose-500 dark:text-rose-400 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <AlertCircle size={12} className="shrink-0" />
+                    <span>{fieldErrors.message}</span>
+                  </p>
+                )}
+              </div>
+
               <button 
                 type="submit" 
                 disabled={loading}

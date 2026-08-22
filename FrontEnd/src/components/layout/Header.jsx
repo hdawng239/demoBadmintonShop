@@ -495,6 +495,82 @@ const Header = () => {
       {/* 4. Mobile Drawer Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white dark:bg-[#0c0d10] border-b border-zinc-200 dark:border-zinc-800 px-4 py-4 space-y-4 animate-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
+          {/* Mobile User Authentication / Profile Box */}
+          {currentUser ? (
+            <div className="p-3.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#ea580c] text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
+                  {(currentUser.full_name || currentUser.username || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="truncate flex-1">
+                  <p className="font-bold text-xs text-zinc-900 dark:text-white truncate">{currentUser.full_name || currentUser.username}</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{currentUser.email}</p>
+                  <span className="inline-block mt-0.5 text-[9px] font-bold px-2 py-0.5 rounded bg-[#ea580c]/15 text-[#ea580c] uppercase">
+                    {currentUser.role === 'admin' ? 'Quản trị viên' : 'Khách hàng'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800 text-[11px] font-bold">
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl"
+                >
+                  <User size={13} />
+                  <span>Tài khoản</span>
+                </Link>
+                <Link
+                  to="/my-orders"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl"
+                >
+                  <ShoppingBag size={13} />
+                  <span>Đơn hàng</span>
+                </Link>
+              </div>
+
+              {currentUser.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 w-full py-2 bg-zinc-900 dark:bg-zinc-800 text-white rounded-xl text-xs font-bold"
+                >
+                  <SlidersHorizontal size={13} />
+                  <span>Vào Trang Quản Trị Admin</span>
+                </Link>
+              )}
+
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full py-2.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-900 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <LogOut size={14} />
+                <span>Đăng xuất tài khoản</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+              <Link
+                to="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2.5 text-center bg-[#ea580c] text-white font-bold text-xs rounded-xl shadow-xs"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2.5 text-center bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-xs rounded-xl border border-zinc-200 dark:border-zinc-700"
+              >
+                Đăng ký
+              </Link>
+            </div>
+          )}
+
           {/* Mobile Search Bar */}
           <form onSubmit={handleSearch} className="flex items-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2">
             <Search size={16} className="text-zinc-400 mr-2" />

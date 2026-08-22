@@ -243,6 +243,7 @@ const AdminUserPage = () => {
                 <input 
                   type="email" 
                   required
+                  maxLength={100}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full border border-zinc-300 rounded-xl p-2.5 outline-none focus:border-[#ea580c]"
@@ -252,22 +253,30 @@ const AdminUserPage = () => {
               <div>
                 <label className="block text-zinc-700 font-bold uppercase mb-1">Số điện thoại</label>
                 <input 
-                  type="text" 
+                  type="tel" 
+                  maxLength={10}
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full border border-zinc-300 rounded-xl p-2.5 outline-none focus:border-[#ea580c]"
+                  onChange={(e) => {
+                    const onlyNums = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormData({ ...formData, phone: onlyNums });
+                  }}
+                  placeholder="0912345678"
+                  className="w-full border border-zinc-300 rounded-xl p-2.5 outline-none focus:border-[#ea580c] font-mono"
                 />
               </div>
 
               <div>
                 <label className="block text-zinc-700 font-bold uppercase mb-1">
-                  {editUser ? 'Mật khẩu mới (Để trống nếu không đổi)' : 'Mật khẩu'}
+                  {editUser ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu'}
                 </label>
                 <input 
                   type="password" 
                   required={!editUser}
+                  minLength={6}
+                  maxLength={50}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
                   className="w-full border border-zinc-300 rounded-xl p-2.5 outline-none focus:border-[#ea580c]"
                 />
               </div>

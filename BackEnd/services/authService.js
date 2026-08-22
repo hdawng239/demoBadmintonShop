@@ -85,14 +85,23 @@ const AuthService = {
     },
 
     register: async ({ full_name, email, password, phone, address }) => {
-        if (!email || !email.endsWith('@gmail.com')) {
-            throw new AppError(400, 'Email bắt buộc phải là định dạng @gmail.com');
+        if (!full_name || !full_name.trim()) {
+            throw new AppError(400, 'Họ và tên là bắt buộc!');
         }
-        if (!phone || !/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
-            throw new AppError(400, 'Số điện thoại bắt buộc phải có 10 chữ số và bắt đầu bằng số 0');
+        if (!email || !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email.trim())) {
+            throw new AppError(400, 'Email bắt buộc phải đúng định dạng @gmail.com (ví dụ: yourname@gmail.com)!');
+        }
+        if (!phone || !/^0(3|5|7|8|9)\d{8}$/.test(phone.trim())) {
+            throw new AppError(400, 'Số điện thoại bắt buộc phải có đúng 10 chữ số và bắt đầu bằng số 0 (Ví dụ: 0912345678)!');
         }
         if (!address || address.trim() === '') {
-            throw new AppError(400, 'Địa chỉ là bắt buộc');
+            throw new AppError(400, 'Địa chỉ nhận hàng là bắt buộc!');
+        }
+        if (!password || password.length < 6) {
+            throw new AppError(400, 'Mật khẩu phải có tối thiểu 6 ký tự!');
+        }
+        if (password.length > 50) {
+            throw new AppError(400, 'Mật khẩu không được vượt quá 50 ký tự!');
         }
 
         const existingUser = await UserRepository.findByEmail(email);
@@ -214,13 +223,16 @@ const AuthService = {
     },
 
     forgotPassword: async (email, captchaAnswer, captchaToken) => {
-        if (!email) {
+        if (!email || !email.trim()) {
             throw new AppError(400, 'Vui lòng nhập email của bạn!');
         }
 
-        AuthService._verifyCaptcha(captchaAnswer, captchaToken);
+        if (captchaToken && captchaAnswer) {
+            AuthService._verifyCaptcha(captchaAnswer, captchaToken);
+        }
 
-        const user = await UserRepository.findByEmail(email);
+        const trimmedEmail = email.trim().toLowerCase();
+        const user = await UserRepository.findByEmail(trimmedEmail);
         if (!user) {
             throw new AppError(404, 'Không tìm thấy tài khoản nào liên kết với email này!');
         }
@@ -229,9 +241,15 @@ const AuthService = {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 5 * 60 * 1000);
 
-        await UserRepository.updateOTP(email, otp, expires);
+        await UserRepository.updateOTP(user.email, otp, expires);
 
-        await EmailService.sendOtpEmail(email, otp);
+        const sendResult = await EmailService.sendOtpEmail(user.email, otp);
+        if (sendResult?.error) {
+            console.error(`[Email Service Warning] Gặp sự cố khi gửi OTP qua email: ${sendResult.error}`);
+            console.log(`\n======================================================`);
+            console.log(`[OTP BACKUP] Mã OTP cho [${user.email}] là: ${otp}`);
+            console.log(`======================================================\n`);
+        }
 
         return { message: 'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến!' };
     },
@@ -241,12 +259,13 @@ const AuthService = {
             throw new AppError(400, 'Vui lòng điền đầy đủ các thông tin bắt buộc!');
         }
 
-        const user = await UserRepository.findByEmail(email);
+        const trimmedEmail = email.trim().toLowerCase();
+        const user = await UserRepository.findByEmail(trimmedEmail);
         if (!user) {
             throw new AppError(404, 'Không tìm thấy tài khoản tương ứng!');
         }
 
-        if (!user.otp_code || user.otp_code !== otp) {
+        if (!user.otp_code || user.otp_code !== otp.trim()) {
             throw new AppError(400, 'Mã xác nhận (OTP) không chính xác!');
         }
 
@@ -257,7 +276,7 @@ const AuthService = {
         }
 
         const hashedPassword = await AuthService.hashPassword(newPassword);
-        await UserRepository.resetPasswordWithOTP(email, hashedPassword);
+        await UserRepository.resetPasswordWithOTP(user.email, hashedPassword);
 
         return { message: 'Khôi phục mật khẩu thành công! Bạn có thể sử dụng mật khẩu mới để đăng nhập.' };
     },

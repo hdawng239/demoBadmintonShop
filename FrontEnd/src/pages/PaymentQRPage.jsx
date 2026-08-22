@@ -16,7 +16,7 @@ const PaymentQRPage = () => {
     orderFromState?.total_amount || location.state?.totalAmount || 0
   );
   const [copiedField, setCopiedField] = useState('');
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+  const [timeLeft, setTimeLeft] = useState(300); // 5 phút đếm ngược
   const [isLoading, setIsLoading] = useState(!totalAmount && !!orderId);
   const [errorMessage, setErrorMessage] = useState('');
 
