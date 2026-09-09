@@ -16,7 +16,6 @@ const ProfilePage = () => {
     address: currentUser?.address || ''
   });
 
-  // Fetch latest profile on mount
   useEffect(() => {
     if (currentUser?.id) {
       userService.getUserById(currentUser.id)
@@ -30,7 +29,7 @@ const ProfilePage = () => {
               email: u.email || prev.email,
               address: u.address || prev.address
             }));
-            const updated = { ...currentUser, ...u };
+            const updated = { ...authService.getCurrentUser(), ...u };
             authService.setCurrentUser(updated);
           }
         })
@@ -38,7 +37,6 @@ const ProfilePage = () => {
     }
   }, [currentUser?.id]);
 
-  // Password change state
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -47,6 +45,45 @@ const ProfilePage = () => {
 
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
+  const [emailChange, setEmailChange] = useState({ email: '', password: '', otp: '', sent: false });
+  const [emailCooldown, setEmailCooldown] = useState(0);
+  const [confirmCooldown, setConfirmCooldown] = useState(0);
+  useEffect(() => {
+    if (!emailCooldown && !confirmCooldown) return;
+    const timer = setTimeout(() => {
+      setEmailCooldown(value => Math.max(0, value - 1));
+      setConfirmCooldown(value => Math.max(0, value - 1));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [emailCooldown, confirmCooldown]);
+  const handleEmailChange = async (e) => {
+    e.preventDefault();
+    if (loading || (emailChange.sent ? confirmCooldown > 0 : emailCooldown > 0)) return;
+    setLoading(true);
+    setMsg({ type: '', text: '' });
+    try {
+      if (!emailChange.sent) {
+        const email = emailChange.email.trim().toLowerCase();
+        const res = await userService.requestEmailChange(email, emailChange.password);
+        setEmailChange(prev => ({ ...prev, email, sent: true, password: '' }));
+        setEmailCooldown(Number(res.data.retryAfterSeconds) || 60);
+        setMsg({ type: 'success', text: res.data.message });
+      } else {
+        await userService.confirmEmailChange(emailChange.email, emailChange.otp);
+        await authService.logout();
+        navigate('/login', { state: { message: 'Đã đổi email. Vui lòng đăng nhập lại.' } });
+      }
+    } catch (err) {
+      if (err.response?.status === 429) {
+        const delay = Number(err.response.data?.retryAfterSeconds || err.response.headers?.['retry-after']);
+        if (Number.isFinite(delay) && delay > 0) {
+          if (emailChange.sent) setConfirmCooldown(Math.ceil(delay));
+          else setEmailCooldown(Math.ceil(delay));
+        }
+      }
+      setMsg({ type: 'error', text: err.response?.data?.message || err.message || 'Không thể đổi email.' });
+    } finally { setLoading(false); }
+  };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -80,7 +117,7 @@ const ProfilePage = () => {
 
       setMsg({ type: 'success', text: 'Cập nhật thông tin và địa chỉ giao hàng thành công!' });
     } catch (err) {
-      setMsg({ type: 'error', text: err.response?.data?.message || 'Có lỗi xảy ra khi lưu thông tin!' });
+      setMsg({ type: 'error', text: err.response?.data?.message || err.message || 'Có lỗi xảy ra khi lưu thông tin!' });
     } finally {
       setLoading(false);
     }
@@ -88,12 +125,12 @@ const ProfilePage = () => {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (passwordForm.newPassword.length < 6) {
-      setMsg({ type: 'error', text: 'Mật khẩu mới phải có ít nhất 6 ký tự!' });
+    if (passwordForm.newPassword.length < 10) {
+      setMsg({ type: 'error', text: 'Mật khẩu mới phải có ít nhất 10 ký tự!' });
       return;
     }
-    if (passwordForm.newPassword.length > 50) {
-      setMsg({ type: 'error', text: 'Mật khẩu mới không được vượt quá 50 ký tự!' });
+    if (new TextEncoder().encode(passwordForm.newPassword).length > 72) {
+      setMsg({ type: 'error', text: 'Mật khẩu mới không được vượt quá 72 byte!' });
       return;
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -109,10 +146,10 @@ const ProfilePage = () => {
         currentPassword: passwordForm.currentPassword,
         password: passwordForm.newPassword
       });
-      setMsg({ type: 'success', text: 'Đổi mật khẩu thành công!' });
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      await authService.logout();
+      navigate('/login', { state: { message: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại.' } });
     } catch (err) {
-      setMsg({ type: 'error', text: err.response?.data?.message || 'Mật khẩu hiện tại không đúng!' });
+      setMsg({ type: 'error', text: err.response?.data?.message || err.message || 'Mật khẩu hiện tại không đúng!' });
     } finally {
       setLoading(false);
     }
@@ -180,7 +217,33 @@ const ProfilePage = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Personal Info */}
+          <form onSubmit={handleEmailChange} className="md:col-span-2 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 space-y-3">
+            <h2 className="font-bold">Đổi email đăng nhập</h2>
+            <p className="text-sm">Email hiện tại: {profile.email}. Xác nhận bằng mật khẩu hiện tại và mã gửi đến email mới.</p>
+            <label className="block text-sm">Email mới
+              <input required type="email" maxLength={254} disabled={loading || emailChange.sent} value={emailChange.email}
+                onChange={e => setEmailChange({ ...emailChange, email: e.target.value })}
+                className="block w-full p-2 rounded border bg-transparent" />
+            </label>
+            {!emailChange.sent ? <label className="block text-sm">Mật khẩu hiện tại
+              <input required type="password" disabled={loading} autoComplete="current-password" value={emailChange.password}
+                onChange={e => setEmailChange({ ...emailChange, password: e.target.value })}
+                className="block w-full p-2 rounded border bg-transparent" />
+            </label> : <label className="block text-sm">Mã xác nhận trong email mới
+              <input required disabled={loading} inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" value={emailChange.otp}
+                onChange={e => setEmailChange({ ...emailChange, otp: e.target.value })}
+                className="block w-full p-2 rounded border bg-transparent" />
+            </label>}
+            <button disabled={loading || (emailChange.sent ? confirmCooldown > 0 : emailCooldown > 0)} className="px-4 py-2 rounded bg-zinc-900 text-white disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading ? 'Đang xử lý...' : emailChange.sent ? 'Xác nhận đổi email' : emailCooldown > 0 ? `Gửi lại sau ${emailCooldown}s` : 'Gửi mã xác nhận'}
+            </button>
+            {emailChange.sent && <button type="button" disabled={loading} className="ml-3 underline disabled:opacity-50" onClick={() => {
+              setEmailChange({ ...emailChange, sent: false, otp: '' });
+              setMsg({ type: '', text: '' });
+            }}>Nhập lại / gửi mã mới</button>}
+            {emailChange.sent && emailCooldown > 0 && <p className="text-xs text-zinc-500">Có thể gửi mã mới sau {emailCooldown}s. Bạn vẫn có thể xác nhận mã vừa nhận.</p>}
+            {emailChange.sent && confirmCooldown > 0 && <p className="text-xs text-rose-500">Có thể xác nhận lại sau {confirmCooldown}s.</p>}
+          </form>
           <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
             <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
               <User size={16} className="text-[#ea580c]" /> Thông tin cá nhân & Địa chỉ
@@ -257,7 +320,6 @@ const ProfilePage = () => {
             </form>
           </div>
 
-          {/* Change Password */}
           <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
             <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
               <Lock size={16} className="text-[#ea580c]" /> Đổi mật khẩu
@@ -271,7 +333,7 @@ const ProfilePage = () => {
                 <input
                   type="password"
                   required
-                  maxLength={50}
+                  maxLength={72}
                   value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                   placeholder="••••••••"
@@ -286,7 +348,7 @@ const ProfilePage = () => {
                 <input
                   type="password"
                   required
-                  maxLength={50}
+                  maxLength={72}
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                   placeholder="••••••••"
@@ -301,8 +363,8 @@ const ProfilePage = () => {
                 <input
                   type="password"
                   required
-                  minLength={6}
-                  maxLength={50}
+                  minLength={10}
+                  maxLength={72}
                   value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                   placeholder="••••••••"

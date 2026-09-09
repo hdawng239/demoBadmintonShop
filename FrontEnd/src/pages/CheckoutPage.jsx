@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
 import { cartService } from '../services/cartService';
 import { ghnService } from '../services/ghnService';
 import { voucherService } from '../services/voucherService';
+import { userService } from '../services/userService';
 import axios from 'axios';
 import { 
   ShieldCheck, 
@@ -25,19 +26,18 @@ import {
 const CheckoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const selectedItems = location.state?.selectedItems;
 
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Form State
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
   const [note, setNote] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('qr'); // 'qr', 'cod', 'store'
+  const [paymentMethod, setPaymentMethod] = useState('qr');
 
-  // GHN Address State
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
@@ -46,8 +46,9 @@ const CheckoutPage = () => {
   const [selectedWard, setSelectedWard] = useState('');
   const [shippingFee, setShippingFee] = useState(0);
   const [isCalculatingFee, setIsCalculatingFee] = useState(false);
+  const [quotedAddress, setQuotedAddress] = useState('');
+  const feeRequest = useRef(0);
 
-  // Voucher State
   const [vouchers, setVouchers] = useState([]);
   const [voucherCode, setVoucherCode] = useState(location.state?.appliedVoucher?.code || '');
   const [appliedVoucher, setAppliedVoucher] = useState(location.state?.appliedVoucher || null);
@@ -62,7 +63,7 @@ const CheckoutPage = () => {
         return;
       }
 
-      let items = location.state?.selectedItems;
+      let items = selectedItems;
       if (!items || items.length === 0) {
         try {
           const cart = await cartService.getMyCart();
@@ -82,7 +83,6 @@ const CheckoutPage = () => {
       if (user.phone) setRecipientPhone(user.phone);
       if (user.address) setAddressDetail(user.address);
 
-      // Fetch fresh profile from API to ensure address is always accurate
       if (user.id) {
         userService.getUserById(user.id).then(res => {
           const freshUser = res?.data || res;
@@ -94,12 +94,10 @@ const CheckoutPage = () => {
         }).catch(() => {});
       }
 
-      // Fetch GHN Provinces
       ghnService.getProvinces().then(res => {
         if (res?.data) setProvinces(res.data);
       }).catch(() => {});
 
-      // Fetch active vouchers
       try {
         const vList = await voucherService.getActiveVouchers();
         const raw = Array.isArray(vList) ? vList : (vList?.data || []);
@@ -110,9 +108,8 @@ const CheckoutPage = () => {
     };
 
     initCheckout();
-  }, [navigate]);
+  }, [navigate, selectedItems]);
 
-  // Province change
   const handleProvinceChange = async (e) => {
     const pId = e.target.value;
     setSelectedProvince(pId);
@@ -132,7 +129,6 @@ const CheckoutPage = () => {
     }
   };
 
-  // District change
   const handleDistrictChange = async (e) => {
     const dId = e.target.value;
     setSelectedDistrict(dId);
@@ -151,6 +147,8 @@ const CheckoutPage = () => {
   };
 
   const calculateShippingFee = async (dId, wCode) => {
+    const requestId = ++feeRequest.current;
+    setQuotedAddress('');
     if (!dId || !wCode) {
       setShippingFee(0);
       return;
@@ -158,55 +156,24 @@ const CheckoutPage = () => {
 
     setIsCalculatingFee(true);
     try {
-      let totalWeight = 0;
-      let maxLength = 20;
-      let maxWidth = 20;
-      let maxHeight = 10;
-
-      cartItems.forEach(item => {
-        let weight = 500;
-        let length = 20;
-        let width = 20;
-        let height = 10;
-
-        if (item.technical_specs) {
-          try {
-            const specs = typeof item.technical_specs === 'string' ? JSON.parse(item.technical_specs) : item.technical_specs;
-            if (specs.weight_g) weight = parseInt(specs.weight_g);
-            if (specs.length) length = parseInt(specs.length);
-            if (specs.width) width = parseInt(specs.width);
-            if (specs.height) height = parseInt(specs.height);
-          } catch (e) {}
-        }
-        totalWeight += weight * (item.quantity || 1);
-        maxLength = Math.max(maxLength, length);
-        maxWidth = Math.max(maxWidth, width);
-        maxHeight += height * (item.quantity || 1);
-      });
-
-      if (maxHeight > 200) maxHeight = 200;
-
       const payload = {
         to_district_id: parseInt(dId),
         to_ward_code: String(wCode),
-        weight: totalWeight || 1000,
-        length: maxLength || 20,
-        width: maxWidth || 20,
-        height: maxHeight || 10
+        cartItems: cartItems.map(item => ({ variant_id: item.variant_id || item.id, quantity: item.quantity || 1 }))
       };
 
       const resData = await ghnService.calculateFee(payload);
-      if (resData && resData.data && resData.data.total) {
+      if (requestId === feeRequest.current && Number.isFinite(resData?.data?.total)) {
         setShippingFee(resData.data.total);
+        setQuotedAddress(`${dId}:${wCode}`);
       }
     } catch (err) {
-      console.error('Lỗi tính phí vận chuyển GHN:', err);
+      if (requestId === feeRequest.current) setErrorMessage(err.message || 'Không tính được phí giao hàng. Vui lòng chọn lại phường/xã để thử lại.');
     } finally {
-      setIsCalculatingFee(false);
+      if (requestId === feeRequest.current) setIsCalculatingFee(false);
     }
   };
 
-  // Ward change -> Calculate shipping fee
   const handleWardChange = async (e) => {
     const wCode = e.target.value;
     setSelectedWard(wCode);
@@ -218,7 +185,6 @@ const CheckoutPage = () => {
     }
   };
 
-  // Calculate item price
   const getItemPrice = (item) => {
     const base = parseFloat(item.base_price || item.price || 0);
     const mod = parseFloat(item.price_modifier || 0);
@@ -227,7 +193,6 @@ const CheckoutPage = () => {
 
   const subtotal = cartItems.reduce((sum, item) => sum + (getItemPrice(item) * (item.quantity || 1)), 0);
 
-  // Apply Voucher
   const handleApplyVoucher = (codeParam) => {
     const code = (codeParam || voucherCode).trim().toUpperCase();
     setVoucherError('');
@@ -249,7 +214,7 @@ const CheckoutPage = () => {
       return;
     }
 
-    let calculatedDiscount = 0;
+    let calculatedDiscount;
     const isFreeship = found.discount_type === 'shipping' || found.discount_type === 'freeship' || found.discount_type === 'free_shipping';
 
     if (found.discount_type === 'percentage') {
@@ -281,7 +246,6 @@ const CheckoutPage = () => {
   const actualShippingFee = Math.max(0, rawShippingFee - shippingDiscount);
   const finalTotal = Math.max(0, subtotal - Math.min(subtotal, orderDiscount) + actualShippingFee);
 
-  // Place Order
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     setErrorMessage('');
@@ -292,13 +256,16 @@ const CheckoutPage = () => {
     }
 
     if (paymentMethod !== 'store') {
+      if (isCalculatingFee || quotedAddress !== `${selectedDistrict}:${selectedWard}`) {
+        setErrorMessage('Chưa xác minh được phí giao hàng. Vui lòng chọn lại phường/xã và chờ báo phí.');
+        return;
+      }
       if (!selectedProvince || !selectedDistrict || !selectedWard || !addressDetail.trim()) {
         setErrorMessage('Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và Số nhà nhận hàng!');
         return;
       }
     }
 
-    // Check stock for every item
     for (const item of cartItems) {
       if (item.stock_quantity !== undefined && item.quantity > item.stock_quantity) {
         setErrorMessage(`Sản phẩm "${item.product_name || item.name}" chỉ còn ${item.stock_quantity} cái trong kho, bạn đang đặt ${item.quantity} cái. Vui lòng điều chỉnh lại!`);
@@ -334,8 +301,10 @@ const CheckoutPage = () => {
 
       const orderResult = res.data?.data || res.data;
       const createdOrderId = orderResult.orderId || orderResult.id;
+      const createdOrder = orderResult.order || orderResult;
+      const serverTotal = Number(createdOrder.total_amount);
+      if (!Number.isFinite(serverTotal)) throw new Error('Server không trả về tổng tiền hợp lệ.');
 
-      // Clear purchased items from backend cart
       try {
         for (const item of cartItems) {
           if (item.id && typeof item.id === 'number') {
@@ -350,18 +319,14 @@ const CheckoutPage = () => {
         navigate(`/payment-qr/${createdOrderId}`, {
           state: {
             orderId: createdOrderId,
-            totalAmount: finalTotal
+            totalAmount: serverTotal,
+            order: createdOrder,
           }
         });
       } else {
         navigate('/order-success', {
           state: {
-            order: {
-              id: createdOrderId,
-              total_amount: finalTotal,
-              shipping_name: recipientName,
-              payment_method: paymentMethod
-            }
+            order: createdOrder
           }
         });
       }
@@ -389,10 +354,8 @@ const CheckoutPage = () => {
 
         <form noValidate onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Left Column: Customer & Delivery & Payment */}
           <div className="lg:col-span-7 space-y-6">
             
-            {/* 1. Customer Info */}
             <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
               <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <User size={16} className="text-[#ea580c]" /> Thông tin người nhận
@@ -431,7 +394,6 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* 2. Delivery Address */}
             <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
               <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <MapPin size={16} className="text-[#ea580c]" /> Địa chỉ giao hàng (GHN Đồng Kiểm)
@@ -532,14 +494,12 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* 3. Payment Methods (Full 3 Options) */}
             <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
               <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <CreditCard size={16} className="text-[#ea580c]" /> Phương thức thanh toán
               </h3>
 
               <div className="space-y-3">
-                {/* 1. VietQR SePay */}
                 <label className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
                   paymentMethod === 'qr'
                     ? 'border-[#ea580c] bg-orange-50/40 dark:bg-orange-950/20 shadow-xs'
@@ -563,7 +523,6 @@ const CheckoutPage = () => {
                   </div>
                 </label>
 
-                {/* 2. COD */}
                 <label className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
                   paymentMethod === 'cod'
                     ? 'border-[#ea580c] bg-orange-50/40 dark:bg-orange-950/20 shadow-xs'
@@ -587,7 +546,6 @@ const CheckoutPage = () => {
                   </div>
                 </label>
 
-                {/* 3. Store Pickup */}
                 <label className={`p-4 rounded-2xl border-2 flex items-start gap-4 cursor-pointer transition-all ${
                   paymentMethod === 'store'
                     ? 'border-[#ea580c] bg-orange-50/40 dark:bg-orange-950/20 shadow-xs'
@@ -615,10 +573,8 @@ const CheckoutPage = () => {
 
           </div>
 
-          {/* Right Column: Order Review & Voucher Selector */}
           <div className="lg:col-span-5 space-y-6">
             
-            {/* Voucher Card */}
             <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
               <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-1.5">
                 <Ticket size={16} className="text-[#ea580c]" /> Mã Giảm Giá Khuyến Mãi
@@ -654,7 +610,6 @@ const CheckoutPage = () => {
                 </div>
               )}
 
-              {/* Available Vouchers List */}
               {vouchers.length > 0 && (
                 <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
                   <p className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1">
@@ -712,13 +667,11 @@ const CheckoutPage = () => {
               )}
             </div>
 
-            {/* Order Review Card */}
             <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
               <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 Đơn Hàng ({cartItems.length} sản phẩm)
               </h3>
 
-              {/* Items Mini List */}
               <div className="space-y-3 max-h-60 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800 pr-1">
                 {cartItems.map((item) => {
                   const price = getItemPrice(item);
@@ -746,7 +699,6 @@ const CheckoutPage = () => {
                 })}
               </div>
 
-              {/* Cost Breakdown */}
               <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                 <div className="flex justify-between">
                   <span>Tạm tính tiền hàng:</span>
@@ -781,7 +733,6 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Total */}
               <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-baseline">
                 <span className="font-black text-sm text-zinc-900 dark:text-white uppercase tracking-wider">Tổng thanh toán:</span>
                 <span className="text-2xl font-black text-[#ea580c]">
@@ -789,7 +740,6 @@ const CheckoutPage = () => {
                 </span>
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}

@@ -1,10 +1,10 @@
 const asyncHandler = require('../utils/asyncHandler');
 const ProductService = require('../services/productService');
 const { sendSuccess, sendError } = require('../utils/response');
+const { parsePagination } = require('../utils/pagination');
 
 const getAllProducts = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
+    const { page, limit } = parsePagination(req.query.page, req.query.limit, 12, 60);
     const categoryId = req.query.categoryId || req.query.category_id || null;
     const brandId = req.query.brandId || req.query.brand || null;
     const keyword = req.query.keyword || req.query.search || null;
@@ -12,7 +12,8 @@ const getAllProducts = asyncHandler(async (req, res) => {
     const maxPrice = req.query.maxPrice !== undefined ? req.query.maxPrice : null;
     const sortBy = req.query.sortBy || 'newest';
 
-    const isAdmin = req.query.isAdmin === 'true' || req.query.all === 'true' || req.query.includeHidden === 'true';
+    const requestedHidden = req.query.isAdmin === 'true' || req.query.all === 'true' || req.query.includeHidden === 'true';
+    const isAdmin = requestedHidden && req.user?.role === 'admin';
     const isActive = isAdmin ? null : true;
 
     const result = await ProductService.getAllProducts(page, limit, categoryId, brandId, keyword, minPrice, maxPrice, sortBy, isActive);
@@ -29,7 +30,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
 });
 
 const getProductById = asyncHandler(async (req, res) => {
-    const product = await ProductService.getProductById(req.params.id);
+    const product = await ProductService.getProductById(req.params.id, req.user?.role === 'admin');
     sendSuccess(res, { data: product, legacy: product });
 });
 

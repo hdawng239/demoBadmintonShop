@@ -1,5 +1,5 @@
-// MODEL = định nghĩa Entity Variant: tên bảng, cột được phép cập nhật, hàm map row,
-// và các helper thuần túy cho định dạng tên/SKU (không dùng DB).
+const crypto = require('crypto');
+
 
 const TABLE = 'product_variants';
 
@@ -10,7 +10,6 @@ const mapRow = (row) => {
     return { ...row };
 };
 
-// ── Helpers thuần (không DB) ──────────────────────────────
 
 const formatVariantName = (category_id, attrs) => {
     if (!attrs) return 'Mặc định';
@@ -36,7 +35,7 @@ const formatVariantName = (category_id, attrs) => {
 };
 
 const cleanStr = (s) =>
-    s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^a-zA-Z0-9]/g, '');
+    String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^a-zA-Z0-9]/g, '');
 
 const generateSKU = (product_id, category_id, parsedAttrs, existingColors) => {
     let skuParts = ['PR', product_id];
@@ -50,9 +49,9 @@ const generateSKU = (product_id, category_id, parsedAttrs, existingColors) => {
         }
         const c = parsedAttrs['Màu sắc'] || parsedAttrs['color'];
         if (c) {
-            const sortedColors = Array.from(existingColors).sort();
-            const idx = sortedColors.indexOf(c);
-            skuParts.push('CL' + (idx !== -1 ? idx : 0));
+            const normalizedColor = cleanStr(String(c)).toUpperCase();
+            const colorHash = crypto.createHash('sha1').update(String(c).trim().toLowerCase()).digest('hex').slice(0, 6).toUpperCase();
+            skuParts.push(`CL${normalizedColor.slice(0, 8) || 'COLOR'}-${colorHash}`);
         }
     } else {
         skuParts.push('DFT');

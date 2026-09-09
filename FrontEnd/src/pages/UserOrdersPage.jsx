@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import { authService } from '../services/authService';
 import axios from 'axios';
 import { Package, Clock, CheckCircle2, Truck, XCircle, ArrowRight, ExternalLink, Printer, MapPin, CreditCard } from 'lucide-react';
 import { printInvoice } from '../utils/printInvoice';
@@ -76,7 +75,6 @@ const UserOrdersPage = () => {
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Theo dõi hành trình đơn hàng và lịch sử mua sắm trực tuyến.</p>
           </div>
 
-          {/* Filter tabs */}
           <div className="flex flex-wrap gap-2">
             {[
               { key: 'all', label: 'Tất cả' },
@@ -128,7 +126,6 @@ const UserOrdersPage = () => {
                   key={order.id}
                   className="bg-white dark:bg-[#12131a] rounded-3xl p-6 border border-zinc-200/80 dark:border-zinc-800 shadow-xs space-y-4 transition-colors duration-300"
                 >
-                  {/* Order Top Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 gap-2">
                     <div className="flex items-center gap-3 text-xs flex-wrap">
                       <span className="font-black text-sm text-zinc-900 dark:text-white font-mono">#NARO-{order.id}</span>
@@ -172,7 +169,6 @@ const UserOrdersPage = () => {
                     </div>
                   </div>
 
-                  {/* GHN Tracking Section */}
                   {order.tracking_code && (
                     <div className="p-4 bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-3">
@@ -199,7 +195,6 @@ const UserOrdersPage = () => {
                     </div>
                   )}
 
-                  {/* Order Items */}
                   <div className="divide-y divide-zinc-50 dark:divide-zinc-800/60 text-xs">
                     {order.items?.map((item, i) => (
                       <div key={i} className="py-3 flex items-center justify-between gap-4">
@@ -222,7 +217,6 @@ const UserOrdersPage = () => {
                     ))}
                   </div>
 
-                  {/* Order Bottom Total */}
                   <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
                     <p className="text-zinc-500 dark:text-zinc-400 truncate max-w-xl">
                       Địa chỉ nhận: <strong className="text-zinc-700 dark:text-zinc-200">{order.shipping_address}</strong>

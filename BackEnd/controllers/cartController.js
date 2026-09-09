@@ -1,7 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const CartService = require('../services/cartService');
 
-// CONTROLLER = chỉ đọc dữ liệu từ request, gọi service, trả response.
 const getMyCart = asyncHandler(async (req, res) => {
     const cart = await CartService.getMyCart(req.user.id);
     res.status(200).json(cart);

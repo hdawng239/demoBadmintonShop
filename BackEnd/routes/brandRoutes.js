@@ -7,7 +7,7 @@ const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
 router.get('/', getAllBrands);
 router.get('/:id', getBrandById);
 router.post('/', verifyToken, isAdmin, handleBrandValidation, createBrand);
-router.put('/:id', verifyToken, isAdmin, updateBrand); // Chỉ admin được phép sửa đổi
-router.delete('/:id', verifyToken, isAdmin, deleteBrand); // Chỉ admin được phép xóa
+router.put('/:id', verifyToken, isAdmin, updateBrand);
+router.delete('/:id', verifyToken, isAdmin, deleteBrand);
 
 module.exports = router;

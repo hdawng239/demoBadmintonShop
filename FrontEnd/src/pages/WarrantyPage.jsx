@@ -33,14 +33,12 @@ const WarrantyPage = () => {
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto px-4 lg:px-6 py-10 space-y-12">
-        {/* Breadcrumb */}
         <nav className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
           <Link to="/" className="hover:text-[#ea580c]">Trang chủ</Link>
           <span>/</span>
           <span className="font-semibold text-zinc-800 dark:text-zinc-200">Quy định bảo hành & Đổi trả</span>
         </nav>
 
-        {/* Hero Title */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/40 text-[#ea580c] rounded-full text-xs font-black uppercase tracking-widest">
             <ShieldCheck size={14} /> Minh Bạch & Uy Tín
@@ -53,7 +51,6 @@ const WarrantyPage = () => {
           </p>
         </div>
 
-        {/* 1. Warranty Periods Table */}
         <section className="space-y-4">
           <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
             <Clock size={20} className="text-[#ea580c]" />
@@ -84,9 +81,7 @@ const WarrantyPage = () => {
           </div>
         </section>
 
-        {/* 2. Conditions & Non-warranty (2 Column Cards) */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Approved conditions */}
           <div className="bg-lime-50/30 dark:bg-lime-950/20 p-6 sm:p-8 rounded-3xl border border-lime-200 dark:border-lime-900/40 space-y-4">
             <div className="flex items-center gap-2 text-lime-700 dark:text-lime-400 font-bold text-base">
               <CheckCircle2 size={22} className="text-lime-600 dark:text-lime-400 shrink-0" />
@@ -112,7 +107,6 @@ const WarrantyPage = () => {
             </ul>
           </div>
 
-          {/* Rejected conditions */}
           <div className="bg-rose-50/30 dark:bg-rose-950/20 p-6 sm:p-8 rounded-3xl border border-rose-200 dark:border-rose-900/40 space-y-4">
             <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-bold text-base">
               <XCircle size={22} className="text-rose-600 dark:text-rose-400 shrink-0" />
@@ -139,7 +133,6 @@ const WarrantyPage = () => {
           </div>
         </section>
 
-        {/* 3. 7-Day Return / Exchange Policy */}
         <section className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs space-y-4 transition-colors duration-300">
           <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
             <RotateCcw size={20} className="text-[#ea580c]" />
@@ -161,7 +154,6 @@ const WarrantyPage = () => {
           </div>
         </section>
 
-        {/* 4. 4-Step Warranty Process */}
         <section className="space-y-6">
           <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
             <FileText size={20} className="text-[#ea580c]" />
@@ -181,7 +173,6 @@ const WarrantyPage = () => {
           </div>
         </section>
 
-        {/* 5. Support Hotline */}
         <div className="bg-zinc-950 dark:bg-[#12131a] text-white rounded-3xl p-8 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-1 text-center sm:text-left">
             <h3 className="text-lg font-bold text-white flex items-center justify-center sm:justify-start gap-2">

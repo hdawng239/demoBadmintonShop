@@ -1,11 +1,10 @@
 const asyncHandler = require('../utils/asyncHandler');
 const CategoryService = require('../services/categoryService');
 const { sendSuccess } = require('../utils/response');
+const { parsePagination } = require('../utils/pagination');
 
-// getAll/getById giữ nguyên hình dạng cũ vì FE đọc trực tiếp
 const getAllCategories = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = parsePagination(req.query.page, req.query.limit, 10, 100);
     const search = req.query.search || '';
     const categories = await CategoryService.getAllCategories(page, limit, search);
     res.status(200).json(categories);

@@ -1,6 +1,8 @@
 const validateBrandCreate = (data) => {
     const errors = [];
-    if (!data.name || data.name.trim() === "") errors.push("Tên thương hiệu không được để trống");
+    if (typeof data.name !== 'string' || !data.name.trim() || data.name.trim().length > 120) {
+        errors.push("Tên thương hiệu không hợp lệ");
+    }
     return errors;
 };
 

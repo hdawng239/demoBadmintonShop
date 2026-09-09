@@ -12,7 +12,6 @@ const getAuthHeaders = () => {
 };
 
 export const cartService = {
-  // Lấy giỏ hàng của user từ server (chỉ cho user đã đăng nhập)
   getMyCart: async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -36,7 +35,6 @@ export const cartService = {
     }
   },
 
-  // Thêm sản phẩm vào giỏ (yêu cầu đăng nhập, lưu trực tiếp vào database)
   addToCart: async (product, quantity = 1, selectedVariant = null) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -61,7 +59,6 @@ export const cartService = {
     return response.data;
   },
 
-  // Cập nhật số lượng
   updateQuantity: async (itemId, quantity) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -74,7 +71,6 @@ export const cartService = {
     return freshCart;
   },
 
-  // Xóa sản phẩm khỏi giỏ
   removeFromCart: async (itemId) => {
     const token = localStorage.getItem('token');
     if (!token) {

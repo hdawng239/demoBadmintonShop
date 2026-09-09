@@ -8,14 +8,14 @@ const ProductRepository = {
         const whereClauses = [];
         const queryParams = [];
 
-        // Lọc theo trạng thái kinh doanh (Ẩn / Hiện). Nếu isActive = null => Admin lấy toàn bộ
+        // isActive = null cho phép admin lấy cả sản phẩm ẩn.
         if (isActive !== null && isActive !== undefined) {
             const idx = queryParams.length + 1;
             whereClauses.push(`p.is_active = $${idx}`);
             queryParams.push(Boolean(isActive));
         }
 
-        // Lọc theo category cha thì lấy luôn sản phẩm của các category con
+        // Danh mục cha bao gồm sản phẩm của danh mục con.
         if (categoryId) {
             const idx = queryParams.length + 1;
             whereClauses.push(`(p.category_id = $${idx} OR p.category_id IN (SELECT id FROM categories WHERE parent_id = $${idx}))`);
@@ -114,7 +114,7 @@ const ProductRepository = {
         return result.rows;
     },
 
-    create: async (data) => {
+    create: async (data, db = pool) => {
         const query = `
             INSERT INTO ${TABLE} (name, category_id, brand_id, base_price, description, image_url, technical_specs, is_active)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -130,32 +130,43 @@ const ProductRepository = {
             data.technical_specs || null,
             data.is_active !== undefined ? data.is_active : true,
         ];
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
         return mapRow(result.rows[0]);
     },
 
-    createDefaultVariant: async (productId) => {
+    createDefaultVariant: async (productId, db = pool) => {
         const query = `
             INSERT INTO product_variants (product_id, variant_name, stock_quantity, price_modifier, attributes)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
         `;
         const values = [productId, 'Mặc định', 10, 0, null];
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
         return result.rows[0];
     },
 
-    update: async (id, data) => {
-        const { setClause, values } = generateDynamicUpdate(data, UPDATABLE_FIELDS);
-        if (!setClause) return null;
+    createWithDefaultVariant: async (data) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const product = await ProductRepository.create(data, client);
+            await ProductRepository.createDefaultVariant(product.id, client);
+            await client.query('COMMIT');
+            return product;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
 
-        const query = `
-            UPDATE ${TABLE} 
-            SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = $${values.length + 1} 
-            RETURNING *
-        `;
-        const result = await pool.query(query, [...values, id]);
+    update: async (id, data) => {
+        const updateData = { ...data, updated_at: new Date() };
+        const allowedFields = [...UPDATABLE_FIELDS, 'updated_at'];
+        const { query, values } = generateDynamicUpdate(TABLE, updateData, id, allowedFields);
+        if (!query) return null;
+        const result = await pool.query(query, values);
         return mapRow(result.rows[0]);
     },
 
@@ -170,7 +181,9 @@ const ProductRepository = {
              FROM ${TABLE} p
              LEFT JOIN brands b ON p.brand_id = b.id
              LEFT JOIN categories c ON p.category_id = c.id
-             WHERE p.is_active = true`
+             WHERE p.is_active = true
+             ORDER BY p.id DESC
+             LIMIT 1000`
         );
         return result.rows;
     },
@@ -186,7 +199,7 @@ const ProductRepository = {
         `;
         const result = await pool.query(query, [ids]);
         const rows = result.rows;
-        // Giữ đúng thứ tự ưu tiên độ khớp mà AI đã xếp hạng
+        // Giữ thứ tự kết quả do AI xếp hạng.
         return ids.map(id => rows.find(r => r.id === id)).filter(Boolean);
     }
 };

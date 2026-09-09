@@ -10,27 +10,27 @@ const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const currentUser = authService.getCurrentUser();
+  const currentUserId = currentUser?.id;
 
-  const fetchFavorites = async () => {
-    if (!currentUser) {
+  useEffect(() => {
+    if (!currentUserId) {
       setLoading(false);
       return;
     }
-    try {
-      setLoading(true);
-      const res = await wishlistService.getWishlist();
-      const list = res?.data || res?.wishlist || res || [];
-      setFavorites(Array.isArray(list) ? list : []);
-    } catch (err) {
-      console.error('Lỗi tải yêu thích:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        setLoading(true);
+        const res = await wishlistService.getWishlist();
+        const list = res?.data || res?.wishlist || res || [];
+        setFavorites(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error('Lỗi tải yêu thích:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchFavorites();
-  }, []);
+  }, [currentUserId]);
 
   const handleFavoriteChange = (productId, isFav) => {
     if (!isFav) {

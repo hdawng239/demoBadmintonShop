@@ -7,7 +7,16 @@ const ReviewService = {
 
     getAllReviews: (page, limit) => ReviewRepository.findAll(page, limit),
 
-    createReview: (data) => ReviewRepository.create(data),
+    createReview: async (data) => {
+        const result = await ReviewRepository.createVerified(data);
+        if (result.reason === 'not_purchased') {
+            throw new AppError(403, 'Bạn chỉ có thể đánh giá sản phẩm trong đơn hàng đã hoàn thành.');
+        }
+        if (result.reason === 'duplicate') {
+            throw new AppError(409, 'Bạn đã đánh giá sản phẩm này rồi.');
+        }
+        return result.review;
+    },
 
     deleteReview: async (id) => {
         const deleted = await ReviewRepository.remove(id);

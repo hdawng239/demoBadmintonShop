@@ -12,7 +12,6 @@ const AdminPostPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Form State
   const [showModal, setShowModal] = useState(false);
   const [editPost, setEditPost] = useState(null);
   const [formData, setFormData] = useState({ title: '', summary: '', content: '', thumbnail_url: '', is_published: true });
@@ -43,6 +42,8 @@ const AdminPostPage = () => {
 
   useEffect(() => {
     fetchPosts(currentPage);
+  // Chỉ áp dụng từ khóa khi gửi biểu mẫu tìm kiếm.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const handleSearch = (e) => {
@@ -67,7 +68,6 @@ const AdminPostPage = () => {
 
   const handleTogglePublish = async (post) => {
     const newStatus = !post.is_published;
-    // Optimistic update
     setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_published: newStatus } : p));
     try {
       const token = localStorage.getItem('token');
@@ -76,7 +76,6 @@ const AdminPostPage = () => {
       });
       showToast(newStatus ? "Đã xuất bản bài viết lên website!" : "Đã chuyển bài viết về bản nháp!");
     } catch (err) {
-      // Revert on error
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_published: post.is_published } : p));
       showToast("Lỗi cập nhật trạng thái xuất bản", "error");
     }
@@ -277,7 +276,6 @@ const AdminPostPage = () => {
         </div>
       )}
 
-      {/* Modal Form */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
           <div className="bg-white dark:bg-[#12131a] rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 max-h-[90vh] overflow-y-auto">

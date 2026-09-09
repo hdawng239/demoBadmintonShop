@@ -43,7 +43,6 @@ const CartPage = () => {
       const loadedCart = c || { items: [] };
       setCart(loadedCart);
       
-      // Default: select all active items
       if (loadedCart.items && loadedCart.items.length > 0) {
         const activeItemIds = loadedCart.items.filter(i => i.is_active !== false).map(i => i.id);
         setSelectedIds(new Set(activeItemIds));
@@ -112,7 +111,6 @@ const CartPage = () => {
       return;
     }
 
-    // Optimistic update
     setCart(prev => {
       if (!prev || !prev.items) return prev;
       return {
@@ -136,7 +134,6 @@ const CartPage = () => {
   const handleRemoveItem = async (itemId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?")) return;
 
-    // Optimistic remove
     setCart(prev => {
       if (!prev || !prev.items) return prev;
       return {
@@ -162,7 +159,6 @@ const CartPage = () => {
     }
   };
 
-  // Correct calculation of item unit price (base_price + price_modifier)
   const getItemPrice = (item) => {
     const base = parseFloat(item.base_price || item.price || 0);
     const mod = parseFloat(item.price_modifier || 0);
@@ -213,7 +209,7 @@ const CartPage = () => {
         discountAmount = Math.min(discountAmount, parseFloat(maxDiscount));
       }
     } else if (isFreeshipVoucher) {
-      discountAmount = 0; // Sẽ được trừ vào phí ship ở bước Checkout
+      discountAmount = 0;
     } else {
       discountAmount = parseFloat(appliedVoucher.discount_value || 0);
     }
@@ -227,7 +223,6 @@ const CartPage = () => {
       return;
     }
 
-    // Check if any selected item is out of stock
     const outOfStock = selectedItems.find(i => i.stock_quantity !== undefined && i.quantity > i.stock_quantity);
     if (outOfStock) {
       showToast(`Sản phẩm "${outOfStock.product_name}" chỉ còn ${outOfStock.stock_quantity} cái trong kho!`, 'error');
@@ -286,10 +281,8 @@ const CartPage = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* Left Column: Items List with Select All */}
             <div className="lg:col-span-8 space-y-4">
               
-              {/* Select All Bar */}
               <div className="bg-white dark:bg-[#12131a] px-6 py-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between text-xs font-bold shadow-xs">
                 <button
                   onClick={handleToggleSelectAll}
@@ -298,7 +291,7 @@ const CartPage = () => {
                   <input
                     type="checkbox"
                     checked={selectedIds.size === items.length && items.length > 0}
-                    onChange={() => {}} // Handled by button click
+                    onChange={() => {}}
                     className="w-4 h-4 accent-[#ea580c] rounded cursor-pointer"
                   />
                   <span>Chọn tất cả ({items.length} sản phẩm)</span>
@@ -308,7 +301,6 @@ const CartPage = () => {
                 </span>
               </div>
 
-              {/* Items Card List */}
               <div className="space-y-3">
                 {items.map((item) => {
                   const isSelected = selectedIds.has(item.id);
@@ -324,7 +316,6 @@ const CartPage = () => {
                           : 'border-zinc-200/60 dark:border-zinc-800/60 opacity-80'
                       }`}
                     >
-                      {/* Checkbox */}
                       <button 
                         onClick={() => handleToggleItem(item)}
                         disabled={item.is_active === false}
@@ -334,12 +325,11 @@ const CartPage = () => {
                           type="checkbox"
                           checked={isSelected && item.is_active !== false}
                           disabled={item.is_active === false}
-                          onChange={() => {}} // Handled by button
+                          onChange={() => {}}
                           className="w-4 h-4 accent-[#ea580c] rounded cursor-pointer disabled:cursor-not-allowed"
                         />
                       </button>
 
-                      {/* Product Thumbnail */}
                       <Link to={`/product/${item.product_id}`} className="w-16 h-16 sm:w-20 sm:h-20 bg-[#f8f9fa] dark:bg-[#181a24] rounded-xl p-2 shrink-0 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center">
                         {item.image_url ? (
                           <img 
@@ -352,7 +342,6 @@ const CartPage = () => {
                         )}
                       </Link>
 
-                      {/* Product Details */}
                       <div className="flex-1 min-w-0">
                         <Link 
                           to={`/product/${item.product_id}`} 
@@ -387,7 +376,6 @@ const CartPage = () => {
                         </div>
                       </div>
 
-                      {/* Quantity Selector */}
                       <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
                         <div className="flex items-center bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 rounded-xl p-1">
                           <button
@@ -414,7 +402,6 @@ const CartPage = () => {
                           {((price * (item.quantity || 1))).toLocaleString('vi-VN')} ₫
                         </div>
 
-                        {/* Delete Button */}
                         <button
                           onClick={() => handleRemoveItem(item.id)}
                           className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
@@ -431,10 +418,8 @@ const CartPage = () => {
 
             </div>
 
-            {/* Right Column: Voucher & Checkout Summary */}
             <div className="lg:col-span-4 space-y-6">
               
-              {/* Voucher Box */}
               <div className="bg-white dark:bg-[#12131a] p-6 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
                 <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-1.5">
                   <Ticket size={16} className="text-[#ea580c]" /> Mã Giảm Giá Khuyến Mãi
@@ -469,7 +454,6 @@ const CartPage = () => {
                   </div>
                 )}
 
-                {/* Available Vouchers List */}
                 {vouchers.length > 0 && (
                   <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
                     <p className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1">
@@ -527,7 +511,6 @@ const CartPage = () => {
                 )}
               </div>
 
-              {/* Order Summary Card */}
               <div className="bg-white dark:bg-[#12131a] p-6 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 shadow-sm transition-colors duration-300">
                 <h3 className="font-black text-sm uppercase tracking-wider text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-zinc-800 pb-3">
                   Tóm Tắt Đơn Hàng ({selectedItems.length} món chọn)
@@ -580,7 +563,6 @@ const CartPage = () => {
         )}
       </div>
 
-      {/* Mobile Sticky Bottom Checkout Bar */}
       {items.length > 0 && (
         <div className="md:hidden fixed bottom-[52px] left-0 right-0 z-30 bg-white/95 dark:bg-[#12131a]/95 backdrop-blur-xl border-t border-zinc-200/80 dark:border-zinc-800/80 p-2.5 px-4 flex items-center justify-between gap-3 shadow-[0_-4px_25px_rgba(0,0,0,0.12)]">
           <button 

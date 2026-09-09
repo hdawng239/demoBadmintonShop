@@ -29,9 +29,8 @@ const WEIGHT_OPTIONS = [
   { label: '5U / 6U (75 - 79g)', value: '5U' }
 ];
 
-// Subcategory Navigation Mapping matching DB navishop
+// Các ID danh mục này phụ thuộc dữ liệu trong DB.
 const SUBCATEGORY_GROUPS = {
-  // Quần Áo (Parent 13, Children: 6 - Nam, 8 - Nữ)
   apparel: {
     title: 'Phân loại Quần Áo',
     defaultParentId: 13,
@@ -42,7 +41,6 @@ const SUBCATEGORY_GROUPS = {
       { id: 8, name: 'Quần Áo Cầu Lông Nữ' }
     ]
   },
-  // Phụ Kiện (Parent 5, Children: 7 - Túi, 9 - Cước, 10 - Tất, 11 - Quấn cán)
   accessories: {
     title: 'Phân loại Phụ Kiện',
     defaultParentId: 5,
@@ -68,20 +66,16 @@ const ProductListPage = () => {
   const [loading, setLoading] = useState(true);
   const [pageTitle, setPageTitle] = useState('Danh Sách Sản Phẩm');
 
-  // Filters State
   const [selectedBrand, setSelectedBrand] = useState(searchParams.get('brand') || '');
   const [selectedWeight, setSelectedWeight] = useState(searchParams.get('weight') || '');
   const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0]);
   const [sortBy, setSortBy] = useState('newest');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const limit = 12;
 
-  // Determine active subcategory group
   const currentCatIdNum = parseInt(categoryId) || 0;
   const activeSubGroup = Object.values(SUBCATEGORY_GROUPS).find(group => 
     group.ids.includes(currentCatIdNum)
@@ -89,7 +83,6 @@ const ProductListPage = () => {
 
   const isRacketCategory = currentCatIdNum === 1;
 
-  // Fetch Brands List for filter
   useEffect(() => {
     const fetchBrands = async () => {
       try {
@@ -103,7 +96,6 @@ const ProductListPage = () => {
     fetchBrands();
   }, []);
 
-  // Update Page Title based on category or search keyword
   useEffect(() => {
     if (keyword) {
       setPageTitle(`Kết quả tìm kiếm cho: "${keyword}"`);
@@ -126,14 +118,12 @@ const ProductListPage = () => {
     }
   }, [categoryId, keyword]);
 
-  // Sync URL search params
   useEffect(() => {
     const brandFromUrl = searchParams.get('brand');
     if (brandFromUrl) setSelectedBrand(brandFromUrl);
     setPage(1);
   }, [searchParams]);
 
-  // Fetch Products with active filters
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -171,14 +161,11 @@ const ProductListPage = () => {
         } else if (res?.products && Array.isArray(res.products)) {
           fetchedProds = res.products;
           setTotalPages(res.totalPages || Math.ceil((res.total || res.products.length) / limit) || 1);
-          setTotalItems(res.total || res.products.length);
         } else if (res?.data && Array.isArray(res.data)) {
           fetchedProds = res.data;
           setTotalPages(res.totalPages || 1);
-          setTotalItems(res.total || res.data.length);
         }
 
-        // Apply Client Weight Filter if chosen
         if (selectedWeight) {
           fetchedProds = fetchedProds.filter(p => {
             if (!p.technical_specs) return true;
@@ -224,7 +211,6 @@ const ProductListPage = () => {
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
         
-        {/* Breadcrumb Navigation */}
         <nav className="flex items-center space-x-2 text-xs text-zinc-500 dark:text-zinc-400 mb-6">
           <Link to="/" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Trang chủ</Link>
           <span>/</span>
@@ -247,7 +233,6 @@ const ProductListPage = () => {
           )}
         </nav>
 
-        {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 border-b border-zinc-200 dark:border-zinc-800 gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
@@ -258,7 +243,6 @@ const ProductListPage = () => {
             </p>
           </div>
 
-          {/* Sort & Mobile Filter Trigger */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileFilterOpen(true)}
@@ -267,7 +251,6 @@ const ProductListPage = () => {
               <SlidersHorizontal size={15} /> Bộ lọc
             </button>
 
-            {/* Sort Dropdown */}
             <div className="flex items-center gap-2 bg-white dark:bg-[#12131a] border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2 shadow-xs">
               <ArrowUpDown size={14} className="text-zinc-400" />
               <select
@@ -285,7 +268,6 @@ const ProductListPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Desktop Filter Sidebar */}
           <aside className="hidden lg:block lg:col-span-3 bg-white dark:bg-[#12131a] p-6 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-6 sticky top-28 shadow-xs transition-colors duration-300">
             <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
               <h3 className="font-extrabold text-sm text-zinc-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
@@ -301,7 +283,6 @@ const ProductListPage = () => {
               )}
             </div>
 
-            {/* 1. Subcategory Group Filter */}
             {activeSubGroup && (
               <div className="space-y-3 pb-5 border-b border-zinc-100 dark:border-zinc-800">
                 <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
@@ -330,7 +311,6 @@ const ProductListPage = () => {
               </div>
             )}
 
-            {/* 2. Brands Filter */}
             <div className="space-y-3">
               <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Thương hiệu</h4>
               <div className="space-y-2">
@@ -365,7 +345,6 @@ const ProductListPage = () => {
               </div>
             </div>
 
-            {/* 3. Weight Filter (Only for Rackets) */}
             {isRacketCategory && (
               <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
                 <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Trọng lượng vợt</h4>
@@ -386,7 +365,6 @@ const ProductListPage = () => {
               </div>
             )}
 
-            {/* 4. Price Filter */}
             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
               <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Mức giá (VNĐ)</h4>
               <div className="space-y-2">
@@ -406,7 +384,6 @@ const ProductListPage = () => {
             </div>
           </aside>
 
-          {/* Mobile Filter Modal / Drawer */}
           {isMobileFilterOpen && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex justify-end lg:hidden animate-in fade-in duration-200">
               <div className="w-[85vw] max-w-sm bg-white dark:bg-[#12131a] h-full p-5 space-y-5 overflow-y-auto text-zinc-900 dark:text-white flex flex-col justify-between shadow-2xl">
@@ -519,7 +496,6 @@ const ProductListPage = () => {
             </div>
           )}
 
-          {/* Product Listing Main Area */}
           <main className="lg:col-span-9">
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
@@ -535,7 +511,6 @@ const ProductListPage = () => {
                   ))}
                 </div>
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-12 pt-6 border-t border-zinc-200 dark:border-zinc-800">
                     <button

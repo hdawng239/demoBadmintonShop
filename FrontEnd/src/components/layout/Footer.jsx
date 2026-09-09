@@ -5,7 +5,6 @@ import { ShieldCheck, Truck, RotateCcw, Award, Phone, Mail, MapPin } from 'lucid
 const Footer = () => {
   return (
     <footer className="bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 text-sm mt-16 border-t border-zinc-200 dark:border-zinc-800 transition-colors duration-300">
-      {/* Brand Value Pillars */}
       <div className="border-b border-zinc-200 dark:border-zinc-800/80 py-10 bg-zinc-50/70 dark:bg-zinc-950 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -52,11 +51,9 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Main Footer Links */}
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Col 1: Brand Info (Matching Image 1 perfectly) */}
           <div className="lg:col-span-2 space-y-4">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-black text-lg shadow-sm">
@@ -82,7 +79,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Col 2: Categories */}
           <div>
             <h5 className="font-bold text-zinc-900 dark:text-white text-sm uppercase tracking-wider mb-4">Danh mục chính</h5>
             <ul className="space-y-2.5 text-xs">
@@ -95,7 +91,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 3: Customer Care */}
           <div>
             <h5 className="font-bold text-zinc-900 dark:text-white text-sm uppercase tracking-wider mb-4">Hỗ trợ khách hàng</h5>
             <ul className="space-y-2.5 text-xs">
@@ -107,7 +102,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 4: Corporate */}
           <div>
             <h5 className="font-bold text-zinc-900 dark:text-white text-sm uppercase tracking-wider mb-4">Về Naro Shop</h5>
             <ul className="space-y-2.5 text-xs">
@@ -121,7 +115,6 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Copyright Bar */}
       <div className="border-t border-zinc-200 dark:border-zinc-900 py-6 text-center text-xs text-zinc-500 dark:text-zinc-600 bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>© 2026 Naro Badminton Shop. All rights reserved.</p>

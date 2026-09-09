@@ -5,9 +5,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import axios from 'axios';
 
 const AdminDashboardPage = () => {
-  const [timeframe, setTimeframe] = useState('week'); // Default to 7 days
+  const [timeframe, setTimeframe] = useState('week');
   
-  // Default custom range: last 30 days
   const todayStr = new Date().toISOString().split('T')[0];
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -69,6 +68,7 @@ const AdminDashboardPage = () => {
     } else {
       fetchStats();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeframe, startDate, endDate]);
 
   const getTimeframeLabel = () => {
@@ -83,7 +83,6 @@ const AdminDashboardPage = () => {
 
   return (
     <AdminLayout>
-      {/* Header & Filter Toolbar */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-black text-zinc-900 dark:text-white flex items-center gap-2">
@@ -93,7 +92,6 @@ const AdminDashboardPage = () => {
           <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">Dữ liệu doanh thu thực tế và chỉ số vận hành cửa hàng.</p>
         </div>
         
-        {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-[#12131a] p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs">
           <div className="flex items-center gap-1 border-r border-zinc-100 dark:border-zinc-800 pr-2">
             {[
@@ -151,10 +149,8 @@ const AdminDashboardPage = () => {
         </div>
       ) : (
         <>
-          {/* Key KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             
-            {/* Revenue */}
             <div className="bg-white dark:bg-[#12131a] rounded-3xl p-6 border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex items-center gap-4 transition-colors">
               <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/40 text-[#ea580c] flex items-center justify-center shrink-0">
                 <DollarSign size={24} />
@@ -165,7 +161,6 @@ const AdminDashboardPage = () => {
               </div>
             </div>
 
-            {/* Orders */}
             <div className="bg-white dark:bg-[#12131a] rounded-3xl p-6 border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex items-center gap-4 transition-colors">
               <div className="w-12 h-12 rounded-2xl bg-lime-50 dark:bg-lime-950/40 text-lime-600 dark:text-lime-400 flex items-center justify-center shrink-0">
                 <ShoppingCart size={24} />
@@ -176,7 +171,6 @@ const AdminDashboardPage = () => {
               </div>
             </div>
 
-            {/* Products Sold */}
             <div className="bg-white dark:bg-[#12131a] rounded-3xl p-6 border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex items-center gap-4 transition-colors">
               <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
                 <Package size={24} />
@@ -187,7 +181,6 @@ const AdminDashboardPage = () => {
               </div>
             </div>
 
-            {/* Users */}
             <div className="bg-white dark:bg-[#12131a] rounded-3xl p-6 border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex items-center gap-4 transition-colors">
               <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <Users size={24} />
@@ -200,7 +193,6 @@ const AdminDashboardPage = () => {
 
           </div>
 
-          {/* Revenue Chart */}
           <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs mb-8 transition-colors">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-base text-zinc-900 dark:text-white flex items-center gap-2">
@@ -264,9 +256,7 @@ const AdminDashboardPage = () => {
             </div>
           </div>
 
-          {/* Bottom Tables: Top Products & Top Customers */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Top Products */}
             <div className="bg-white dark:bg-[#12131a] p-6 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs space-y-4 transition-colors">
               <h3 className="font-bold text-sm text-zinc-900 dark:text-white uppercase tracking-wider">Top Vợt / Sản Phẩm Bán Chạy</h3>
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">
@@ -285,7 +275,6 @@ const AdminDashboardPage = () => {
               </div>
             </div>
 
-            {/* Top Customers */}
             <div className="bg-white dark:bg-[#12131a] p-6 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs space-y-4 transition-colors">
               <h3 className="font-bold text-sm text-zinc-900 dark:text-white uppercase tracking-wider">Top Khách Hàng Thân Thiết</h3>
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">

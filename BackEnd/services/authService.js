@@ -5,14 +5,34 @@ const EmailService = require('./emailService');
 const UserRepository = require('../repositories/userRepository');
 const RefreshTokenRepository = require('../repositories/refreshTokenRepository');
 const AppError = require('../utils/AppError');
-require('dotenv').config();
 
 const ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
 const REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+const MIN_PASSWORD_LENGTH = 10;
+const DUMMY_PASSWORD_HASH = '$2b$10$Qv/ZqgKQeM8q1sf1GRU9e.YTbDbdBflOG9xhh8xTlxp3ovlVumVsW';
 
-// Chỉ lưu hash của refresh token vào DB, không lưu token thô
+// Chỉ lưu hash của refresh token trong DB.
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+const hashOtp = (email, otp) => crypto
+    .createHmac('sha256', process.env.JWT_SECRET)
+    .update(`${email}:${otp}`)
+    .digest('hex');
+
+const safeEqual = (left, right) => {
+    const a = Buffer.from(String(left || ''));
+    const b = Buffer.from(String(right || ''));
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+};
+
+const validatePassword = (password) => {
+    if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+        throw new AppError(400, `Mật khẩu phải có tối thiểu ${MIN_PASSWORD_LENGTH} ký tự!`);
+    }
+    if (Buffer.byteLength(password, 'utf8') > 72) {
+        throw new AppError(400, 'Mật khẩu không được vượt quá 72 byte!');
+    }
+};
 
 const AuthService = {
     hashPassword: async (plainPassword) => {
@@ -26,22 +46,20 @@ const AuthService = {
 
     generateAccessToken: (user) => {
         return jwt.sign(
-            { id: user.id, role: user.role },
+            { id: user.id, role: user.role, type: 'access', ver: user.auth_version },
             process.env.JWT_SECRET,
-            { expiresIn: ACCESS_EXPIRES_IN }
+            { expiresIn: ACCESS_EXPIRES_IN, algorithm: 'HS256' }
         );
     },
 
-    // Alias tên cũ, một số chỗ vẫn gọi generateToken
     generateToken: (user) => AuthService.generateAccessToken(user),
 
-    generateRefreshToken: (user) => {
+    generateRefreshToken: (user, csrfToken) => {
         const token = jwt.sign(
-            { id: user.id, type: 'refresh' },
+            { id: user.id, type: 'refresh', csrf: csrfToken, ver: user.auth_version },
             REFRESH_SECRET,
-            { expiresIn: REFRESH_EXPIRES_IN }
+            { expiresIn: REFRESH_EXPIRES_IN, algorithm: 'HS256' }
         );
-        // Lấy exp từ token để tính expires_at lưu DB
         const decoded = jwt.decode(token);
         return {
             token,
@@ -50,65 +68,41 @@ const AuthService = {
         };
     },
 
-    // Cấp cặp access + refresh token, lưu hash refresh vào DB
     _issueTokens: async (user) => {
         const accessToken = AuthService.generateAccessToken(user);
-        const { token: refreshToken, tokenHash, expiresAt } = AuthService.generateRefreshToken(user);
+        const csrfToken = crypto.randomBytes(32).toString('base64url');
+        const { token: refreshToken, tokenHash, expiresAt } = AuthService.generateRefreshToken(user, csrfToken);
         await RefreshTokenRepository.create(user.id, tokenHash, expiresAt);
-        return { accessToken, refreshToken };
-    },
-
-    _generateRandomString: (length) => {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    },
-
-    getCaptcha: () => {
-        const length = Math.floor(Math.random() * 3) + 4;
-        const question = AuthService._generateRandomString(length);
-        const answer = question.toUpperCase();
-
-        // Băm đáp án với Hmac để tránh bị bot giải mã JWT đọc trộm
-        const answerHash = crypto.createHmac('sha256', process.env.JWT_SECRET).update(answer).digest('hex');
-
-        const captchaToken = jwt.sign(
-            { answerHash },
-            process.env.JWT_SECRET,
-            { expiresIn: '3m' }
-        );
-
-        return { question, captchaToken };
+        return { accessToken, refreshToken, csrfToken, refreshExpiresAt: expiresAt };
     },
 
     register: async ({ full_name, email, password, phone, address }) => {
-        if (!full_name || !full_name.trim()) {
+        if (typeof full_name !== 'string' || !full_name.trim() || full_name.trim().length > 150) {
             throw new AppError(400, 'Họ và tên là bắt buộc!');
         }
-        if (!email || !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email.trim())) {
+        if (typeof email !== 'string' || email.length > 254 || !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email.trim())) {
             throw new AppError(400, 'Email bắt buộc phải đúng định dạng @gmail.com (ví dụ: yourname@gmail.com)!');
         }
-        if (!phone || !/^0(3|5|7|8|9)\d{8}$/.test(phone.trim())) {
+        if (typeof phone !== 'string' || !/^0(3|5|7|8|9)\d{8}$/.test(phone.trim())) {
             throw new AppError(400, 'Số điện thoại bắt buộc phải có đúng 10 chữ số và bắt đầu bằng số 0 (Ví dụ: 0912345678)!');
         }
-        if (!address || address.trim() === '') {
+        if (typeof address !== 'string' || !address.trim() || address.trim().length > 500) {
             throw new AppError(400, 'Địa chỉ nhận hàng là bắt buộc!');
         }
-        if (!password || password.length < 6) {
-            throw new AppError(400, 'Mật khẩu phải có tối thiểu 6 ký tự!');
-        }
-        if (password.length > 50) {
-            throw new AppError(400, 'Mật khẩu không được vượt quá 50 ký tự!');
-        }
+        validatePassword(password);
 
-        const existingUser = await UserRepository.findByEmail(email);
+        const normalized = {
+            full_name: full_name.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            address: address.trim(),
+        };
+
+        const existingUser = await UserRepository.findByEmail(normalized.email);
         if (existingUser) {
             throw new AppError(409, 'Email này đã được sử dụng!');
         }
-        const existingPhone = await UserRepository.findByIdentifier(phone);
+        const existingPhone = await UserRepository.findByIdentifier(normalized.phone);
         if (existingPhone) {
             throw new AppError(409, 'Số điện thoại này đã được sử dụng!');
         }
@@ -117,12 +111,12 @@ const AuthService = {
 
         try {
             return await UserRepository.create({
-                full_name,
-                email,
+                full_name: normalized.full_name,
+                email: normalized.email,
                 password: hashedPassword,
                 role: 'customer',
-                phone,
-                address,
+                phone: normalized.phone,
+                address: normalized.address,
             });
         } catch (err) {
             if (err.code === '23505') throw new AppError(409, 'Email hoặc số điện thoại đã tồn tại!');
@@ -131,8 +125,19 @@ const AuthService = {
     },
 
     login: async (email, password) => {
-        const user = await UserRepository.findByIdentifier(email);
+        if (
+            typeof email !== 'string'
+            || typeof password !== 'string'
+            || !email.trim()
+            || Buffer.byteLength(password, 'utf8') > 72
+        ) {
+            throw new AppError(401, 'Tài khoản hoặc mật khẩu không chính xác!');
+        }
+        const identifier = email.trim().includes('@') ? email.trim().toLowerCase() : email.trim();
+        const user = await UserRepository.findByIdentifier(identifier);
         if (!user) {
+            // Giảm chênh lệch thời gian xử lý để tránh dò tài khoản.
+            await AuthService.comparePassword(password, DUMMY_PASSWORD_HASH);
             throw new AppError(401, 'Tài khoản hoặc mật khẩu không chính xác!');
         }
 
@@ -141,12 +146,14 @@ const AuthService = {
             throw new AppError(401, 'Tài khoản hoặc mật khẩu không chính xác!');
         }
 
-        const { accessToken, refreshToken } = await AuthService._issueTokens(user);
+        const { accessToken, refreshToken, csrfToken, refreshExpiresAt } = await AuthService._issueTokens(user);
 
         return {
-            token: accessToken, // FE cũ đọc field 'token'
+            token: accessToken,
             accessToken,
             refreshToken,
+            csrfToken,
+            refreshExpiresAt,
             user: {
                 id: user.id,
                 full_name: user.full_name,
@@ -158,128 +165,134 @@ const AuthService = {
         };
     },
 
-    refreshAccessToken: async (refreshToken) => {
+    _verifyRefreshToken: (refreshToken, csrfToken) => {
         if (!refreshToken) {
-            throw new AppError(400, 'Thiếu refresh token!');
+            throw new AppError(401, 'Thiếu refresh token!');
         }
 
-        let decoded;
         try {
-            decoded = jwt.verify(refreshToken, REFRESH_SECRET);
+            const decoded = jwt.verify(refreshToken, REFRESH_SECRET, { algorithms: ['HS256'] });
+            if (decoded.type !== 'refresh' || !csrfToken || !safeEqual(decoded.csrf, csrfToken)) {
+                throw new Error('Invalid refresh CSRF');
+            }
+            return decoded;
         } catch (err) {
             throw new AppError(401, 'Refresh token không hợp lệ hoặc đã hết hạn!');
         }
-        if (decoded.type !== 'refresh') {
-            throw new AppError(401, 'Token không phải là refresh token!');
-        }
+    },
 
-        // Đối chiếu DB: phải tồn tại, chưa bị thu hồi, chưa hết hạn
+    refreshAccessToken: async (refreshToken, csrfToken) => {
+        const decoded = AuthService._verifyRefreshToken(refreshToken, csrfToken);
+
+        // Thu hồi bằng một UPDATE để mỗi refresh token chỉ dùng được một lần.
         const tokenHash = hashToken(refreshToken);
-        const stored = await RefreshTokenRepository.findByHash(tokenHash);
-        if (!stored || stored.revoked || new Date(stored.expires_at) < new Date()) {
+        const stored = await RefreshTokenRepository.consumeByHash(tokenHash);
+        if (!stored) {
             throw new AppError(401, 'Refresh token không hợp lệ hoặc đã bị thu hồi!');
         }
 
-        const user = await UserRepository.findById(decoded.id);
-        if (!user) {
+        const user = await UserRepository.findAuthState(decoded.id);
+        if (!user || !Number.isInteger(decoded.ver) || decoded.ver !== user.auth_version) {
             throw new AppError(401, 'Tài khoản không còn tồn tại!');
         }
 
-        // Rotate: thu hồi token cũ rồi cấp cặp mới
-        await RefreshTokenRepository.revokeByHash(tokenHash);
         const tokens = await AuthService._issueTokens(user);
 
         return {
             token: tokens.accessToken,
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
+            csrfToken: tokens.csrfToken,
+            refreshExpiresAt: tokens.refreshExpiresAt,
         };
     },
 
-    logout: async (refreshToken) => {
+    logout: async (refreshToken, csrfToken) => {
         if (refreshToken) {
-            await RefreshTokenRepository.revokeByHash(hashToken(refreshToken));
+            try {
+                AuthService._verifyRefreshToken(refreshToken, csrfToken);
+                await RefreshTokenRepository.revokeByHash(hashToken(refreshToken));
+            } catch (_) {
+                // Vẫn xóa cookie khi token hỏng hoặc hết hạn.
+            }
         }
         return { message: 'Đăng xuất thành công!' };
     },
 
-    _verifyCaptcha: (captchaAnswer, captchaToken) => {
-        if (!captchaToken || captchaAnswer === undefined || captchaAnswer === '') {
-            throw new AppError(400, 'Vui lòng hoàn thành mã Captcha!');
-        }
-        try {
-            const decoded = jwt.verify(captchaToken, process.env.JWT_SECRET);
-            const userAnswerHash = crypto.createHmac('sha256', process.env.JWT_SECRET)
-                .update(captchaAnswer.trim().toUpperCase())
-                .digest('hex');
+    verifyTurnstile: async (turnstileToken, remoteIp) => {
+        const secret = process.env.TURNSTILE_SECRET_KEY;
+        if (!secret && process.env.NODE_ENV !== 'production') return true;
+        if (!secret || !turnstileToken) throw new AppError(400, 'Vui lòng hoàn thành xác minh chống bot!');
 
-            if (userAnswerHash !== decoded.answerHash) {
-                throw new AppError(400, 'Mã Captcha không chính xác!');
-            }
-        } catch (err) {
-            if (err instanceof AppError) throw err;
-            throw new AppError(400, 'Mã Captcha đã hết hạn hoặc không hợp lệ, vui lòng thử lại!');
-        }
+        const body = new URLSearchParams({ secret, response: turnstileToken });
+        if (remoteIp) body.set('remoteip', remoteIp);
+        const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            body,
+            signal: AbortSignal.timeout(5000),
+        });
+        const result = await response.json();
+        if (!result.success) throw new AppError(400, 'Xác minh chống bot không hợp lệ hoặc đã hết hạn!');
+        return true;
     },
 
-    forgotPassword: async (email, captchaAnswer, captchaToken) => {
-        if (!email || !email.trim()) {
+    forgotPassword: async (email, turnstileToken, remoteIp) => {
+        if (typeof email !== 'string' || !email.trim() || email.length > 254) {
             throw new AppError(400, 'Vui lòng nhập email của bạn!');
         }
-
-        if (captchaToken && captchaAnswer) {
-            AuthService._verifyCaptcha(captchaAnswer, captchaToken);
-        }
+        await AuthService.verifyTurnstile(turnstileToken, remoteIp);
 
         const trimmedEmail = email.trim().toLowerCase();
         const user = await UserRepository.findByEmail(trimmedEmail);
         if (!user) {
-            throw new AppError(404, 'Không tìm thấy tài khoản nào liên kết với email này!');
+            // Không tiết lộ email có tồn tại hay không.
+            return { message: 'Nếu email tồn tại, mã xác nhận sẽ được gửi trong ít phút.' };
+        }
+        if (user.otp_last_sent_at && Date.now() - new Date(user.otp_last_sent_at).getTime() < 60_000) {
+            return { message: 'Nếu email tồn tại, mã xác nhận sẽ được gửi trong ít phút.' };
         }
 
-        // OTP 6 số, hết hạn 5 phút
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = crypto.randomInt(100000, 1000000).toString();
         const expires = new Date(Date.now() + 5 * 60 * 1000);
 
-        await UserRepository.updateOTP(user.email, otp, expires);
+        await UserRepository.updateOTP(user.email, hashOtp(user.email, otp), expires);
 
         const sendResult = await EmailService.sendOtpEmail(user.email, otp);
-        if (sendResult?.error) {
-            console.error(`[Email Service Warning] Gặp sự cố khi gửi OTP qua email: ${sendResult.error}`);
-            console.log(`\n======================================================`);
-            console.log(`[OTP BACKUP] Mã OTP cho [${user.email}] là: ${otp}`);
-            console.log(`======================================================\n`);
+        if (!sendResult?.sent) {
+            await UserRepository.clearOTP(user.email);
+            console.error('[Auth] Không thể gửi email OTP; mã đã được thu hồi.');
         }
 
-        return { message: 'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến!' };
+        return { message: 'Nếu email tồn tại, mã xác nhận sẽ được gửi trong ít phút.' };
     },
 
     resetPassword: async (email, otp, newPassword) => {
-        if (!email || !otp || !newPassword) {
+        if (typeof email !== 'string' || !email.trim() || email.length > 254 || !otp || !newPassword) {
             throw new AppError(400, 'Vui lòng điền đầy đủ các thông tin bắt buộc!');
         }
+        validatePassword(newPassword);
 
         const trimmedEmail = email.trim().toLowerCase();
         const user = await UserRepository.findByEmail(trimmedEmail);
         if (!user) {
-            throw new AppError(404, 'Không tìm thấy tài khoản tương ứng!');
+            throw new AppError(400, 'Mã xác nhận không chính xác, đã hết hạn hoặc vượt quá số lần thử!');
         }
 
-        if (!user.otp_code || user.otp_code !== otp.trim()) {
-            throw new AppError(400, 'Mã xác nhận (OTP) không chính xác!');
-        }
-
-        const now = new Date();
-        const otpExpires = new Date(user.otp_expires);
-        if (now > otpExpires) {
-            throw new AppError(400, 'Mã OTP đã hết hiệu lực, vui lòng lấy mã mới!');
-        }
-
+        const submittedOtp = typeof otp === 'string' ? otp.trim() : String(otp);
         const hashedPassword = await AuthService.hashPassword(newPassword);
-        await UserRepository.resetPasswordWithOTP(user.email, hashedPassword);
+        const consumed = /^\d{6}$/.test(submittedOtp)
+            ? await UserRepository.consumeOTPAndResetPassword(user.email, hashOtp(user.email, submittedOtp), hashedPassword)
+            : null;
+        if (!consumed) {
+            await UserRepository.recordFailedOTPAttempt(user.email);
+            throw new AppError(400, 'Mã xác nhận không chính xác, đã hết hạn hoặc vượt quá số lần thử!');
+        }
+        await RefreshTokenRepository.revokeAllByUser(consumed.id);
 
         return { message: 'Khôi phục mật khẩu thành công! Bạn có thể sử dụng mật khẩu mới để đăng nhập.' };
     },
 };
+
+AuthService.validatePassword = validatePassword;
 
 module.exports = AuthService;

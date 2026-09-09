@@ -48,14 +48,12 @@ const ShippingPolicyPage = () => {
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto px-4 lg:px-6 py-10 space-y-12">
-        {/* Breadcrumb */}
         <nav className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
           <Link to="/" className="hover:text-[#ea580c]">Trang chủ</Link>
           <span>/</span>
           <span className="font-semibold text-zinc-800 dark:text-zinc-200">Chính sách vận chuyển GHN</span>
         </nav>
 
-        {/* Hero Title */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/40 text-[#ea580c] rounded-full text-xs font-black uppercase tracking-widest">
             <Truck size={14} /> GHN Express Logistics
@@ -68,7 +66,6 @@ const ShippingPolicyPage = () => {
           </p>
         </div>
 
-        {/* 1. Delivery Timeline */}
         <section className="space-y-4">
           <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
             <Clock size={20} className="text-[#ea580c]" />
@@ -99,7 +96,6 @@ const ShippingPolicyPage = () => {
           </div>
         </section>
 
-        {/* 2. Professional Packaging Process */}
         <section className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800 gap-2">
             <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
@@ -124,7 +120,6 @@ const ShippingPolicyPage = () => {
           </div>
         </section>
 
-        {/* 3. Inspection & Freeship Policy */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-[#12131a] p-6 sm:p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs space-y-4 transition-colors duration-300">
             <h3 className="font-bold text-base text-zinc-900 dark:text-white flex items-center gap-2">
@@ -161,7 +156,6 @@ const ShippingPolicyPage = () => {
           </div>
         </section>
 
-        {/* 4. Tracking guide */}
         <div className="bg-zinc-950 dark:bg-[#12131a] text-white rounded-3xl p-8 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-1 text-center sm:text-left">
             <h3 className="text-lg font-bold text-white flex items-center justify-center sm:justify-start gap-2">

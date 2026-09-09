@@ -1,26 +1,52 @@
 const axios = require('axios');
-require('dotenv').config();
 
-const GHN_API_URL = 'https://dev-online-gateway.ghn.vn/shiip/public-api';
+const GHN_API_URL = process.env.GHN_API_URL || (process.env.NODE_ENV === 'production'
+    ? 'https://online-gateway.ghn.vn/shiip/public-api' : 'https://dev-online-gateway.ghn.vn/shiip/public-api');
 const GHN_TOKEN = process.env.KEY_TOKEN_SHOP;
 const GHN_SHOP_ID = process.env.KEY_IDSHOP;
+const http = axios.create({ timeout: parseInt(process.env.OUTBOUND_HTTP_TIMEOUT_MS || '8000', 10) });
+
+const { getItemMetrics, getPackageMetrics, shipmentPayment } = require('../utils/shipping');
 
 const getHeaders = () => ({
     Token: (GHN_TOKEN || '').trim(),
     'Content-Type': 'application/json',
 });
 
-// SERVICE = tầng nghiệp vụ tích hợp Giao Hàng Nhanh.
-// Gồm: tra cứu địa chỉ, tính phí, tạo đơn vận chuyển.
+const requireShippingCredentials = () => {
+    if (!GHN_TOKEN || !GHN_SHOP_ID) {
+        throw new Error('GHN API keys are missing in environment variables');
+    }
+};
+
+const getGhnMessage = (body) => String(body?.message || body?.code_message_value || '').trim();
+
+// Chỉ gỡ cờ khi GHN xác nhận không có đơn, không dựa vào lỗi kết nối.
+const isExplicitNotFound = (response) => {
+    const body = response?.data;
+    if (![200, 400, 404].includes(response?.status)
+        || ![400, 404].includes(Number(body?.code)) || body?.data !== null) return false;
+    const message = getGhnMessage(body).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/gi, 'd').toLowerCase().replace(/\s+/g, ' ').replace(/[.!]+$/, '').trim();
+    return ['don hang khong ton tai', 'khong tim thay don hang',
+        'order not found', 'order does not exist', 'shipping order not found'].includes(message);
+};
+
+const getProviderItems = (items) => items.map((item) => ({
+    name: item.product_name || 'San pham',
+    code: String(item.variant_id || item.product_name || 'item').slice(0, 20),
+    quantity: Number(item.quantity),
+    ...getItemMetrics(item),
+}));
+
 const GHNService = {
-    // ── Tra cứu địa chỉ ────────────────────────────────────
     getProvinces: async () => {
-        const response = await axios.get(`${GHN_API_URL}/master-data/province`, { headers: getHeaders() });
+        const response = await http.get(`${GHN_API_URL}/master-data/province`, { headers: getHeaders() });
         return response.data;
     },
 
     getDistricts: async (provinceId) => {
-        const response = await axios.post(
+        const response = await http.post(
             `${GHN_API_URL}/master-data/district`,
             { province_id: parseInt(provinceId) },
             { headers: getHeaders() }
@@ -29,7 +55,7 @@ const GHNService = {
     },
 
     getWards: async (districtId) => {
-        const response = await axios.post(
+        const response = await http.post(
             `${GHN_API_URL}/master-data/ward`,
             { district_id: parseInt(districtId) },
             { headers: getHeaders() }
@@ -37,83 +63,59 @@ const GHNService = {
         return response.data;
     },
 
-    // ── Tính phí vận chuyển ─────────────────────────────────
-    calculateFee: async ({ to_district_id, to_ward_code, weight, length, width, height }) => {
+    calculateFee: async ({ to_district_id, to_ward_code, weight, length, width, height, items }) => {
         const data = {
-            from_district_id: 1454,
+            from_district_id: Number.parseInt(process.env.SHOP_DISTRICT_ID, 10),
+            from_ward_code: process.env.SHOP_WARD_CODE,
             to_district_id,
             to_ward_code,
             weight: weight || 1000,
             length: length || 20,
             width: width || 20,
             height: height || 10,
-            service_type_id: 2,
+            service_type_id: Number(weight) >= 20000 ? 5 : 2,
+            ...(items ? { items: getProviderItems(items) } : {}),
         };
 
-        const response = await axios.post(`${GHN_API_URL}/v2/shipping-order/fee`, data, {
+        const response = await http.post(`${GHN_API_URL}/v2/shipping-order/fee`, data, {
             headers: { ...getHeaders(), ShopId: (GHN_SHOP_ID || '').trim() },
         });
         return response.data;
     },
 
-    // ── Tạo đơn vận chuyển GHN ─────────────────────────────
+    calculateOrderFee: async ({ to_district_id, to_ward_code, items }) => {
+        const metrics = getPackageMetrics(items);
+        const response = await GHNService.calculateFee({ to_district_id, to_ward_code, ...metrics, items });
+        const total = Number(response?.data?.total);
+        if (!Number.isFinite(total) || total < 0) throw new Error('GHN trả về phí vận chuyển không hợp lệ');
+        return Math.round(total);
+    },
+
     createShippingOrder: async (orderData) => {
-        if (!GHN_TOKEN || !GHN_SHOP_ID) {
-            throw new Error('GHN API keys are missing in environment variables');
-        }
+        requireShippingCredentials();
 
-        let totalWeight = 0;
-        let maxLength = 10, maxWidth = 10, maxHeight = 10;
+        const metrics = getPackageMetrics(orderData.items);
 
-        const items = orderData.items.map((item) => {
-            let width = 10, height = 10, length = 10, weight = 500;
-            if (item.technical_specs) {
-                try {
-                    const specs = typeof item.technical_specs === 'string'
-                        ? JSON.parse(item.technical_specs)
-                        : item.technical_specs;
-                    if (specs.width) width = parseInt(specs.width) || width;
-                    if (specs.height) height = parseInt(specs.height) || height;
-                    if (specs.length) length = parseInt(specs.length) || length;
-                    if (specs.weight_g) weight = parseInt(specs.weight_g);
-                    else if (specs.weight) weight = parseInt(String(specs.weight).replace(/[^0-9]/g, '')) || weight;
-                } catch (e) { /* use defaults */ }
-            }
-
-            totalWeight += weight * item.quantity;
-            if (length > maxLength) maxLength = length;
-            if (width > maxWidth) maxWidth = width;
-            maxHeight += height * item.quantity;
-
-            return {
-                name: item.product_name,
-                code: item.product_name.substring(0, 20),
-                quantity: item.quantity,
-                price: parseInt(item.price_at_time),
-                length, width, height, weight,
-            };
-        });
-
-        if (maxHeight > 150) maxHeight = 150;
+        const items = getProviderItems(orderData.items).map((item, index) => ({
+            ...item, price: Number(orderData.items[index].price_at_time),
+        }));
 
         const payload = {
-            payment_type_id: 2,
+            ...shipmentPayment(orderData),
+            client_order_code: orderData.shipping_client_code || `${process.env.GHN_CLIENT_PREFIX || 'NARO'}-${orderData.id}`,
             note: `Đơn hàng #${orderData.id} từ Naro Shop`,
             required_note: 'KHONGCHOXEMHANG',
             to_name: orderData.shipping_name,
             to_phone: orderData.shipping_phone,
             to_address: orderData.shipping_address,
-            to_ward_code: orderData.to_ward_code || '21012',
-            to_district_id: orderData.to_district_id || 1442,
-            weight: totalWeight,
-            length: maxLength,
-            width: maxWidth,
-            height: maxHeight,
-            service_type_id: 2,
+            to_ward_code: String(orderData.to_ward_code),
+            to_district_id: Number.parseInt(orderData.to_district_id, 10),
+            ...metrics,
+            service_type_id: metrics.weight >= 20000 ? 5 : 2,
             items,
         };
 
-        const response = await axios.post(
+        const response = await http.post(
             `${GHN_API_URL}/v2/shipping-order/create`,
             payload,
             {
@@ -129,6 +131,46 @@ const GHNService = {
             return response.data.data.order_code;
         }
         throw new Error(response.data.message || 'Failed to create GHN order');
+    },
+
+    // Tra cứu bằng client_order_code đã lưu để đối soát lần tạo đơn trước.
+    findShippingOrderByClientCode: async (clientOrderCode) => {
+        requireShippingCredentials();
+        if (typeof clientOrderCode !== 'string' || !/^[A-Za-z0-9_-]{1,50}$/.test(clientOrderCode)) {
+            throw new Error('Invalid GHN client order code');
+        }
+
+        let response;
+        try {
+            response = await http.post(
+                `${GHN_API_URL}/v2/shipping-order/detail-by-client-code`,
+                { client_order_code: clientOrderCode },
+                { headers: { ...getHeaders(), ShopId: GHN_SHOP_ID.trim() } }
+            );
+        } catch (error) {
+            if (isExplicitNotFound(error.response)) return null;
+            throw error;
+        }
+
+        const body = response.data;
+        if (isExplicitNotFound(response)) return null;
+        if (response.status !== 200 || Number(body?.code) !== 200) {
+            throw new Error(getGhnMessage(body) || 'GHN reconciliation failed');
+        }
+        if (Array.isArray(body.data) && body.data.length !== 1) {
+            throw new Error('GHN returned an ambiguous order detail');
+        }
+        const detail = Array.isArray(body.data) ? body.data[0] : body.data;
+        if (!detail || typeof detail !== 'object' || Array.isArray(detail)
+            || typeof detail.order_code !== 'string' || !detail.order_code.trim()
+            || detail.client_order_code !== clientOrderCode
+            || Number(detail.shop_id) !== Number(GHN_SHOP_ID)) {
+            throw new Error('GHN returned an invalid or mismatched order detail');
+        }
+        return {
+            orderCode: detail.order_code.trim(),
+            status: typeof detail.status === 'string' ? detail.status : null,
+        };
     },
 };
 

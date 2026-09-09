@@ -13,7 +13,6 @@ const AdminProductPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Product Form modal state
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [formData, setFormData] = useState({
@@ -21,12 +20,10 @@ const AdminProductPage = () => {
     length: '', width: '', height: '', weight_g: ''
   });
 
-  // Variant Modal State
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [selectedProductForVariants, setSelectedProductForVariants] = useState(null);
   const [variants, setVariants] = useState([]);
   
-  // Variant Form Data
   const defaultVariantForm = { id: null, variant_name: '', stock_quantity: 10, price_modifier: 0, sizeAttr: '', colorAttr: '' };
   const [variantForm, setVariantForm] = useState(defaultVariantForm);
 
@@ -187,6 +184,8 @@ const AdminProductPage = () => {
 
   useEffect(() => {
     fetchData(currentPage);
+  // Chỉ áp dụng từ khóa khi gửi biểu mẫu tìm kiếm.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const handleDelete = async (id) => {
@@ -293,7 +292,6 @@ const AdminProductPage = () => {
         </button>
       </div>
 
-      {/* Search Bar */}
       <div className="mb-6 max-w-md">
         <form onSubmit={handleSearch} className="flex gap-2">
           <div className="relative flex-1">
@@ -315,7 +313,6 @@ const AdminProductPage = () => {
         </form>
       </div>
 
-      {/* Products Table */}
       {isLoading ? (
         <div className="flex justify-center py-20">
           <div className="w-8 h-8 border-4 border-[#ea580c] border-t-transparent rounded-full animate-spin" />
@@ -400,7 +397,6 @@ const AdminProductPage = () => {
         </>
       )}
 
-      {/* Modal Add / Edit Product */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
@@ -471,7 +467,6 @@ const AdminProductPage = () => {
                   </select>
                 </div>
 
-                {/* Shipping dimensions */}
                 <div className="md:col-span-2 grid grid-cols-4 gap-3 bg-zinc-50 p-4 rounded-2xl border border-zinc-200">
                   <div className="col-span-4 font-bold text-zinc-800">Thông số Vận chuyển (GHN)</div>
                   <div>
@@ -535,7 +530,6 @@ const AdminProductPage = () => {
         </div>
       )}
 
-      {/* Variant Modal */}
       {showVariantModal && selectedProductForVariants && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
@@ -550,7 +544,6 @@ const AdminProductPage = () => {
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              {/* Add/Edit Variant Form */}
               <form onSubmit={handleSubmitVariant} className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200 text-xs">
                 <div className="flex gap-3 items-end flex-wrap">
                   <div className="flex-1 min-w-[180px]">
@@ -628,7 +621,6 @@ const AdminProductPage = () => {
                 </div>
               </form>
 
-              {/* Variants Table */}
               <div className="border border-zinc-200 rounded-2xl overflow-hidden text-xs">
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-bold uppercase">

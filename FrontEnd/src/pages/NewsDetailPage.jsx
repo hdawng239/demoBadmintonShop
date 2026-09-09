@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { postService } from '../services/postService';
 import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 const NewsDetailPage = () => {
   const { id } = useParams();
@@ -74,10 +75,9 @@ const NewsDetailPage = () => {
           </div>
         )}
 
-        {/* Formatted article body */}
         <div 
           className="article-content prose dark:prose-invert max-w-none text-base leading-relaxed text-zinc-700 dark:text-zinc-300 space-y-4"
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content || '') }}
         />
       </article>
     </MainLayout>

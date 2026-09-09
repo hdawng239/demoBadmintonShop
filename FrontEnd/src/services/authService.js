@@ -1,21 +1,25 @@
 import axios from 'axios';
 
 const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth`;
+const authHttp = axios.create({ withCredentials: true, timeout: 10000 });
+const withSessionLock = (operation) => navigator.locks
+  ? navigator.locks.request('naro-session', operation)
+  : operation();
 
 export const authService = {
-  login: async (email, password) => {
+  login: async (email, password) => withSessionLock(async () => {
     try {
-      const response = await axios.post(`${API_URL}/login`, { email, password });
+      const response = await authHttp.post(`${API_URL}/login`, { email, password });
       const resData = response.data;
       const token = resData.token || resData.data?.token;
       const user = resData.user || resData.data?.user;
-      const refreshToken = resData.refreshToken || resData.data?.refreshToken;
+      const csrfToken = resData.csrfToken || resData.data?.csrfToken;
 
       if (token) {
         localStorage.setItem('token', token);
-        if (refreshToken) {
-          localStorage.setItem('refreshToken', refreshToken);
-        }
+        localStorage.removeItem('refreshToken');
+        if (csrfToken) localStorage.setItem('csrfToken', csrfToken);
+        sessionStorage.removeItem('csrfToken');
         if (user) {
           localStorage.setItem('user', JSON.stringify(user));
         }
@@ -25,11 +29,11 @@ export const authService = {
         window.dispatchEvent(new Event('cartUpdated'));
         window.dispatchEvent(new Event('wishlistUpdated'));
       }
-      return { token, user, refreshToken, ...resData };
+      return { token, user, ...resData };
     } catch (error) {
       throw error.response?.data || { message: "Lỗi kết nối server" };
     }
-  },
+  }),
 
   register: async (full_name, email, phone, address, password) => {
     try {
@@ -46,40 +50,54 @@ export const authService = {
     }
   },
 
-  logout: async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
+  logout: async () => withSessionLock(async () => {
+    const csrfToken = localStorage.getItem('csrfToken') || sessionStorage.getItem('csrfToken');
+    if (csrfToken) {
       try {
-        await axios.post(`${API_URL}/logout`, { refreshToken });
-      } catch (_) { /* ignore */ }
+        await authHttp.post(`${API_URL}/logout`, {}, { headers: { 'x-csrf-token': csrfToken } });
+      } catch (_) {   }
     }
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('guest_cart');
+    localStorage.removeItem('csrfToken');
+    sessionStorage.removeItem('csrfToken');
     window.dispatchEvent(new Event('userUpdated'));
     window.dispatchEvent(new Event('authChange'));
     window.dispatchEvent(new Event('cartUpdated'));
     window.dispatchEvent(new Event('wishlistUpdated'));
     window.dispatchEvent(new Event('favoritesUpdated'));
-  },
+  }),
 
-  refreshToken: async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) throw new Error('Không có refresh token');
-    const response = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
+  refreshToken: async (failedToken) => withSessionLock(async () => {
+    const currentToken = localStorage.getItem('token');
+    if (failedToken && currentToken && currentToken !== failedToken) return currentToken;
+    const csrfToken = localStorage.getItem('csrfToken') || sessionStorage.getItem('csrfToken');
+    if (!csrfToken) throw new Error('Không có CSRF token');
+    let response;
+    try {
+      response = await authHttp.post(`${API_URL}/refresh-token`, {}, { headers: { 'x-csrf-token': csrfToken } });
+    } catch (err) {
+      // Giữ phiên mới của tab khác khi trình duyệt không có Web Locks.
+      if (err.response?.status === 401 && localStorage.getItem('csrfToken') !== csrfToken && localStorage.getItem('token')) {
+        return localStorage.getItem('token');
+      }
+      throw err;
+    }
     const resData = response.data;
     const newToken = resData.token || resData.data?.token;
-    const newRefreshToken = resData.refreshToken || resData.data?.refreshToken;
+    const newCsrfToken = resData.csrfToken || resData.data?.csrfToken;
 
     if (newToken) {
       localStorage.setItem('token', newToken);
     }
-    if (newRefreshToken) {
-      localStorage.setItem('refreshToken', newRefreshToken);
-    }
+    if (newCsrfToken) localStorage.setItem('csrfToken', newCsrfToken);
+    sessionStorage.removeItem('csrfToken');
     return newToken;
-  },
+  }),
+
+  setCurrentUser: (user) => localStorage.setItem('user', JSON.stringify(user)),
 
   getCurrentUser: () => {
     try {
@@ -97,18 +115,9 @@ export const authService = {
     return localStorage.getItem('token');
   },
 
-  getCaptcha: async () => {
+  forgotPassword: async (email, turnstileToken) => {
     try {
-      const response = await axios.get(`${API_URL}/captcha`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: "Lỗi kết nối server khi tải Captcha" };
-    }
-  },
-
-  forgotPassword: async (email, captchaAnswer, captchaToken) => {
-    try {
-      const response = await axios.post(`${API_URL}/forgot-password`, { email, captchaAnswer, captchaToken });
+      const response = await axios.post(`${API_URL}/forgot-password`, { email, turnstileToken });
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: "Lỗi kết nối server" };

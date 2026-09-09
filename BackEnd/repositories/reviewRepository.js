@@ -51,12 +51,48 @@ const ReviewRepository = {
         };
     },
 
-    create: async ({ user_id, product_id, rating, comment }) => {
-        const result = await pool.query(
-            `INSERT INTO ${TABLE} (user_id, product_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *`,
-            [user_id, product_id, rating, comment]
-        );
-        return mapRow(result.rows[0]);
+    createVerified: async ({ user_id, product_id, rating, comment }) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            // Khóa theo cặp người dùng/sản phẩm để tránh gửi đánh giá trùng đồng thời.
+            await client.query('SELECT pg_advisory_xact_lock($1::integer, $2::integer)', [user_id, product_id]);
+
+            const purchased = await client.query(
+                `SELECT 1
+                 FROM orders o
+                 JOIN order_items oi ON oi.order_id = o.id
+                 JOIN product_variants pv ON pv.id = oi.variant_id
+                 WHERE o.user_id = $1 AND pv.product_id = $2 AND o.status = 'completed'
+                 LIMIT 1`,
+                [user_id, product_id]
+            );
+            if (!purchased.rowCount) {
+                await client.query('ROLLBACK');
+                return { reason: 'not_purchased' };
+            }
+
+            const existing = await client.query(
+                `SELECT 1 FROM ${TABLE} WHERE user_id = $1 AND product_id = $2 LIMIT 1`,
+                [user_id, product_id]
+            );
+            if (existing.rowCount) {
+                await client.query('ROLLBACK');
+                return { reason: 'duplicate' };
+            }
+
+            const result = await client.query(
+                `INSERT INTO ${TABLE} (user_id, product_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *`,
+                [user_id, product_id, rating, comment?.trim() || null]
+            );
+            await client.query('COMMIT');
+            return { review: mapRow(result.rows[0]) };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     },
 
     remove: async (id) => {

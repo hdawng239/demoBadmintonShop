@@ -2,23 +2,50 @@ const VariantRepository = require('../repositories/variantRepository');
 const { formatVariantName, generateSKU } = require('../models/variantModel');
 const AppError = require('../utils/AppError');
 
-// Nhận string hoặc object, trả object
 const parseAttrs = (attrs) => {
     if (!attrs) return null;
-    return typeof attrs === 'string' ? JSON.parse(attrs) : attrs;
+    let parsed;
+    try {
+        parsed = typeof attrs === 'string' ? JSON.parse(attrs) : attrs;
+    } catch {
+        throw new AppError(400, 'Thuộc tính phân loại phải là JSON hợp lệ.');
+    }
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+        throw new AppError(400, 'Thuộc tính phân loại phải là một object.');
+    }
+    const entries = Object.entries(parsed);
+    if (entries.length > 20 || entries.some(([key, value]) => String(key).length > 100 || String(value).length > 200)) {
+        throw new AppError(400, 'Thuộc tính phân loại vượt quá giới hạn cho phép.');
+    }
+    return parsed;
 };
 
 const isDefaultName = (name) => !name || name === 'Mặc định' || /^Phiên bản\s+\d+$/i.test(name);
 
+const validateInventory = (data) => {
+    if (data.stock_quantity !== undefined) {
+        const stock = Number(data.stock_quantity);
+        if (!Number.isInteger(stock) || stock < 0 || stock > 1_000_000) {
+            throw new AppError(400, 'Tồn kho phải là số nguyên không âm hợp lệ.');
+        }
+    }
+    if (data.price_modifier !== undefined) {
+        const modifier = Number(data.price_modifier);
+        if (!Number.isFinite(modifier) || Math.abs(modifier) > 1_000_000_000) {
+            throw new AppError(400, 'Phần điều chỉnh giá không hợp lệ.');
+        }
+    }
+};
+
 const VariantService = {
-    getVariantsByProduct: (productId) => VariantRepository.findByProductId(productId),
+    getVariantsByProduct: (productId, includeInactive = false) => VariantRepository.findByProductId(productId, includeInactive),
 
     createVariant: async (data) => {
+        validateInventory(data);
         let { variant_name, product_id, attributes, sku } = data;
         const parsedAttrs = parseAttrs(attributes);
         const category_id = await VariantRepository.findProductCategoryId(product_id);
 
-        // Tự đặt tên và sinh SKU nếu client không truyền
         if (isDefaultName(variant_name)) {
             variant_name = formatVariantName(category_id, parsedAttrs);
         }
@@ -42,6 +69,7 @@ const VariantService = {
     },
 
     updateVariant: async (id, data) => {
+        validateInventory(data);
         const current = await VariantRepository.findById(id);
         if (!current) throw new AppError(404, 'Không tìm thấy phân loại');
 
@@ -52,7 +80,6 @@ const VariantService = {
         const parsedCurrentAttrs = parseAttrs(current.attributes);
         const parsedAttrs = parseAttrs(attributes);
 
-        // Attributes không đổi thì giữ nguyên tên và SKU cũ
         const currentKeys = parsedCurrentAttrs ? Object.keys(parsedCurrentAttrs).sort() : [];
         const newKeys = parsedAttrs ? Object.keys(parsedAttrs).sort() : [];
         const attrsChanged =
@@ -86,7 +113,6 @@ const VariantService = {
     },
 
     deleteVariant: async (id) => {
-        // Đã có người đặt mua thì không cho xóa
         const hasOrders = await VariantRepository.hasOrderItems(id);
         if (hasOrders) {
             throw new AppError(400, 'Không thể xóa phân loại này vì đã có người đặt mua.');

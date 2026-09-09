@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { authService } from './authService';
 
 const API_URL = `${import.meta.env.VITE_API_URL || `http://localhost:5000/api`}/reviews`;
 

@@ -2,7 +2,6 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/postModel');
 
-// REPOSITORY = CHỈ chứa SQL thuần cho bảng posts.
 const PostRepository = {
     findAll: async (page = 1, limit = 10, search = '', publishedOnly = false) => {
         const offset = (page - 1) * limit;
@@ -41,12 +40,12 @@ const PostRepository = {
         return { rows: result.rows.map(mapRow), totalItems };
     },
 
-    findById: async (id) => {
+    findById: async (id, publishedOnly = true) => {
         const result = await pool.query(
             `SELECT p.*, u.full_name AS author_name
              FROM ${TABLE} p
              LEFT JOIN users u ON p.author_id = u.id
-             WHERE p.id = $1`,
+             WHERE p.id = $1${publishedOnly ? ' AND p.is_published = TRUE' : ''}`,
             [id]
         );
         return mapRow(result.rows[0]);

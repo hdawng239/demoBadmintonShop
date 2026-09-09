@@ -1,13 +1,12 @@
 const pool = require('../config/db');
 const { TABLE, mapRow } = require('../models/variantModel');
 
-// REPOSITORY = tầng truy cập dữ liệu: CHỈ chứa SQL thuần cho bảng product_variants.
-// Không chứa business logic (định dạng tên/SKU nằm ở model/service), không xử lý req/res.
 const VariantRepository = {
-    findByProductId: async (productId) => {
+    findByProductId: async (productId, includeInactive = false) => {
         const result = await pool.query(
-            `SELECT * FROM ${TABLE} WHERE product_id = $1 ORDER BY id ASC`,
-            [productId]
+            `SELECT pv.* FROM ${TABLE} pv JOIN products p ON p.id = pv.product_id
+             WHERE pv.product_id = $1 AND ($2::boolean OR p.is_active = TRUE) ORDER BY pv.id ASC`,
+            [productId, includeInactive]
         );
         return result.rows;
     },

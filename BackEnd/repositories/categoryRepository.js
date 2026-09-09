@@ -2,7 +2,6 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/categoryModel');
 
-// REPOSITORY = CHỈ chứa SQL thuần cho bảng categories.
 const CategoryRepository = {
     findAll: async (page = 1, limit = 10, search = '') => {
         const offset = (page - 1) * limit;
@@ -39,6 +38,22 @@ const CategoryRepository = {
     findById: async (id) => {
         const result = await pool.query(`SELECT * FROM ${TABLE} WHERE id = $1`, [id]);
         return mapRow(result.rows[0]);
+    },
+
+    wouldCreateCycle: async (categoryId, parentId) => {
+        const result = await pool.query(
+            `WITH RECURSIVE lineage AS (
+                SELECT id, parent_id, ARRAY[id] AS path FROM ${TABLE} WHERE id = $1
+                UNION ALL
+                SELECT c.id, c.parent_id, l.path || c.id
+                FROM ${TABLE} c
+                JOIN lineage l ON c.id = l.parent_id
+                WHERE NOT c.id = ANY(l.path)
+            )
+            SELECT 1 FROM lineage WHERE id = $2 LIMIT 1`,
+            [parentId, categoryId]
+        );
+        return result.rowCount > 0;
     },
 
     create: async ({ parent_id, name, slug }) => {

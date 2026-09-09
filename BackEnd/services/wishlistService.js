@@ -8,12 +8,13 @@ const WishlistService = {
     getMyProductIds: (userId) => WishlistRepository.findProductIdsByUser(userId),
 
     addToWishlist: async (userId, productId) => {
-        if (!productId) throw new AppError(400, 'Thiếu mã sản phẩm (product_id)!');
+        const validProductId = Number(productId);
+        if (!Number.isInteger(validProductId) || validProductId <= 0) throw new AppError(400, 'Mã sản phẩm không hợp lệ!');
 
-        const product = await ProductRepository.findById(productId);
-        if (!product) throw new AppError(404, 'Sản phẩm không tồn tại!');
+        const product = await ProductRepository.findById(validProductId);
+        if (!product || product.is_active === false) throw new AppError(404, 'Sản phẩm không tồn tại!');
 
-        const added = await WishlistRepository.add(userId, productId);
+        const added = await WishlistRepository.add(userId, validProductId);
         return {
             added: !!added,
             message: added ? 'Đã thêm vào danh sách yêu thích!' : 'Sản phẩm đã có trong danh sách yêu thích.',
@@ -26,17 +27,17 @@ const WishlistService = {
         return { message: 'Đã xóa khỏi danh sách yêu thích!' };
     },
 
-    // Bật/tắt yêu thích trong 1 lần gọi cho nút trái tim
     toggle: async (userId, productId) => {
-        if (!productId) throw new AppError(400, 'Thiếu mã sản phẩm (product_id)!');
-        const isFav = await WishlistRepository.exists(userId, productId);
+        const validProductId = Number(productId);
+        if (!Number.isInteger(validProductId) || validProductId <= 0) throw new AppError(400, 'Mã sản phẩm không hợp lệ!');
+        const isFav = await WishlistRepository.exists(userId, validProductId);
         if (isFav) {
-            await WishlistRepository.remove(userId, productId);
+            await WishlistRepository.remove(userId, validProductId);
             return { isFavorite: false, message: 'Đã xóa khỏi danh sách yêu thích!' };
         }
-        const product = await ProductRepository.findById(productId);
-        if (!product) throw new AppError(404, 'Sản phẩm không tồn tại!');
-        await WishlistRepository.add(userId, productId);
+        const product = await ProductRepository.findById(validProductId);
+        if (!product || product.is_active === false) throw new AppError(404, 'Sản phẩm không tồn tại!');
+        await WishlistRepository.add(userId, validProductId);
         return { isFavorite: true, message: 'Đã thêm vào danh sách yêu thích!' };
     },
 };

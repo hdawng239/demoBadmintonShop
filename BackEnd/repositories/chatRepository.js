@@ -1,6 +1,5 @@
 const pool = require('../config/db');
 
-// REPOSITORY = tầng truy cập dữ liệu cho chat: ghi log chat và lấy catalog sản phẩm.
 const ChatRepository = {
     logMessage: async (sessionId, userId, senderType, message) => {
         await pool.query(
@@ -10,7 +9,9 @@ const ChatRepository = {
     },
 
     getProductCatalog: async () => {
-        const res = await pool.query('SELECT name, base_price FROM products WHERE is_active = true');
+        const res = await pool.query(
+            'SELECT name, base_price FROM products WHERE is_active = true ORDER BY id DESC LIMIT 500'
+        );
         if (res.rows.length > 0) {
             return res.rows
                 .map((p) => `- ${p.name}: ${parseInt(p.base_price).toLocaleString('vi-VN')} VNĐ`)

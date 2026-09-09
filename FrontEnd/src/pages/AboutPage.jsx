@@ -61,14 +61,12 @@ const AboutPage = () => {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-10 space-y-16">
-        {/* Breadcrumb */}
         <nav className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
           <Link to="/" className="hover:text-[#ea580c]">Trang chủ</Link>
           <span>/</span>
           <span className="font-semibold text-zinc-800 dark:text-zinc-200">Về chúng tôi</span>
         </nav>
 
-        {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-7 space-y-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/40 text-[#ea580c] rounded-full text-xs font-black uppercase tracking-widest">
@@ -114,7 +112,6 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* Impressive Stats */}
         <div className="bg-zinc-950 dark:bg-[#12131a] text-white rounded-3xl p-8 sm:p-12 border border-zinc-800 shadow-xl">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 divide-y lg:divide-y-0 lg:divide-x divide-zinc-800">
             {STATS.map((s, i) => (
@@ -127,7 +124,6 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* 4 Core Value Pillars */}
         <section className="space-y-8">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#ea580c]">Giá trị cốt lõi</span>
@@ -157,7 +153,6 @@ const AboutPage = () => {
           </div>
         </section>
 
-        {/* Official Brand Partnerships */}
         <section className="bg-zinc-50 dark:bg-[#181a24] rounded-3xl p-8 sm:p-12 border border-zinc-200/80 dark:border-zinc-800 space-y-8 transition-colors duration-300">
           <div className="text-center max-w-xl mx-auto space-y-2">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#ea580c]">Đối tác chiến lược</span>
@@ -178,7 +173,6 @@ const AboutPage = () => {
           </div>
         </section>
 
-        {/* Call to action */}
         <div className="bg-gradient-to-r from-zinc-900 to-zinc-950 dark:from-[#12131a] dark:to-zinc-900 text-white rounded-3xl p-8 sm:p-12 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-2 max-w-xl">
             <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">

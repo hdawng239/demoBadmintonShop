@@ -12,7 +12,6 @@ const getAuthHeaders = () => {
 };
 
 export const voucherService = {
-  // Client APIs
   getActiveVouchers: async () => {
     try {
       const response = await axios.get(`${API_URL}/active`, getAuthHeaders());
@@ -32,7 +31,6 @@ export const voucherService = {
     }
   },
 
-  // Admin APIs
   adminGetVouchers: async (page = 1, limit = 10) => {
     try {
       const response = await axios.get(`${API_URL}/admin?page=${page}&limit=${limit}`, getAuthHeaders());

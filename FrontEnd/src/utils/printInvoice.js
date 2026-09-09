@@ -1,5 +1,26 @@
+const escapeHtml = (value) => String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+
+const safeImageUrl = (value) => {
+    try {
+        const url = new URL(String(value));
+        return ['http:', 'https:'].includes(url.protocol) ? escapeHtml(url.href) : '';
+    } catch (_) {
+        return '';
+    }
+};
+
 export const printInvoice = (order) => {
-    // Generate HTML string for the invoice
+    const itemSubtotal = (order.items || []).reduce(
+        (sum, item) => sum + Number(item.price_at_time || 0) * Number(item.quantity || 0),
+        0
+    );
+    const shippingFee = Number(order.shipping_fee || 0);
+    const discount = Number(order.discount_amount || 0);
     const html = `
     <!DOCTYPE html>
     <html lang="vi">
@@ -71,14 +92,14 @@ export const printInvoice = (order) => {
         <div class="info-grid">
             <div class="info-box">
                 <h3>Thông Tin Giao Hàng</h3>
-                <p><b>Người nhận:</b> ${order.shipping_name || ''}</p>
-                <p><b>Điện thoại:</b> ${order.shipping_phone || ''}</p>
-                <p><b>Địa chỉ:</b> ${order.shipping_address || ''}</p>
+                <p><b>Người nhận:</b> ${escapeHtml(order.shipping_name)}</p>
+                <p><b>Điện thoại:</b> ${escapeHtml(order.shipping_phone)}</p>
+                <p><b>Địa chỉ:</b> ${escapeHtml(order.shipping_address)}</p>
             </div>
             <div class="info-box">
                 <h3>Thông Tin Đơn Hàng</h3>
                 <p><b>Ngày đặt:</b> ${new Date(order.created_at).toLocaleString('vi-VN')}</p>
-                <p><b>Phương thức:</b> ${order.payment_method?.toUpperCase() || 'COD'}</p>
+                <p><b>Phương thức:</b> ${escapeHtml(order.payment_method?.toUpperCase() || 'COD')}</p>
                 <p><b>Trạng thái TT:</b> ${order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</p>
             </div>
         </div>
@@ -100,10 +121,10 @@ export const printInvoice = (order) => {
                 <tr>
                     <td class="text-center">${index + 1}</td>
                     <td class="text-center">
-                        ${item.image_url ? `<img src="${item.image_url}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;" />` : ''}
+                        ${safeImageUrl(item.image_url) ? `<img src="${safeImageUrl(item.image_url)}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;" />` : ''}
                     </td>
-                    <td class="font-bold">${item.product_name}</td>
-                    <td>${item.variant_name}</td>
+                    <td class="font-bold">${escapeHtml(item.product_name)}</td>
+                    <td>${escapeHtml(item.variant_name)}</td>
                     <td class="text-center">${item.quantity}</td>
                     <td class="text-right">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price_at_time)}</td>
                     <td class="text-right font-bold">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price_at_time * item.quantity)}</td>
@@ -116,12 +137,13 @@ export const printInvoice = (order) => {
             <div class="summary-box">
                 <div class="summary-row">
                     <span>Tổng tiền hàng:</span>
-                    <span>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total_amount)}</span>
+                    <span>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(itemSubtotal)}</span>
                 </div>
                 <div class="summary-row">
                     <span>Phí vận chuyển:</span>
-                    <span>0 đ</span>
+                    <span>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shippingFee)}</span>
                 </div>
+                ${discount > 0 ? `<div class="summary-row"><span>Giảm giá:</span><span>-${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discount)}</span></div>` : ''}
                 <div class="summary-total">
                     <span>TỔNG CỘNG:</span>
                     <span>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total_amount)}</span>
@@ -151,7 +173,7 @@ export const printInvoice = (order) => {
         printWindow.document.write(html);
         printWindow.document.close();
         
-        // Wait for styles to apply before printing
+        // Chờ áp dụng CSS trước khi in.
         printWindow.setTimeout(() => {
             printWindow.focus();
             printWindow.print();

@@ -38,7 +38,6 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
     }
   };
 
-  // Parse technical specs for badge display
   let specs = null;
   if (product.technical_specs) {
     try {
@@ -46,7 +45,6 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
     } catch (e) {}
   }
 
-  // Weight / Spec snippet
   const weightBadge = specs?.weight || specs?.weight_class || (product.category_id === 1 ? '3U / 4U' : null);
 
   const basePrice = parseInt(product.base_price) || 0;
@@ -55,9 +53,7 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
 
   return (
     <div className="group relative bg-white dark:bg-[#12131a] rounded-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden flex flex-col h-full card-hover-effect transition-all duration-300 shadow-xs hover:shadow-md">
-      {/* Product Image Stage */}
       <Link to={`/product/${product.id}`} className="relative block aspect-square bg-[#f8f9fa] dark:bg-[#181a24] overflow-hidden p-3 sm:p-4 transition-colors duration-300">
-        {/* Badges Overlay */}
         <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 items-start">
           {product.brand_name && (
             <span className="px-2 py-0.5 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider bg-zinc-900/90 dark:bg-zinc-800/90 backdrop-blur-xs text-white rounded-md shadow-xs">
@@ -71,7 +67,6 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
           )}
         </div>
 
-        {/* Favorite Button */}
         <button
           onClick={handleFavoriteClick}
           className={`absolute top-2.5 right-2.5 z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
@@ -84,7 +79,6 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
           <Heart size={16} className={isFavorite ? 'fill-current' : ''} />
         </button>
 
-        {/* Image */}
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -99,10 +93,8 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
         )}
       </Link>
 
-      {/* Product Body */}
       <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
         <div>
-          {/* Category & Quick Spec Tag */}
           <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 dark:text-zinc-500 mb-1">
             <span className="truncate max-w-[90px] sm:max-w-none">{product.category_name || 'Cầu lông'}</span>
             {weightBadge && (
@@ -112,7 +104,6 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
             )}
           </div>
 
-          {/* Product Title */}
           <Link to={`/product/${product.id}`} className="block">
             <h3 className="font-bold text-zinc-800 dark:text-zinc-100 text-xs sm:text-sm md:text-base leading-snug line-clamp-2 min-h-[32px] sm:min-h-[40px] group-hover:text-[#ea580c] transition-colors">
               {product.name}
@@ -120,7 +111,6 @@ const ProductCard = ({ product, isFavoriteInitial = false, onFavoriteChange }) =
           </Link>
         </div>
 
-        {/* Price & Action Row */}
         <div className="mt-2.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-1">
           <div className="min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1.5">

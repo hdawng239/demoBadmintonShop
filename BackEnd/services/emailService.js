@@ -5,26 +5,37 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Naro Badminton <onboarding@resend.dev>';
 const EMAIL_ADMIN = process.env.EMAIL_ADMIN || 'dohaidang239@gmail.com';
 
+const escapeHtml = (value) => String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+
+const sanitizeSubjectPart = (value) => String(value || '').replace(/[\r\n]+/g, ' ').slice(0, 120);
+
+// Không trả nguyên văn lỗi nhà cung cấp cho client.
+const failureReason = (error) => {
+    const message = String(error?.message || '');
+    if (/only send testing emails/i.test(message)) return 'test_recipient_restricted';
+    if (/domain.*not verified|verify your domain/i.test(message)) return 'sender_not_verified';
+    return 'provider_unavailable';
+};
+
 const EmailService = {
-    /**
-     * Gửi mã OTP khôi phục mật khẩu qua Resend REST API
-     * @param {string} toEmail - Địa chỉ email người nhận
-     * @param {string} otp - Mã xác thực 6 chữ số
-     */
-    sendOtpEmail: async (toEmail, otp) => {
-        // Nếu chưa cấu hình Resend API key, in OTP ra console để hỗ trợ dev test
+    sendOtpEmail: async (toEmail, otp, purpose = 'password-reset') => {
+        const title = purpose === 'email-change' ? 'Xác Nhận Đổi Email' : 'Yêu Cầu Đặt Lại Mật Khẩu';
+        // Không ghi OTP ra log, kể cả khi chạy local.
         if (!resend) {
-            console.log('\n======================================================');
-            console.log(`[DEV TEST MODE] Mã OTP khôi phục mật khẩu cho [${toEmail}] là: ${otp}`);
-            console.log('======================================================\n');
-            return { sent: false, devMode: true };
+            console.warn('[Email] RESEND_API_KEY chưa được cấu hình; email OTP không được gửi.');
+            return { sent: false, devMode: true, reason: 'not_configured' };
         }
 
         try {
             const { data, error } = await resend.emails.send({
                 from: EMAIL_FROM,
                 to: [toEmail],
-                subject: 'Mã xác nhận khôi phục mật khẩu - Naro Badminton',
+                subject: `${title} - Naro Badminton`,
                 html: `
                     <!DOCTYPE html>
                     <html>
@@ -37,7 +48,7 @@ const EmailService = {
                             <tr>
                                 <td align="center" style="padding: 40px 10px;">
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 540px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eaeaea;">
-                                        <!-- Header -->
+
                                         <tr>
                                             <td style="background-color: #ea580c; padding: 28px 32px; text-align: center;">
                                                 <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
@@ -45,17 +56,17 @@ const EmailService = {
                                                 </h1>
                                             </td>
                                         </tr>
-                                        <!-- Body Content -->
+
                                         <tr>
                                             <td style="padding: 36px 32px;">
                                                 <h2 style="margin: 0 0 12px; color: #18181b; font-size: 18px; font-weight: 700;">
-                                                    Yêu Cầu Đặt Lại Mật Khẩu
+                                                    ${title}
                                                 </h2>
                                                 <p style="margin: 0 0 20px; color: #52525b; font-size: 14px; line-height: 1.6;">
-                                                    Xin chào, chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này.
+                                                    Mã dưới đây dùng để xác nhận yêu cầu của bạn: ${title}.
                                                 </p>
                                                 
-                                                <!-- OTP Code Box -->
+
                                                 <div style="background-color: #fff7ed; border: 1.5px dashed #ea580c; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
                                                     <span style="font-size: 12px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px;">
                                                         Mã Xác Thực Của Bạn
@@ -69,11 +80,11 @@ const EmailService = {
                                                     ⏱️ Mã xác thực này có hiệu lực trong vòng <b>5 phút</b>. Sau thời gian này, bạn cần gửi lại yêu cầu mới.
                                                 </p>
                                                 <p style="margin: 0; color: #a1a1aa; font-size: 12px; line-height: 1.5;">
-                                                    Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này. Tài khoản của bạn vẫn an toàn tuyệt đối.
+                                                    Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email và không chia sẻ mã với bất kỳ ai.
                                                 </p>
                                             </td>
                                         </tr>
-                                        <!-- Footer -->
+
                                         <tr>
                                             <td style="background-color: #fafafa; padding: 20px 32px; border-top: 1px solid #f4f4f5; text-align: center;">
                                                 <p style="margin: 0; color: #a1a1aa; font-size: 11px;">
@@ -91,25 +102,21 @@ const EmailService = {
             });
 
             if (error) {
-                console.error('[Resend Error]:', error);
-                return { sent: false, error: error.message };
+                console.error('[Resend Error]:', { name: error.name, status: error.statusCode });
+                return { sent: false, reason: failureReason(error) };
             }
 
-            console.log(`[Resend Success] Email OTP đã gửi thành công tới: ${toEmail} (ID: ${data?.id})`);
+            console.log(`[Resend Success] Email OTP đã được gửi (ID: ${data?.id})`);
             return { sent: true, messageId: data?.id };
         } catch (err) {
-            console.error('[Resend Exception]:', err.message);
-            return { sent: false, error: err.message };
+            console.error('[Resend Exception]:', { name: err.name, code: err.code });
+            return { sent: false, reason: failureReason(err) };
         }
     },
 
-    /**
-     * Gửi email liên hệ từ khách hàng tới ban quản trị Shop
-     * @param {Object} contactData - Thông tin liên hệ { name, email, phone, message }
-     */
     sendContactEmail: async ({ name, email, phone, message }) => {
         if (!resend) {
-            console.log(`\n[DEV TEST MODE] Tin nhắn liên hệ mới từ ${name} (${email} - ${phone}): "${message}"\n`);
+            console.warn('[Email] RESEND_API_KEY chưa được cấu hình; email liên hệ không được gửi.');
             return { sent: false, devMode: true };
         }
 
@@ -118,29 +125,29 @@ const EmailService = {
                 from: EMAIL_FROM,
                 to: [EMAIL_ADMIN],
                 reply_to: email,
-                subject: `[Liên hệ mới từ Web] ${name} - ${phone || 'Khách hàng'}`,
+                subject: `[Liên hệ mới từ Web] ${sanitizeSubjectPart(name)} - ${sanitizeSubjectPart(phone || 'Khách hàng')}`,
                 html: `
                     <div style="font-family: sans-serif; padding: 20px; color: #333;">
                         <h2 style="color: #ea580c;">Tin nhắn liên hệ mới từ Website Naro Badminton</h2>
-                        <p><b>Họ và tên:</b> ${name}</p>
-                        <p><b>Email:</b> ${email}</p>
-                        <p><b>Số điện thoại:</b> ${phone || 'Không cung cấp'}</p>
+                        <p><b>Họ và tên:</b> ${escapeHtml(name)}</p>
+                        <p><b>Email:</b> ${escapeHtml(email)}</p>
+                        <p><b>Số điện thoại:</b> ${escapeHtml(phone || 'Không cung cấp')}</p>
                         <p><b>Nội dung tin nhắn:</b></p>
                         <div style="background: #f4f4f5; padding: 15px; border-radius: 8px; border-left: 4px solid #ea580c;">
-                            ${message}
+                            ${escapeHtml(message).replaceAll('\n', '<br>')}
                         </div>
                     </div>
                 `,
             });
 
             if (error) {
-                console.error('[Resend Contact Error]:', error);
+                console.error('[Resend Contact Error]:', { name: error.name, status: error.statusCode });
                 return { sent: false, error: error.message };
             }
 
             return { sent: true, messageId: data?.id };
         } catch (err) {
-            console.error('[Resend Contact Exception]:', err.message);
+            console.error('[Resend Contact Exception]:', { name: err.name, code: err.code });
             return { sent: false, error: err.message };
         }
     },

@@ -1,5 +1,4 @@
-// Chuẩn hóa response về dạng { success, message?, data, meta? }.
-// `legacy` để kèm thêm các key cũ cho FE chưa cập nhật, sẽ bỏ dần.
+// Giữ các trường cũ để tương thích frontend.
 const sendSuccess = (res, { statusCode = 200, message, data = null, meta = null, legacy = {} } = {}) => {
     const body = { success: true };
     if (message !== undefined) body.message = message;

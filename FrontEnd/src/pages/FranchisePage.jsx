@@ -126,14 +126,12 @@ const FranchisePage = () => {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-10 space-y-16">
-        {/* Breadcrumb */}
         <nav className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
           <Link to="/" className="hover:text-[#ea580c]">Trang chủ</Link>
           <span>/</span>
           <span className="font-semibold text-zinc-800 dark:text-zinc-200">Hợp tác nhượng quyền</span>
         </nav>
 
-        {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-7 space-y-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/40 text-[#ea580c] rounded-full text-xs font-black uppercase tracking-widest">
@@ -187,7 +185,6 @@ const FranchisePage = () => {
           </div>
         </div>
 
-        {/* 6 Key Franchise Perks */}
         <section className="space-y-8">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#ea580c]">Quyền lợi đối tác</span>
@@ -215,7 +212,6 @@ const FranchisePage = () => {
           </div>
         </section>
 
-        {/* 3 Franchise Investment Models */}
         <section className="space-y-8">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#ea580c]">Mô hình đầu tư</span>
@@ -286,7 +282,6 @@ const FranchisePage = () => {
           </div>
         </section>
 
-        {/* 5-Step Process */}
         <section className="bg-zinc-50 dark:bg-[#181a24] rounded-3xl p-8 sm:p-12 border border-zinc-200/80 dark:border-zinc-800 space-y-8 transition-colors duration-300">
           <div className="text-center max-w-xl mx-auto space-y-2">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#ea580c]">Quy trình 5 bước</span>
@@ -306,7 +301,6 @@ const FranchisePage = () => {
           </div>
         </section>
 
-        {/* Registration Form Card */}
         <div id="register-form" className="bg-white dark:bg-[#12131a] rounded-3xl p-8 sm:p-12 border border-zinc-200/80 dark:border-zinc-800 shadow-lg grid grid-cols-1 lg:grid-cols-12 gap-10 transition-colors duration-300">
           <div className="lg:col-span-5 space-y-4">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#ea580c]">Đăng ký trực tuyến</span>

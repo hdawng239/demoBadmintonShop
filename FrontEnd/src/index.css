@@ -25,7 +25,7 @@
   }
 
   html {
-    font-size: 17px; /* Tăng 1-2px toàn diện cho toàn bộ cỡ chữ trên website */
+    font-size: 17px;
   }
 
   @media (max-width: 640px) {
@@ -58,9 +58,6 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   GLOBAL THEME UTILITIES
-   ───────────────────────────────────────────────────────────── */
 .bg-primary {
   background-color: #ea580c !important;
 }
@@ -80,15 +77,12 @@ html.dark body {
   color: #f8fafc !important;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   DARK MODE ARTICLE TYPOGRAPHY (Khắc phục bài viết tin tức)
-   ───────────────────────────────────────────────────────────── */
 .dark .article-content,
 .dark .article-content p,
 .dark .article-content span,
 .dark .article-content li,
 .dark .article-content div {
-  color: #e2e8f0 !important; /* Màu xám trắng sáng đọc rất rõ */
+  color: #e2e8f0 !important;
 }
 
 .dark .article-content h1,
@@ -97,7 +91,7 @@ html.dark body {
 .dark .article-content h4,
 .dark .article-content strong,
 .dark .article-content b {
-  color: #ffffff !important; /* Tiêu đề trắng sáng nổi bật */
+  color: #ffffff !important;
   border-bottom-color: #ea580c !important;
 }
 
@@ -116,7 +110,6 @@ html.dark body {
   border-color: #27272a !important;
 }
 
-/* Smooth Scroll Reveal (Bóng mờ & Trượt nhẹ) */
 .reveal-on-scroll {
   opacity: 0;
   transform: translateY(16px);
@@ -133,12 +126,10 @@ html.dark body {
   filter: blur(0);
 }
 
-/* Stagger animation delay helpers */
 .delay-100 { transition-delay: 100ms; }
 .delay-200 { transition-delay: 200ms; }
 .delay-300 { transition-delay: 300ms; }
 
-/* Custom modern utilities */
 .card-hover-effect {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -148,7 +139,6 @@ html.dark body {
   box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.15);
 }
 
-/* Custom subtle scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

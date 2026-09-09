@@ -11,11 +11,9 @@ const {
 } = require('../controllers/voucherController');
 const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
 
-// Public endpoints (Customer)
 router.post('/apply', verifyToken, applyVoucher);
 router.get('/active', verifyToken, getActiveVouchers);
 
-// Admin endpoints
 router.get('/admin', verifyToken, isAdmin, getAllVouchers);
 router.get('/admin/:id', verifyToken, isAdmin, getVoucherById);
 router.post('/admin', verifyToken, isAdmin, createVoucher);

@@ -29,15 +29,14 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   const currentUser = authService.getCurrentUser();
+  const currentUserId = currentUser?.id;
 
-  // Variant Selection State
   const [selectedOptions, setSelectedOptions] = useState({});
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Review Form State
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -47,7 +46,6 @@ const ProductDetailPage = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Fetch product data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -56,19 +54,16 @@ const ProductDetailPage = () => {
         const prodData = await productService.getProductById(id);
         setProduct(prodData);
 
-        // Fetch related products
         if (prodData?.category_id) {
           const relRes = await productService.getAllProducts(1, 5, prodData.category_id);
           const list = (relRes?.products || relRes?.data || []).filter(p => p.id !== parseInt(id)).slice(0, 4);
           setRelatedProducts(list);
         }
 
-        // Fetch reviews
         const revData = await reviewService.getProductReviews(id, 1, 50);
         setReviews(revData?.reviews || revData?.data || revData || []);
 
-        // Initial Wishlist status
-        if (currentUser?.id) {
+        if (currentUserId) {
           wishlistService.getProductIds().then(ids => {
             setIsFavorite(ids.includes(parseInt(id)));
           }).catch(() => {});
@@ -81,9 +76,8 @@ const ProductDetailPage = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, currentUserId]);
 
-  // Build attributesMap from variants
   const attributesMap = {};
   if (product && product.variants) {
     product.variants.forEach(variant => {
@@ -99,7 +93,6 @@ const ProductDetailPage = () => {
     });
   }
 
-  // Handle Attribute Option Click
   const handleSelectOption = (key, value) => {
     let newOptions = { ...selectedOptions };
     if (newOptions[key] === value) {
@@ -108,7 +101,6 @@ const ProductDetailPage = () => {
       newOptions[key] = value;
     }
 
-    // Match exact variant
     const exactMatch = product.variants?.find(v => {
       if (!v.attributes) return false;
       try {
@@ -125,7 +117,6 @@ const ProductDetailPage = () => {
     setSelectedVariant(exactMatch || null);
   };
 
-  // Add to Cart handler
   const handleAddToCart = async (isBuyNow = false) => {
     const user = authService.getCurrentUser();
     if (!user) {
@@ -169,7 +160,6 @@ const ProductDetailPage = () => {
     }
   };
 
-  // Toggle favorite
   const handleToggleFavorite = async () => {
     if (!currentUser) {
       alert('Vui lòng đăng nhập để lưu sản phẩm yêu thích!');
@@ -188,7 +178,6 @@ const ProductDetailPage = () => {
     }
   };
 
-  // Submit Review
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!currentUser) {
@@ -200,7 +189,6 @@ const ProductDetailPage = () => {
     setSubmittingReview(true);
     try {
       await reviewService.createReview({
-        user_id: currentUser.id,
         product_id: parseInt(id),
         rating,
         comment
@@ -239,13 +227,11 @@ const ProductDetailPage = () => {
     );
   }
 
-  // Price calculations
   const basePrice = parseInt(product.base_price) || 0;
   const modifier = selectedVariant?.price_modifier ? parseInt(selectedVariant.price_modifier) : 0;
   const effectivePrice = basePrice + modifier;
   const salePrice = product.sale_price ? (parseInt(product.sale_price) + modifier) : null;
 
-  // Technical Specs parsing
   let specs = {};
   if (product.technical_specs) {
     try {
@@ -260,7 +246,6 @@ const ProductDetailPage = () => {
 
   return (
     <MainLayout>
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-24 right-4 z-50 px-5 py-3 bg-zinc-950 text-white text-xs font-bold rounded-2xl shadow-2xl flex items-center gap-2 border border-zinc-800 animate-in fade-in slide-in-from-top-2">
           <CheckCircle2 size={16} className="text-lime-400" />
@@ -270,7 +255,6 @@ const ProductDetailPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
         
-        {/* Breadcrumbs */}
         <nav className="text-xs text-zinc-500 dark:text-zinc-400 mb-6 flex items-center gap-2">
           <Link to="/" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Trang chủ</Link>
           <span>/</span>
@@ -281,10 +265,8 @@ const ProductDetailPage = () => {
           <span className="font-semibold text-zinc-800 dark:text-zinc-200 line-clamp-1">{product.name}</span>
         </nav>
 
-        {/* Top Product Section (Dark/Light Fully Styled) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 bg-white dark:bg-[#12131a] p-6 sm:p-10 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 mb-12 shadow-sm transition-colors duration-300">
           
-          {/* Left: Product Image */}
           <div className="lg:col-span-5">
             <div className="aspect-square bg-[#f8f9fa] dark:bg-[#181a24] rounded-2xl p-8 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center relative overflow-hidden transition-colors duration-300">
               {product.image_url ? (
@@ -297,7 +279,6 @@ const ProductDetailPage = () => {
                 <span className="text-zinc-400 dark:text-zinc-600 font-bold uppercase text-xs">Chưa có ảnh</span>
               )}
 
-              {/* Brand Tag */}
               {product.brand_name && (
                 <span className="absolute top-4 left-4 px-3 py-1 bg-zinc-950 dark:bg-zinc-800 text-white text-[10px] font-black uppercase tracking-widest rounded-md border border-zinc-800">
                   {product.brand_name}
@@ -306,7 +287,6 @@ const ProductDetailPage = () => {
             </div>
           </div>
 
-          {/* Right: Product Info & Actions */}
           <div className="lg:col-span-7 flex flex-col justify-between">
             <div className="space-y-4">
               <div>
@@ -318,7 +298,6 @@ const ProductDetailPage = () => {
                 </h1>
               </div>
 
-              {/* Rating & Brand */}
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1 text-amber-500 font-bold">
                   <Star size={15} className="fill-current" />
@@ -331,7 +310,6 @@ const ProductDetailPage = () => {
                 </span>
               </div>
 
-              {/* Price Stage */}
               <div className="p-4 bg-zinc-50 dark:bg-[#181924] rounded-2xl border border-zinc-100 dark:border-zinc-800 flex items-baseline gap-3 transition-colors duration-300">
                 <span className="text-3xl font-black text-[#ea580c]">
                   {(salePrice || effectivePrice).toLocaleString('vi-VN')} ₫
@@ -346,7 +324,6 @@ const ProductDetailPage = () => {
                 </span>
               </div>
 
-              {/* Variant Matrix Picker */}
               {Object.keys(attributesMap).length > 0 ? (
                 <div className="space-y-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                   {Object.keys(attributesMap).map(key => (
@@ -373,7 +350,6 @@ const ProductDetailPage = () => {
                     </div>
                   ))}
 
-                  {/* Stock Feedback */}
                   {selectedVariant ? (
                     selectedVariant.stock_quantity > 0 ? (
                       <p className="text-xs font-semibold text-lime-600 dark:text-lime-400 flex items-center gap-1">
@@ -391,7 +367,6 @@ const ProductDetailPage = () => {
                   )}
                 </div>
               ) : product.variants && product.variants.length > 0 ? (
-                /* Flat Variant fallback */
                 <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                   <p className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Phân loại:</p>
                   <div className="flex flex-wrap gap-2">
@@ -412,7 +387,6 @@ const ProductDetailPage = () => {
                 </div>
               ) : null}
 
-              {/* Quantity & Actions */}
               <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden bg-white dark:bg-[#181a24]">
                   <button
@@ -439,7 +413,6 @@ const ProductDetailPage = () => {
                   </button>
                 </div>
 
-                {/* Inactive & Stock Status Warning */}
                 {product.is_active === false ? (
                   <div className="w-full p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
                     <AlertCircle size={16} className="shrink-0" />
@@ -454,7 +427,6 @@ const ProductDetailPage = () => {
                   )
                 )}
 
-                {/* Add to Cart */}
                 <button
                   onClick={() => handleAddToCart(false)}
                   disabled={product.is_active === false || (selectedVariant && selectedVariant.stock_quantity <= 0)}
@@ -466,7 +438,6 @@ const ProductDetailPage = () => {
                     : (selectedVariant && selectedVariant.stock_quantity <= 0 ? 'Hết hàng' : 'Thêm vào giỏ')}
                 </button>
 
-                {/* Buy Now */}
                 <button
                   onClick={() => handleAddToCart(true)}
                   disabled={product.is_active === false || (selectedVariant && selectedVariant.stock_quantity <= 0)}
@@ -477,7 +448,6 @@ const ProductDetailPage = () => {
                     : (selectedVariant && selectedVariant.stock_quantity <= 0 ? 'Hết hàng' : 'Mua ngay')}
                 </button>
 
-                {/* Wishlist Button */}
                 <button
                   onClick={handleToggleFavorite}
                   disabled={product.is_active === false}
@@ -494,7 +464,6 @@ const ProductDetailPage = () => {
                 </button>
               </div>
 
-              {/* Guarantee Bar */}
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400">
                 <div className="flex items-center gap-1.5 font-medium">
                   <ShieldCheck size={16} className="text-lime-600 dark:text-lime-400 shrink-0" /> Chính hãng 100%
@@ -511,9 +480,7 @@ const ProductDetailPage = () => {
 
         </div>
 
-        {/* Section 2: Technical Specifications & Description */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-14">
-          {/* Description */}
           <div className="lg:col-span-7 bg-white dark:bg-[#12131a] p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors duration-300">
             <h3 className="text-lg font-black text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-100 dark:border-zinc-800 pb-3">
               Mô tả chi tiết sản phẩm
@@ -523,7 +490,6 @@ const ProductDetailPage = () => {
             </div>
           </div>
 
-          {/* Technical Specs Table */}
           <div className="lg:col-span-5 bg-white dark:bg-[#12131a] p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-4 transition-colors duration-300">
             <h3 className="text-lg font-black text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-100 dark:border-zinc-800 pb-3">
               Thông số kỹ thuật
@@ -572,7 +538,6 @@ const ProductDetailPage = () => {
           </div>
         </div>
 
-        {/* Section 3: Customer Reviews */}
         <div className="bg-white dark:bg-[#12131a] p-8 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 mb-14 space-y-6 transition-colors duration-300">
           <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
             <div>
@@ -583,12 +548,10 @@ const ProductDetailPage = () => {
             </div>
           </div>
 
-          {/* Add Review Form */}
           {currentUser ? (
             <form onSubmit={handleReviewSubmit} className="bg-zinc-50 dark:bg-[#181924] p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-3">
               <p className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Viết đánh giá của bạn:</p>
               
-              {/* Star Rating Picker */}
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map(star => (
                   <button
@@ -627,7 +590,6 @@ const ProductDetailPage = () => {
             </div>
           )}
 
-          {/* Reviews List */}
           <div className="space-y-4">
             {validReviews.map((rev, idx) => (
               <div key={idx} className="p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-[#181a24] space-y-2">
@@ -653,7 +615,6 @@ const ProductDetailPage = () => {
           </div>
         </div>
 
-        {/* Section 4: Related Products */}
         {relatedProducts.length > 0 && (
           <div className="space-y-6">
             <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white tracking-tight">Sản phẩm cùng phân khúc</h3>
@@ -667,11 +628,10 @@ const ProductDetailPage = () => {
 
       </div>
 
-      {/* Mobile Sticky Bottom Action Bar */}
       {product && (
         <div className="md:hidden fixed bottom-[52px] left-0 right-0 z-30 bg-white/95 dark:bg-[#12131a]/95 backdrop-blur-xl border-t border-zinc-200/80 dark:border-zinc-800/80 p-2.5 px-3 flex items-center gap-2 shadow-[0_-4px_25px_rgba(0,0,0,0.12)]">
           <button
-            onClick={() => handleFavoriteClick()}
+            onClick={handleToggleFavorite}
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
               isFavorite 
                 ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-200 text-rose-500' 

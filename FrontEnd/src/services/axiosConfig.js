@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { authService } from './authService';
 
-// Thiết lập axios toàn cục: tự động làm mới access token khi hết hạn (401),
-// và đăng xuất khi refresh thất bại hoặc bị cấm quyền (403).
+axios.defaults.withCredentials = true;
 
-// ── Single-flight: nhiều request 401 cùng lúc chỉ refresh 1 lần ──
+
+// Các request lỗi 401 dùng chung một lần làm mới token.
 let isRefreshing = false;
-let pendingQueue = []; // các request đang chờ token mới
+let pendingQueue = [];
+let installed = false;
 
 const processQueue = (error, newToken = null) => {
   pendingQueue.forEach(({ resolve, reject }) => {
@@ -16,11 +17,12 @@ const processQueue = (error, newToken = null) => {
   pendingQueue = [];
 };
 
-// Đăng xuất "cứng": xóa token và điều hướng về trang login phù hợp.
 const forceLogout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
+  localStorage.removeItem('csrfToken');
+  sessionStorage.removeItem('csrfToken');
   window.dispatchEvent(new Event('userUpdated'));
 
   const currentPath = window.location.pathname;
@@ -29,51 +31,57 @@ const forceLogout = () => {
   }
 };
 
-// Các endpoint không được phép refresh (tránh đệ quy vô hạn).
+// Không tự refresh các endpoint xác thực để tránh gọi lặp.
 const isAuthEndpoint = (url = '') =>
   url.includes('/auth/login') ||
   url.includes('/auth/refresh-token') ||
   url.includes('/auth/logout');
 
 export const setupAxiosInterceptors = () => {
+  if (installed) return;
+  installed = true;
+  const api = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5000/api', window.location.origin);
+  const isOwnApi = (config) => {
+    try {
+      const target = new URL(axios.getUri(config), window.location.origin);
+      return target.origin === api.origin && (target.pathname === api.pathname || target.pathname.startsWith(`${api.pathname.replace(/\/$/, '')}/`));
+    } catch { return false; }
+  };
+  axios.interceptors.request.use((config) => {
+    if (isOwnApi(config)) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers ||= {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  });
   axios.interceptors.response.use(
     (response) => response,
     async (error) => {
       const { response, config: originalRequest } = error;
 
-      // Không có response (lỗi mạng) hoặc không có config -> trả lỗi nguyên trạng.
-      if (!response || !originalRequest) return Promise.reject(error);
+      if (!response || !originalRequest || !isOwnApi(originalRequest)) return Promise.reject(error);
 
       const status = response.status;
 
-      // 403 = sai quyền hoặc token hỏng -> không cứu được, đăng xuất luôn.
-      if (status === 403) {
-        forceLogout();
-        return Promise.reject(error);
-      }
-
-      // Chỉ xử lý 401 (token hết hạn), và chưa từng retry, và không phải endpoint auth.
+      // Chỉ refresh khi lỗi 401; lỗi 403 không làm mất phiên.
       if (
         status !== 401 ||
         originalRequest._retry ||
         isAuthEndpoint(originalRequest.url)
       ) {
-        // 401 ở các endpoint auth (vd refresh hết hạn) -> đăng xuất.
-        if (status === 401 && isAuthEndpoint(originalRequest.url)) {
-          forceLogout();
-        }
         return Promise.reject(error);
       }
 
-      // Không có refresh token -> không thể làm mới.
-      if (!localStorage.getItem('refreshToken')) {
+      if (!localStorage.getItem('csrfToken') && !sessionStorage.getItem('csrfToken')) {
         forceLogout();
         return Promise.reject(error);
       }
 
       originalRequest._retry = true;
 
-      // Nếu đang refresh, xếp hàng chờ token mới rồi retry.
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           pendingQueue.push({ resolve, reject });
@@ -85,16 +93,16 @@ export const setupAxiosInterceptors = () => {
           .catch((err) => Promise.reject(err));
       }
 
-      // Tiến hành refresh (single-flight).
       isRefreshing = true;
       try {
-        const newToken = await authService.refreshToken();
+        const newToken = await authService.refreshToken(originalRequest.headers.Authorization?.replace(/^Bearer /, ''));
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axios(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        forceLogout();
+        const failedToken = originalRequest.headers.Authorization?.replace(/^Bearer /, '');
+        if (refreshError.response?.status === 401 && localStorage.getItem('token') === failedToken) forceLogout();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

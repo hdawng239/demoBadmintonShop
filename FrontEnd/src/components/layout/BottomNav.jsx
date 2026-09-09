@@ -27,7 +27,6 @@ const BottomNav = () => {
         setWishlistCount(0);
       }
     } catch {
-      // Ignore count fetch error
     }
   };
 

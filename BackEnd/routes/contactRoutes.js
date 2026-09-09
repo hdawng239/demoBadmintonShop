@@ -3,12 +3,21 @@ const router = express.Router();
 const EmailService = require('../services/emailService');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
+const { contactLimiter } = require('../middlewares/rateLimiter');
 
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', contactLimiter, asyncHandler(async (req, res) => {
     const { name, email, phone, message } = req.body;
 
-    if (!name || !name.trim() || !email || !email.trim() || !message || !message.trim()) {
+    if (
+        typeof name !== 'string' || !name.trim()
+        || typeof email !== 'string' || !email.trim()
+        || typeof message !== 'string' || !message.trim()
+        || (phone !== undefined && typeof phone !== 'string')
+    ) {
         throw new AppError(400, 'Vui lòng điền đầy đủ Họ tên, Email và Nội dung lời nhắn!');
+    }
+    if (name.length > 120 || message.length > 5000) {
+        throw new AppError(400, 'Tên hoặc nội dung lời nhắn vượt quá giới hạn cho phép!');
     }
 
     const trimmedEmail = email.trim().toLowerCase();

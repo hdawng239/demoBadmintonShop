@@ -3,16 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
 import { Mail, Key, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: Enter email, 2: Enter OTP & New Password
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState(null);
 
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -36,8 +38,8 @@ const ForgotPasswordPage = () => {
     setLoading(true);
 
     try {
-      await authService.forgotPassword(email.trim());
-      setMessage('Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư!');
+      await authService.forgotPassword(email.trim(), turnstileToken);
+      setMessage('Nếu email tồn tại, mã OTP sẽ được gửi trong ít phút.');
       setStep(2);
     } catch (err) {
       setError(err.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi mã OTP.');
@@ -60,10 +62,10 @@ const ForgotPasswordPage = () => {
 
     if (!newPassword) {
       errors.newPassword = 'Vui lòng nhập mật khẩu mới!';
-    } else if (newPassword.length < 6) {
-      errors.newPassword = 'Mật khẩu mới phải có tối thiểu 6 ký tự!';
-    } else if (newPassword.length > 50) {
-      errors.newPassword = 'Mật khẩu mới không được vượt quá 50 ký tự!';
+    } else if (newPassword.length < 10) {
+      errors.newPassword = 'Mật khẩu mới phải có tối thiểu 10 ký tự!';
+    } else if (new TextEncoder().encode(newPassword).length > 72) {
+      errors.newPassword = 'Mật khẩu mới không được vượt quá 72 byte!';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -75,7 +77,7 @@ const ForgotPasswordPage = () => {
     setLoading(true);
 
     try {
-      await authService.resetPassword({ email: email.trim(), otp: otp.trim(), newPassword });
+      await authService.resetPassword(email.trim(), otp.trim(), newPassword);
       setMessage('Đổi mật khẩu thành công! Đang chuyển đến đăng nhập...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
@@ -144,9 +146,18 @@ const ForgotPasswordPage = () => {
                 )}
               </div>
 
+              {import.meta.env.VITE_TURNSTILE_SITE_KEY && (
+                <Turnstile
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={setTurnstileToken}
+                  onExpire={() => setTurnstileToken(null)}
+                  options={{ theme: 'auto' }}
+                />
+              )}
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY) && !turnstileToken)}
                 className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
               >
                 {loading ? 'Đang gửi mã...' : 'Gửi mã xác nhận'}
@@ -188,7 +199,7 @@ const ForgotPasswordPage = () => {
                 </label>
                 <input
                   type="password"
-                  maxLength={50}
+                  maxLength={72}
                   value={newPassword}
                   onChange={(e) => {
                     setNewPassword(e.target.value);

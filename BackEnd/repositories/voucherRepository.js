@@ -65,7 +65,7 @@ const VoucherRepository = {
         return mapRow(res.rows[0]);
     },
 
-    // Gọi trong transaction đặt hàng, nhận client của transaction
+    // Dùng cùng giao dịch với thao tác đặt hàng.
     incrementUsedCount: async (client, code) => {
         const res = await client.query(
             `UPDATE ${TABLE} SET used_count = used_count + 1 WHERE UPPER(code) = UPPER($1) RETURNING *`,

@@ -9,12 +9,10 @@ import { themeService } from '../../services/themeService';
 const MainLayout = ({ children }) => {
   const location = useLocation();
 
-  // Initialize theme on mount
   useEffect(() => {
     themeService.initTheme();
   }, []);
 
-  // Continuous Two-Way Scroll Reveal (Scroll Up & Down)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const observer = new IntersectionObserver(
@@ -23,7 +21,6 @@ const MainLayout = ({ children }) => {
             if (entry.isIntersecting) {
               entry.target.classList.add('is-revealed');
             } else {
-              // Re-arm animation when scrolling out of view so it repeats seamlessly!
               entry.target.classList.remove('is-revealed');
             }
           });

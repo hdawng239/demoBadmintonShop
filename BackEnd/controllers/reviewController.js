@@ -1,17 +1,16 @@
 const asyncHandler = require('../utils/asyncHandler');
 const ReviewService = require('../services/reviewService');
 const { sendSuccess } = require('../utils/response');
+const { parsePagination } = require('../utils/pagination');
 
 const getProductReviews = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = parsePagination(req.query.page, req.query.limit, 10, 50);
     const result = await ReviewService.getProductReviews(req.params.productId, page, limit);
     res.status(200).json(result);
 });
 
 const getAllReviews = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = parsePagination(req.query.page, req.query.limit, 10, 100);
     const result = await ReviewService.getAllReviews(page, limit);
     res.status(200).json(result);
 });

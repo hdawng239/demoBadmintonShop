@@ -1,11 +1,10 @@
 const asyncHandler = require('../utils/asyncHandler');
 const UserService = require('../services/userService');
 const { sendSuccess } = require('../utils/response');
+const { parsePagination } = require('../utils/pagination');
 
-// getAll/getById giữ nguyên hình dạng cũ vì FE đọc trực tiếp
 const getAllUsers = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = parsePagination(req.query.page, req.query.limit);
     const search = req.query.search || '';
     const usersData = await UserService.getAllUsers(page, limit, search);
     res.status(200).json(usersData);
@@ -27,7 +26,7 @@ const updateUser = asyncHandler(async (req, res) => {
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
-    const deleted = await UserService.deleteUser(req.params.id);
+    const deleted = await UserService.deleteUser(req.params.id, req.user);
     sendSuccess(res, { message: 'Đã xóa tài khoản', data: deleted });
 });
 

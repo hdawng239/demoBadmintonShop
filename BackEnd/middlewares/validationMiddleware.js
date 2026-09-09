@@ -9,7 +9,7 @@ const handleUserValidation = (req, res, next) => {
     if (errors.length > 0) {
         return res.status(400).json({ status: "fail", errors });
     }
-    next(); // Không lỗi thì cho đi tiếp vào Controller
+    next();
 };
 
 const handleOrderValidation = (req, res, next) => {

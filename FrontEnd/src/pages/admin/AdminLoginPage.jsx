@@ -20,10 +20,6 @@ const AdminLoginPage = () => {
     });
   };
 
-  const handleFillDemo = (email, pass) => {
-    setFormData({ email, password: pass });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');

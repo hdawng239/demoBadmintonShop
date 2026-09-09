@@ -2,7 +2,6 @@ const pool = require('../config/db');
 const { TABLE } = require('../models/wishlistModel');
 
 const WishlistRepository = {
-    // JOIN sang products để lấy thông tin hiển thị mới nhất
     findByUser: async (userId) => {
         const query = `
             SELECT p.*, b.name AS brand_name, c.name AS category_name,
@@ -11,17 +10,19 @@ const WishlistRepository = {
             JOIN products p ON w.product_id = p.id
             LEFT JOIN brands b ON p.brand_id = b.id
             LEFT JOIN categories c ON p.category_id = c.id
-            WHERE w.user_id = $1
+            WHERE w.user_id = $1 AND p.is_active = TRUE
             ORDER BY w.created_at DESC
         `;
         const result = await pool.query(query, [userId]);
         return result.rows;
     },
 
-    // Chỉ lấy product_id, dùng để FE tô tim / đếm nhanh
     findProductIdsByUser: async (userId) => {
         const result = await pool.query(
-            `SELECT product_id FROM ${TABLE} WHERE user_id = $1`,
+            `SELECT w.product_id
+             FROM ${TABLE} w
+             JOIN products p ON p.id = w.product_id
+             WHERE w.user_id = $1 AND p.is_active = TRUE`,
             [userId]
         );
         return result.rows.map((r) => r.product_id);
@@ -35,7 +36,6 @@ const WishlistRepository = {
              RETURNING *`,
             [userId, productId]
         );
-        // null nếu đã tồn tại từ trước
         return result.rows[0] || null;
     },
 

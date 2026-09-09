@@ -1,6 +1,5 @@
 const pool = require('../config/db');
 
-// REPOSITORY = tầng truy cập dữ liệu cho thống kê dashboard admin.
 const AdminRepository = {
     countUsers: async () => {
         const result = await pool.query("SELECT COUNT(*) as count FROM users WHERE role != 'admin'");

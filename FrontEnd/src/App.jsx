@@ -1,46 +1,47 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import ProductListPage from './pages/ProductListPage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import CartPage from './pages/CartPage';
-import FranchisePage from './pages/FranchisePage';
-import StoreSystemPage from './pages/StoreSystemPage';
-import GuidePage from './pages/GuidePage';
-import WarrantyPage from './pages/WarrantyPage';
-import ShippingPolicyPage from './pages/ShippingPolicyPage';
-import UserOrdersPage from './pages/UserOrdersPage';
-import AboutPage from './pages/AboutPage';
-import ContactPage from './pages/ContactPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ProfilePage from './pages/ProfilePage';
-import NewsPage from './pages/NewsPage';
-import NewsDetailPage from './pages/NewsDetailPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import PaymentQRPage from './pages/PaymentQRPage';
 import ScrollToTop from './components/ScrollToTop';
-import FavoritesPage from './pages/FavoritesPage';
-import SearchImagePage from './pages/SearchImagePage';
-
 import AdminRoute from './components/layout/AdminRoute';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import AdminProductPage from './pages/admin/AdminProductPage';
-import AdminCategoryPage from './pages/admin/AdminCategoryPage';
-import AdminUserPage from './pages/admin/AdminUserPage';
-import AdminOrderPage from './pages/admin/AdminOrderPage';
-import AdminLoginPage from './pages/admin/AdminLoginPage';
-import AdminPostPage from './pages/admin/AdminPostPage';
-import AdminReviewPage from './pages/admin/AdminReviewPage';
-import AdminVoucherPage from './pages/admin/AdminVoucherPage';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const ProductListPage = lazy(() => import('./pages/ProductListPage'));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const FranchisePage = lazy(() => import('./pages/FranchisePage'));
+const StoreSystemPage = lazy(() => import('./pages/StoreSystemPage'));
+const GuidePage = lazy(() => import('./pages/GuidePage'));
+const WarrantyPage = lazy(() => import('./pages/WarrantyPage'));
+const ShippingPolicyPage = lazy(() => import('./pages/ShippingPolicyPage'));
+const UserOrdersPage = lazy(() => import('./pages/UserOrdersPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const NewsPage = lazy(() => import('./pages/NewsPage'));
+const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
+const PaymentQRPage = lazy(() => import('./pages/PaymentQRPage'));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
+const SearchImagePage = lazy(() => import('./pages/SearchImagePage'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminProductPage = lazy(() => import('./pages/admin/AdminProductPage'));
+const AdminCategoryPage = lazy(() => import('./pages/admin/AdminCategoryPage'));
+const AdminUserPage = lazy(() => import('./pages/admin/AdminUserPage'));
+const AdminOrderPage = lazy(() => import('./pages/admin/AdminOrderPage'));
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminPostPage = lazy(() => import('./pages/admin/AdminPostPage'));
+const AdminReviewPage = lazy(() => import('./pages/admin/AdminReviewPage'));
+const AdminVoucherPage = lazy(() => import('./pages/admin/AdminVoucherPage'));
 
 function App() {
   return (
     <Router>
       <ScrollToTop />
+      <Suspense fallback={<div className="min-h-screen grid place-items-center text-sm text-zinc-500">Đang tải…</div>}>
       <Routes>
-        {/* Storefront Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/category/:categoryId" element={<ProductListPage />} />
@@ -69,7 +70,6 @@ function App() {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/search-image" element={<SearchImagePage />} />
         
-        {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><AdminUserPage /></AdminRoute>} />
@@ -80,6 +80,7 @@ function App() {
         <Route path="/admin/reviews" element={<AdminRoute><AdminReviewPage /></AdminRoute>} />
         <Route path="/admin/vouchers" element={<AdminRoute><AdminVoucherPage /></AdminRoute>} />
       </Routes>
+      </Suspense>
     </Router>
   );
 }

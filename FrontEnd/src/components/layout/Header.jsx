@@ -96,7 +96,6 @@ const Header = () => {
     setTheme(nextTheme);
   };
 
-  // Sync auth & counters
   const updateUserData = async () => {
     const user = authService.getCurrentUser();
     setCurrentUser(user);
@@ -148,7 +147,6 @@ const Header = () => {
     };
   }, []);
 
-  // Close mobile drawer on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsUserMenuOpen(false);
@@ -175,7 +173,6 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#0c0d10] text-zinc-900 dark:text-white shadow-md border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300">
       
-      {/* 1. Top Utility Announcement Bar (Smooth Slide) */}
       <div className={`bg-zinc-100 dark:bg-[#181920] border-b border-zinc-200 dark:border-zinc-800 text-[11px] px-4 hidden md:block transition-all duration-300 ease-in-out ${
         isHeaderCollapsed ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0' : 'max-h-12 py-1.5 opacity-100'
       }`}>
@@ -207,11 +204,9 @@ const Header = () => {
         </div>
       </div>
 
-      {/* 2. Main Navigation Bar */}
       <div className={`max-w-7xl mx-auto px-4 lg:px-6 transition-all duration-300 ${isHeaderCollapsed ? 'py-2 sm:py-2.5' : 'py-3.5'}`}>
         <div className="flex items-center justify-between gap-4 lg:gap-8">
           
-          {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <div className={`rounded-xl bg-gradient-to-tr from-[#c2410c] to-[#ea580c] flex items-center justify-center font-black text-white shadow-lg shadow-orange-500/20 transition-all ${
               isHeaderCollapsed ? 'w-8 h-8 text-base' : 'w-10 h-10 text-xl'
@@ -232,7 +227,6 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Search Bar with AI Visual Search */}
           <div className="hidden md:flex flex-1 max-w-xl">
             <form onSubmit={handleSearch} className="w-full flex items-center bg-zinc-100 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/80 rounded-full pl-4 pr-1 py-1 focus-within:border-[#ea580c] focus-within:ring-1 focus-within:ring-[#ea580c] transition-all">
               <Search size={16} className="text-zinc-400 shrink-0" />
@@ -244,7 +238,6 @@ const Header = () => {
                 className="w-full bg-transparent px-3 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 outline-none"
               />
               
-              {/* AI Camera Search Button */}
               <button
                 type="button"
                 onClick={() => navigate('/search-image')}
@@ -263,10 +256,8 @@ const Header = () => {
             </form>
           </div>
 
-          {/* Action Icons Desktop (Wishlist, Cart, Theme Toggle, Single Arrow Toggle, User) */}
           <div className="hidden md:flex items-center space-x-2 sm:space-x-3.5">
             
-            {/* Wishlist Button */}
             <Link
               to="/favorites"
               className="relative p-2 text-zinc-600 dark:text-zinc-300 hover:text-[#ea580c] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/80 rounded-full transition-colors"
@@ -280,7 +271,6 @@ const Header = () => {
               )}
             </Link>
 
-            {/* Cart Button */}
             <Link
               to="/cart"
               className="relative p-2 text-zinc-600 dark:text-zinc-300 hover:text-[#ea580c] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/80 rounded-full transition-colors"
@@ -294,7 +284,6 @@ const Header = () => {
               )}
             </Link>
 
-            {/* Theme Toggle Icon Button */}
             <button
               onClick={handleToggleTheme}
               className="p-2 text-zinc-600 dark:text-zinc-300 hover:text-[#ea580c] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/80 rounded-full transition-colors cursor-pointer"
@@ -303,7 +292,6 @@ const Header = () => {
               {theme === 'dark' ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-sky-500" />}
             </button>
 
-            {/* Single Elegant Header Collapse Arrow Button (Desktop) */}
             <button
               onClick={toggleHeaderCollapse}
               className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-[#ea580c] dark:hover:text-[#ea580c] hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-full border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer shadow-xs"
@@ -316,7 +304,6 @@ const Header = () => {
               )}
             </button>
 
-            {/* User Account / Auth Desktop */}
             <div className="relative">
               {currentUser ? (
                 <button
@@ -341,7 +328,6 @@ const Header = () => {
                 </Link>
               )}
 
-              {/* User Dropdown Menu Desktop */}
               {isUserMenuOpen && currentUser && (
                 <div 
                   className="absolute right-0 mt-2 w-52 bg-white dark:bg-[#121318] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-xs"
@@ -396,9 +382,7 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Action Icons Mobile (Theme Toggle + Hamburger) */}
           <div className="flex md:hidden items-center gap-1.5 shrink-0">
-            {/* Theme Toggle Icon Button */}
             <button
               onClick={handleToggleTheme}
               className="p-2 text-zinc-600 dark:text-zinc-300 hover:text-[#ea580c] dark:hover:text-white rounded-full transition-colors cursor-pointer"
@@ -407,7 +391,6 @@ const Header = () => {
               {theme === 'dark' ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-sky-500" />}
             </button>
 
-            {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
@@ -418,7 +401,6 @@ const Header = () => {
 
         </div>
 
-        {/* Mobile Quick Search Bar (Dành riêng cho điện thoại) */}
         <div className="md:hidden pt-2 pb-0.5">
           <form onSubmit={handleSearch} className="flex items-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-300/80 dark:border-zinc-700/80 rounded-full pl-3 pr-1 py-1 focus-within:border-[#ea580c] transition-all shadow-xs">
             <Search size={15} className="text-zinc-400 shrink-0" />
@@ -447,7 +429,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* 3. Category Strip (Desktop Mega Navigation + Slide Transition) */}
       <nav className={`hidden lg:block bg-zinc-50 dark:bg-[#121318] border-b border-zinc-200 dark:border-zinc-800 text-xs transition-all duration-300 ease-in-out ${
         isHeaderCollapsed ? 'max-h-0 opacity-0 overflow-hidden border-b-0' : 'max-h-16 opacity-100'
       }`}>
@@ -471,7 +452,6 @@ const Header = () => {
                     )}
                   </Link>
 
-                  {/* Dropdown Menu */}
                   {link.children && (
                     <div className="absolute left-0 top-full hidden group-hover:block w-56 bg-white dark:bg-[#121318] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                       {link.children.map((sub, sIdx) => (
@@ -492,10 +472,8 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* 4. Mobile Drawer Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white dark:bg-[#0c0d10] border-b border-zinc-200 dark:border-zinc-800 px-4 py-4 space-y-4 animate-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
-          {/* Mobile User Authentication / Profile Box */}
           {currentUser ? (
             <div className="p-3.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl space-y-3">
               <div className="flex items-center gap-3">
@@ -571,7 +549,6 @@ const Header = () => {
             </div>
           )}
 
-          {/* Mobile Search Bar */}
           <form onSubmit={handleSearch} className="flex items-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2">
             <Search size={16} className="text-zinc-400 mr-2" />
             <input
@@ -584,7 +561,6 @@ const Header = () => {
             <button type="submit" className="text-xs font-bold text-[#ea580c] shrink-0 ml-2">Tìm</button>
           </form>
 
-          {/* Mobile Theme Toggle */}
           <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800">
             <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">Giao diện</span>
             <button
@@ -596,7 +572,6 @@ const Header = () => {
             </button>
           </div>
 
-          {/* Mobile Links */}
           <div className="space-y-1">
             {NAV_LINKS.map((link, idx) => (
               <div key={idx} className="border-b border-zinc-100 dark:border-zinc-800/60 pb-1">
@@ -625,7 +600,6 @@ const Header = () => {
             ))}
           </div>
 
-          {/* Mobile Franchise link */}
           <div className="pt-2">
             <Link
               to="/franchise"

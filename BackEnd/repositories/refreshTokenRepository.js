@@ -27,7 +27,17 @@ const RefreshTokenRepository = {
         return result.rows[0];
     },
 
-    // Thu hồi hết token của 1 user (đổi mật khẩu / logout mọi thiết bị)
+    consumeByHash: async (tokenHash) => {
+        const result = await pool.query(
+            `UPDATE ${TABLE}
+             SET revoked = TRUE
+             WHERE token_hash = $1 AND revoked = FALSE AND expires_at > NOW()
+             RETURNING *`,
+            [tokenHash]
+        );
+        return mapRow(result.rows[0]);
+    },
+
     revokeAllByUser: async (userId) => {
         const result = await pool.query(
             `UPDATE ${TABLE} SET revoked = TRUE WHERE user_id = $1 AND revoked = FALSE RETURNING id`,
@@ -36,7 +46,6 @@ const RefreshTokenRepository = {
         return result.rows;
     },
 
-    // Dọn token hết hạn / đã thu hồi
     deleteExpired: async () => {
         const result = await pool.query(
             `DELETE FROM ${TABLE} WHERE expires_at < NOW() OR revoked = TRUE RETURNING id`

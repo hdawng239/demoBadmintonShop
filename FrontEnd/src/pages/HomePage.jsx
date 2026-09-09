@@ -27,7 +27,6 @@ const BRANDS = [
   { name: 'KUMPOO', country: 'Japan', desc: 'Dễ chơi, bền bỉ cho phong trào', color: 'from-amber-600 to-yellow-500' }
 ];
 
-// Top 5 Highlight Slides for Hero Right Card
 const HERO_SLIDES = [
   {
     tag: 'YONEX JAPAN • PRO EDITION',
@@ -66,7 +65,6 @@ const HERO_SLIDES = [
   }
 ];
 
-// 4 Golden Pro Guarantees & Marketing Pillars
 const PRO_MARKETING_SERVICES = [
   {
     icon: Award,
@@ -112,10 +110,8 @@ const HomePage = () => {
   const [accessories, setAccessories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Hero Slide State
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Auto-play Hero Slides every 3.8s
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
@@ -174,14 +170,12 @@ const HomePage = () => {
 
   return (
     <MainLayout>
-      {/* 1. Hero Showcase Banner */}
       <section className="relative bg-gradient-to-b from-orange-50/50 via-white to-zinc-50/50 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950 text-zinc-900 dark:text-white overflow-hidden border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-orange-500/10 via-transparent to-transparent pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 sm:py-16 md:py-24 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
-            {/* Left Content */}
             <div className="lg:col-span-7 space-y-4 sm:space-y-6">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 dark:bg-orange-950/40 border border-orange-500/30 text-[11px] sm:text-xs font-black text-[#ea580c] dark:text-orange-400 uppercase tracking-wider shadow-xs">
                 <Flame size={14} className="text-[#ea580c] animate-pulse" />
@@ -197,7 +191,6 @@ const HomePage = () => {
                 Khám phá thế hệ vợt cầu lông Carbon cao cấp từ Yonex, Victor, Li-Ning. Tư vấn thông số chuẩn 3U/4U, sức căng cước chuẩn BWF cho mọi trình độ.
               </p>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
                 <Link
                   to="/category/1"
@@ -214,7 +207,6 @@ const HomePage = () => {
                 </Link>
               </div>
 
-              {/* Stat Counters */}
               <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-4 sm:pt-6 border-t border-zinc-200 dark:border-zinc-800/80 max-w-md">
                 <div>
                   <p className="text-xl sm:text-3xl font-black text-zinc-950 dark:text-white">100%</p>
@@ -231,11 +223,9 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Right Hero Product Carousel */}
             <div className="lg:col-span-5 flex justify-center">
               <div className="relative w-full max-w-md bg-white dark:bg-gradient-to-b dark:from-zinc-900 dark:to-zinc-950 p-4 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xl sm:shadow-2xl transition-colors duration-300">
                 
-                {/* Slide Top Badge */}
                 <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-3 pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
                   <span className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-[10px] sm:text-[11px] truncate pr-2">
                     {activeSlideData.tag}
@@ -245,7 +235,6 @@ const HomePage = () => {
                   </span>
                 </div>
 
-                {/* Product Image Slide Frame */}
                 <Link to={activeSlideData.link} className="block">
                   <div className="aspect-square bg-zinc-50 dark:bg-zinc-900/90 rounded-2xl p-4 sm:p-6 flex items-center justify-center relative overflow-hidden border border-zinc-100 dark:border-zinc-800">
                     <img
@@ -258,7 +247,6 @@ const HomePage = () => {
                   </div>
                 </Link>
 
-                {/* Product Name Slide */}
                 <div className="mt-4 space-y-2.5">
                   <Link to={activeSlideData.link}>
                     <h3 className="text-sm sm:text-lg font-bold text-zinc-900 dark:text-white leading-snug line-clamp-1 hover:text-[#ea580c] transition-colors">
@@ -266,7 +254,6 @@ const HomePage = () => {
                     </h3>
                   </Link>
 
-                  {/* Navigation Dots and Slide Controls */}
                   <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
                     <div className="flex items-center gap-1.5">
                       {HERO_SLIDES.map((_, idx) => (
@@ -307,7 +294,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Quick Mobile Category Carousel (Chỉ dành riêng cho điện thoại - Ẩn trên máy tính) */}
       <div className="md:hidden w-full max-w-full bg-white dark:bg-[#0f1015] border-b border-zinc-200/80 dark:border-zinc-800/80 py-3 px-4 overflow-x-auto scrollbar-none transition-colors">
         <div className="inline-flex items-center gap-2 min-w-full">
           {QUICK_MOBILE_CATEGORIES.map((cat, i) => (
@@ -322,7 +308,6 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* 2. Top Brands Strip */}
       <section className="bg-white dark:bg-[#0c0d10] py-6 sm:py-8 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -353,7 +338,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 3. Featured Rackets Grid */}
       <section className="py-10 sm:py-14 max-w-7xl mx-auto px-4 lg:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 gap-2 sm:gap-4">
           <div>
@@ -389,7 +373,6 @@ const HomePage = () => {
         )}
       </section>
 
-      {/* 4. High-Impact Marketing Ecosystem Section */}
       <section className="bg-zinc-100/60 dark:bg-zinc-950 text-zinc-900 dark:text-white py-12 sm:py-16 border-y border-zinc-200 dark:border-zinc-800 relative overflow-hidden transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 relative z-10 space-y-8 sm:space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3">
@@ -441,7 +424,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 5. Shoes Grid */}
       <section className="py-10 sm:py-14 max-w-7xl mx-auto px-4 lg:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 gap-2 sm:gap-4">
           <div>
@@ -477,7 +459,6 @@ const HomePage = () => {
         )}
       </section>
 
-      {/* 6. Accessories & String Grid */}
       {accessories.length > 0 && (
         <section className="py-10 sm:py-14 max-w-7xl mx-auto px-4 lg:px-6 border-t border-zinc-100 dark:border-zinc-800/80">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 gap-2 sm:gap-4">

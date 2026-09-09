@@ -1,6 +1,6 @@
 const AdminRepository = require('../repositories/adminRepository');
+const AppError = require('../utils/AppError');
 
-// Helpers thuần (không DB)
 const getDatesInRange = (startDate, endDate) => {
     const dates = [];
     const current = new Date(startDate);
@@ -23,7 +23,6 @@ const getMonthsInRange = (startDate, endDate) => {
     return months;
 };
 
-// SERVICE = tầng nghiệp vụ: tính toán timeframe, điều phối repository, merge dữ liệu biểu đồ.
 const AdminService = {
     getDashboardStats: async ({ timeframe, startDate, endDate }) => {
         const now = new Date();
@@ -50,8 +49,14 @@ const AdminService = {
                 break;
             case 'custom':
                 start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-                start.setHours(0, 0, 0, 0);
                 end = endDate ? new Date(endDate) : new Date();
+                if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+                    throw new AppError(400, 'Khoảng ngày thống kê không hợp lệ.');
+                }
+                if (end - start > 366 * 24 * 60 * 60 * 1000) {
+                    throw new AppError(400, 'Khoảng thống kê tùy chỉnh không được vượt quá 366 ngày.');
+                }
+                start.setHours(0, 0, 0, 0);
                 end.setHours(23, 59, 59, 999);
                 break;
             default:
@@ -62,7 +67,6 @@ const AdminService = {
                 end.setHours(23, 59, 59, 999);
         }
 
-        // Chạy song song tất cả query
         const [
             totalUsers,
             newUsers,
@@ -85,7 +89,6 @@ const AdminService = {
             AdminRepository.getTopProducts(start, end),
         ]);
 
-        // Merge chart data với fill ngày/tháng trống
         const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
         const groupByMonth = timeframe === 'year' || durationDays > 60;
 

@@ -233,7 +233,7 @@ const RegisterPage = () => {
               <div className="relative">
                 <input
                   type="password"
-                  maxLength={50}
+                  maxLength={72}
                   value={formData.password}
                   onChange={(e) => {
                     setFormData({ ...formData, password: e.target.value });
@@ -263,7 +263,7 @@ const RegisterPage = () => {
               <div className="relative">
                 <input
                   type="password"
-                  maxLength={50}
+                  maxLength={72}
                   value={formData.confirmPassword}
                   onChange={(e) => {
                     setFormData({ ...formData, confirmPassword: e.target.value });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { 
@@ -88,14 +88,12 @@ const GuidePage = () => {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-10 space-y-12">
-        {/* Breadcrumb */}
         <nav className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
           <Link to="/" className="hover:text-[#ea580c]">Trang chủ</Link>
           <span>/</span>
           <span className="font-semibold text-zinc-800 dark:text-zinc-200">Cẩm nang chọn vợt</span>
         </nav>
 
-        {/* Hero Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/40 text-[#ea580c] rounded-full text-xs font-black uppercase tracking-widest">
             <Sparkles size={14} /> Cẩm Nang Chuyên Sâu BWF
@@ -108,7 +106,6 @@ const GuidePage = () => {
           </p>
         </div>
 
-        {/* Anatomy of a Badminton Racket (Visual Card) */}
         <div className="bg-zinc-950 dark:bg-[#12131a] text-white rounded-3xl p-6 sm:p-10 border border-zinc-800 shadow-xl overflow-hidden relative">
           <div className="absolute right-0 top-0 w-96 h-96 bg-[#ea580c]/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -151,7 +148,6 @@ const GuidePage = () => {
           </div>
         </div>
 
-        {/* Section 1: Trọng Lượng Vợt (Weight: 3U vs 4U vs 5U) */}
         <section className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 gap-2">
             <div>
@@ -191,7 +187,6 @@ const GuidePage = () => {
           </div>
         </section>
 
-        {/* Section 2: Điểm Cân Bằng (Balance Point) */}
         <section className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 gap-2">
             <div>
@@ -233,7 +228,6 @@ const GuidePage = () => {
           </div>
         </section>
 
-        {/* Section 3: Bảng Căng Cước Chuẩn BWF (Tension Guide) */}
         <section className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 gap-2">
             <div>
@@ -269,7 +263,6 @@ const GuidePage = () => {
           </div>
         </section>
 
-        {/* Section 4: Lời Khuyên & Căng Vợt Tại Naro Badminton */}
         <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 dark:from-[#12131a] dark:to-zinc-900 text-white rounded-3xl p-8 sm:p-10 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-2 max-w-xl">
             <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">

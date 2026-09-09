@@ -2,9 +2,7 @@ const pool = require('../config/db');
 const CartModel = require('../models/cartModel');
 const CartItemModel = require('../models/cartItemModel');
 
-// REPOSITORY = tầng truy cập dữ liệu cho carts và cart_items.
 const CartRepository = {
-    // ── Cart ────────────────────────────────────────────────
     findByUserId: async (userId) => {
         const result = await pool.query(
             `SELECT * FROM ${CartModel.TABLE} WHERE user_id = $1`,
@@ -51,13 +49,12 @@ const CartRepository = {
         return CartModel.mapRow(result.rows[0]);
     },
 
-    // ── CartItem ────────────────────────────────────────────
     upsertItem: async ({ cart_id, variant_id, quantity }) => {
         const query = `
             INSERT INTO ${CartItemModel.TABLE} (cart_id, variant_id, quantity)
             VALUES ($1, $2, $3)
             ON CONFLICT (cart_id, variant_id)
-            DO UPDATE SET quantity = ${CartItemModel.TABLE}.quantity + EXCLUDED.quantity
+            DO UPDATE SET quantity = LEAST(${CartItemModel.TABLE}.quantity + EXCLUDED.quantity, 99)
             RETURNING *
         `;
         const result = await pool.query(query, [cart_id, variant_id, quantity || 1]);

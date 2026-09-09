@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://localhost:5000/api`;
+const authConfig = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
 export const ghnService = {
   getProvinces: async () => {
@@ -32,7 +33,7 @@ export const ghnService = {
 
   calculateFee: async (payload) => {
     try {
-      const response = await axios.post(`${API_URL}/ghn/shipping-fee`, payload);
+      const response = await axios.post(`${API_URL}/ghn/shipping-fee`, payload, authConfig());
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: "Lỗi kết nối server GHN" };
@@ -41,7 +42,7 @@ export const ghnService = {
 
   calculateShippingFee: async (payload) => {
     try {
-      const response = await axios.post(`${API_URL}/ghn/shipping-fee`, payload);
+      const response = await axios.post(`${API_URL}/ghn/shipping-fee`, payload, authConfig());
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: "Lỗi kết nối server GHN" };

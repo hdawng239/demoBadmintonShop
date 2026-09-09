@@ -12,7 +12,6 @@ const AdminCategoryPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Form modal state
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ id: null, name: '', parent_id: '' });
 
@@ -47,6 +46,8 @@ const AdminCategoryPage = () => {
   useEffect(() => {
     fetchCategories(currentPage);
     fetchParentCategories();
+  // Đổi trang giữ nguyên từ khóa của lần tìm kiếm đã gửi.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const handleSearch = (e) => {
@@ -215,7 +216,6 @@ const AdminCategoryPage = () => {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-zinc-200">

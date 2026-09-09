@@ -1,8 +1,8 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const crypto = require('crypto');
 const ChatRepository = require('../repositories/chatRepository');
 const AppError = require('../utils/AppError');
 
-// AI Service = Gemini + search-by-image + chatbot tư vấn.
 
 if (!process.env.KEY_GEMINI) {
     console.warn('⚠️ KEY_GEMINI is not set in environment variables!');
@@ -31,31 +31,29 @@ Ngoài phạm vi trên, từ chối bằng đúng câu: "Dạ xin lỗi bạn, e
 - Thanh toán: COD toàn quốc (kiểm hàng trước khi nhận), chuyển khoản QR SePay
 - Nhượng quyền: Mặt bằng 50m², hỗ trợ setup 100%`;
 
-// Cache catalog 10 phút
 let productCatalogCache = '';
 let lastCacheTime = 0;
 
 const AiService = {
-    // ── Chatbot tư vấn ─────────────────────────────────────
     handleChat: async (message, sessionId, userId, history) => {
-        if (!message) throw new AppError(400, 'Thiếu tin nhắn.');
+        if (typeof message !== 'string' || !message.trim()) throw new AppError(400, 'Thiếu tin nhắn.');
+        if (message.length > 1000) throw new AppError(400, 'Tin nhắn không được vượt quá 1000 ký tự.');
 
-        const sid = sessionId || 'anonymous_session';
+        const sid = typeof sessionId === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(sessionId)
+            ? sessionId
+            : crypto.randomUUID();
         const uid = userId || null;
 
-        // Ghi log user
         await ChatRepository.logMessage(sid, uid, 'user', message);
 
-        // Format history từ FE gửi lên
         let formattedHistory = [];
         if (history && Array.isArray(history)) {
-            formattedHistory = history.map((msg) => ({
+            formattedHistory = history.slice(-10).filter((msg) => typeof msg?.content === 'string').map((msg) => ({
                 role: msg.role === 'bot' ? 'model' : 'user',
-                parts: [{ text: msg.content }],
+                parts: [{ text: msg.content.slice(0, 1000) }],
             }));
         }
 
-        // Lấy catalog (cached)
         if (Date.now() - lastCacheTime > 10 * 60 * 1000) {
             const catalog = await ChatRepository.getProductCatalog();
             if (catalog) {
@@ -66,11 +64,10 @@ const AiService = {
 
         const systemInstruction = BASE_SYSTEM_INSTRUCTION + productCatalogCache;
 
-        // Sử dụng model gemini-3.1-flash-lite chuẩn như trong commit b7462d7 (phản hồi siêu nhanh và ổn định)
         const model = genAI.getGenerativeModel({
             model: 'gemini-3.1-flash-lite',
             systemInstruction,
-        });
+        }, { timeout: 8000 });
 
         const chat = model.startChat({
             history: formattedHistory,
@@ -80,23 +77,40 @@ const AiService = {
         const result = await chat.sendMessage(message);
         const responseText = result.response.text();
 
-        // Ghi log bot
         await ChatRepository.logMessage(sid, uid, 'bot', responseText);
 
         return { reply: responseText };
     },
 
-    // ── Tìm kiếm bằng hình ảnh ─────────────────────────────
     _parseBase64Image: (dataString) => {
-        const matches = dataString.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-        if (!matches || matches.length !== 3) {
-            return { mimeType: 'image/jpeg', data: dataString };
+        if (typeof dataString !== 'string') throw new AppError(400, 'Ảnh không hợp lệ.');
+        const matches = dataString.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/);
+        if (!matches) {
+            throw new AppError(400, 'Ảnh phải là dữ liệu Base64 JPEG, PNG hoặc WebP hợp lệ.');
         }
+        const buffer = Buffer.from(matches[2], 'base64');
+        if (!buffer.length || buffer.length > 3_500_000) {
+            throw new AppError(400, 'Ảnh không hợp lệ hoặc vượt quá giới hạn 3.5 MB.');
+        }
+        const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+        const isPng = buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+        const isWebp = buffer.subarray(0, 4).toString('ascii') === 'RIFF'
+            && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+        const validSignature = (matches[1] === 'image/jpeg' && isJpeg)
+            || (matches[1] === 'image/png' && isPng)
+            || (matches[1] === 'image/webp' && isWebp);
+        if (!validSignature) throw new AppError(400, 'Nội dung ảnh không khớp định dạng đã khai báo.');
         return { mimeType: matches[1], data: matches[2] };
     },
 
     analyzeProductImage: async (base64ImageString, productList) => {
+        if (typeof base64ImageString !== 'string' || base64ImageString.length > 4_700_000) {
+            throw new AppError(400, 'Ảnh không hợp lệ hoặc vượt quá giới hạn 3.5 MB.');
+        }
         const { mimeType, data } = AiService._parseBase64Image(base64ImageString);
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
+            throw new AppError(400, 'Chỉ hỗ trợ ảnh JPEG, PNG hoặc WebP.');
+        }
 
         const imagePart = {
             inlineData: { data, mimeType },
@@ -134,7 +148,6 @@ Nhiệm vụ của bạn là:
             return [];
         };
 
-        // Ưu tiên gemini-3.1-flash-lite / gemini-3.6-flash để đạt tốc độ nhận diện nhanh nhất (2-3s)
         const candidateModels = ['gemini-3.1-flash-lite', 'gemini-3.6-flash'];
         
         for (const modelName of candidateModels) {
@@ -142,7 +155,7 @@ Nhiệm vụ của bạn là:
                 const model = genAI.getGenerativeModel({ 
                     model: modelName,
                     generationConfig: { maxOutputTokens: 100, temperature: 0.1 }
-                });
+                }, { timeout: 8000 });
                 const result = await model.generateContent([prompt, imagePart]);
                 const ids = parseResult(result.response.text());
                 if (ids && ids.length > 0) {

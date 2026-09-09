@@ -11,7 +11,6 @@ const AdminUserPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Form state
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [formData, setFormData] = useState({ full_name: '', email: '', phone: '', password: '', role: 'customer' });
@@ -36,6 +35,8 @@ const AdminUserPage = () => {
 
   useEffect(() => {
     fetchUsers(currentPage);
+  // Chỉ áp dụng từ khóa khi gửi biểu mẫu tìm kiếm.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const handleSearch = (e) => {
@@ -76,14 +77,12 @@ const AdminUserPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (editUser) {
-        // Edit
         const payload = { ...formData };
-        if (!payload.password) delete payload.password; // không đổi pass nếu rỗng
+        if (!payload.password) delete payload.password;
         await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/${editUser.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        // Create
         await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -219,7 +218,6 @@ const AdminUserPage = () => {
         </div>
       )}
 
-      {/* Modal Add / Edit */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-zinc-200">
@@ -242,6 +240,7 @@ const AdminUserPage = () => {
                 <label className="block text-zinc-700 font-bold uppercase mb-1">Email</label>
                 <input 
                   type="email" 
+                  disabled={Boolean(editUser)}
                   required
                   maxLength={100}
                   value={formData.email}
@@ -272,8 +271,8 @@ const AdminUserPage = () => {
                 <input 
                   type="password" 
                   required={!editUser}
-                  minLength={6}
-                  maxLength={50}
+                  minLength={10}
+                  maxLength={72}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"

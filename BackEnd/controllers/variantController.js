@@ -3,7 +3,7 @@ const VariantService = require('../services/variantService');
 const { sendSuccess } = require('../utils/response');
 
 const getVariantsByProduct = asyncHandler(async (req, res) => {
-    const variants = await VariantService.getVariantsByProduct(req.params.productId);
+    const variants = await VariantService.getVariantsByProduct(req.params.productId, req.user?.role === 'admin');
     sendSuccess(res, { data: variants });
 });
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { authService } from '../services/authService';
 import { Lock, Mail, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
 
@@ -70,6 +71,7 @@ const LoginPage = () => {
             <p className="text-xs text-zinc-500 dark:text-zinc-400">Truy cập tài khoản Naro Badminton để mua sắm</p>
           </div>
 
+          {location.state?.message && <p role="status" className="text-sm text-lime-700 dark:text-lime-300">{location.state.message}</p>}
           {error && (
             <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-600 dark:text-rose-300 flex items-center gap-2 animate-in fade-in duration-200">
               <AlertCircle size={15} className="shrink-0" />

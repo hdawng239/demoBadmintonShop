@@ -1,6 +1,3 @@
-/**
- * Tiện ích kiểm tra tính hợp lệ dữ liệu nhập (Form Validation)
- */
 
 export const validateEmail = (email, { requireGmail = false } = {}) => {
   if (!email || !email.trim()) {
@@ -8,19 +5,16 @@ export const validateEmail = (email, { requireGmail = false } = {}) => {
   }
   const trimmed = email.trim().toLowerCase();
 
-  // Định dạng regex email chuẩn RFC
   const emailRegex = /^[a-z0-9]([a-z0-9._%+-]*[a-z0-9])?@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
   if (!emailRegex.test(trimmed)) {
     return 'Địa chỉ email không đúng định dạng (Ví dụ: yourname@gmail.com)!';
   }
 
-  // Chặn các đuôi gõ sai phổ biến (.coz, .con, .comm...)
   const invalidTlds = ['.coz', '.con', '.comm', '.cpm', '.cmo', '.gmai', '.gmaill'];
   if (invalidTlds.some(tld => trimmed.endsWith(tld))) {
     return 'Đuôi tên miền email không hợp lệ (Ví dụ: phải là .com, .vn, .net)!';
   }
 
-  // Nếu là Gmail hoặc form yêu cầu Gmail
   if (requireGmail || trimmed.includes('gmail.')) {
     if (!trimmed.endsWith('@gmail.com')) {
       return 'Email Gmail bắt buộc phải có đuôi chính xác là @gmail.com!';
@@ -59,11 +53,11 @@ export const validatePassword = (password) => {
   if (!password) {
     return 'Vui lòng nhập mật khẩu!';
   }
-  if (password.length < 6) {
-    return 'Mật khẩu phải có tối thiểu 6 ký tự!';
+  if (password.length < 10) {
+    return 'Mật khẩu phải có tối thiểu 10 ký tự!';
   }
-  if (password.length > 50) {
-    return 'Mật khẩu không được vượt quá 50 ký tự!';
+  if (new TextEncoder().encode(password).length > 72) {
+    return 'Mật khẩu không được vượt quá 72 byte!';
   }
   return '';
 };

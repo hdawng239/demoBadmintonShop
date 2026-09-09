@@ -4,6 +4,10 @@ import MainLayout from '../components/layout/MainLayout';
 import { Check, Copy, AlertCircle, Clock, QrCode, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 
+const isAwaitingQrPayment = (order) => order?.payment_method === 'qr'
+  && order.payment_status === 'unpaid'
+  && ['pending', 'processing'].includes(order.status);
+
 const PaymentQRPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -16,11 +20,12 @@ const PaymentQRPage = () => {
     orderFromState?.total_amount || location.state?.totalAmount || 0
   );
   const [copiedField, setCopiedField] = useState('');
-  const [timeLeft, setTimeLeft] = useState(300); // 5 phút đếm ngược
+  const [expiresAt, setExpiresAt] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(300);
   const [isLoading, setIsLoading] = useState(!totalAmount && !!orderId);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // 1. Fetch Order details if accessed directly or reloaded
+  // Lấy tổng tiền từ server, không tin dữ liệu điều hướng.
   useEffect(() => {
     if (!orderId) {
       navigate('/');
@@ -36,8 +41,11 @@ const PaymentQRPage = () => {
         const ord = res.data?.data || res.data;
         if (ord) {
           setTotalAmount(parseFloat(ord.total_amount || 0));
+          if (ord.created_at) setExpiresAt(new Date(ord.created_at).getTime() + 5 * 60 * 1000);
           if (ord.payment_status === 'paid') {
             navigate('/order-success', { state: { order: ord } });
+          } else if (!isAwaitingQrPayment(ord)) {
+            setErrorMessage('Đơn hàng này không còn chờ thanh toán QR.');
           }
         }
       } catch (err) {
@@ -48,27 +56,19 @@ const PaymentQRPage = () => {
       }
     };
 
-    if (!totalAmount) {
-      fetchOrderDetails();
-    }
-  }, [orderId, totalAmount, navigate]);
+    fetchOrderDetails();
+  }, [orderId, navigate]);
 
-  // 2. Countdown timer
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !expiresAt) return;
+    const updateCountdown = () => setTimeLeft(Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)));
+    updateCountdown();
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
+      updateCountdown();
     }, 1000);
     return () => clearInterval(timer);
-  }, [orderId]);
+  }, [orderId, expiresAt]);
 
-  // 3. Polling check order status every 3 seconds
   useEffect(() => {
     if (!orderId) return;
     const interval = setInterval(async () => {
@@ -82,21 +82,32 @@ const PaymentQRPage = () => {
         if (ord?.payment_status === 'paid') {
           clearInterval(interval);
           navigate('/order-success', { state: { order: ord } });
+        } else if (!isAwaitingQrPayment(ord)) {
+          clearInterval(interval);
+          setErrorMessage('Đơn hàng đã hết hạn hoặc không còn chờ thanh toán.');
         }
       } catch (err) {
-        // Silent polling error
       }
     }, 3000);
 
     return () => clearInterval(interval);
   }, [orderId, navigate]);
 
-  const bankStk = '0338780204';
-  const bankName = 'DO HAI DANG';
-  const bankId = 'MB';
+  const bankStk = import.meta.env.BANK_STK || import.meta.env.VITE_BANK_ACCOUNT || '';
+  const bankName = import.meta.env.BANK_NAME || import.meta.env.VITE_BANK_NAME || '';
+  const bankId = import.meta.env.BANK_ID || import.meta.env.VITE_BANK_ID || '';
+  const paymentConfigError = !bankStk || !bankName || !bankId
+    ? 'Hệ thống thanh toán QR chưa được cấu hình. Vui lòng chọn phương thức khác hoặc liên hệ cửa hàng.'
+    : '';
   const content = `NARO${orderId}`;
 
-  const qrUrl = `https://qr.sepay.vn/img?acc=${bankStk}&bank=${bankId}&amount=${totalAmount}&des=${content}`;
+  const qrParams = new URLSearchParams({
+    acc: bankStk,
+    bank: bankId,
+    amount: String(totalAmount),
+    des: content,
+  });
+  const qrUrl = `https://qr.sepay.vn/img?${qrParams.toString()}`;
 
   const handleCopy = (text, field) => {
     navigator.clipboard.writeText(text);
@@ -121,13 +132,13 @@ const PaymentQRPage = () => {
     );
   }
 
-  if (errorMessage) {
+  if (errorMessage || paymentConfigError) {
     return (
       <MainLayout>
         <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
           <AlertCircle size={44} className="text-rose-500 mx-auto" />
-          <h2 className="text-lg font-black text-zinc-900 dark:text-white">Không tìm thấy đơn hàng</h2>
-          <p className="text-xs text-zinc-500">{errorMessage}</p>
+          <h2 className="text-lg font-black text-zinc-900 dark:text-white">Không thể thanh toán QR</h2>
+          <p className="text-xs text-zinc-500">{errorMessage || paymentConfigError}</p>
           <Link to="/" className="inline-block px-5 py-2.5 bg-[#ea580c] text-white rounded-xl text-xs font-bold">
             Về trang chủ
           </Link>
@@ -141,7 +152,6 @@ const PaymentQRPage = () => {
       <div className="max-w-4xl mx-auto px-4 lg:px-6 py-10">
         <div className="bg-white dark:bg-[#12131a] rounded-3xl p-6 sm:p-10 border border-zinc-200/80 dark:border-zinc-800 shadow-sm space-y-8 transition-colors duration-300">
           
-          {/* Header */}
           <div className="text-center space-y-2 border-b border-zinc-100 dark:border-zinc-800 pb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-950/40 text-[#ea580c] rounded-full text-xs font-bold uppercase tracking-wider">
               <QrCode size={15} /> Thanh toán tự động SePay VietQR
@@ -156,7 +166,6 @@ const PaymentQRPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
             
-            {/* QR Code Stage */}
             <div className="md:col-span-6 flex flex-col items-center">
               <div className="p-4 bg-white border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-3xl shadow-xs relative">
                 {timeLeft > 0 ? (
@@ -171,29 +180,26 @@ const PaymentQRPage = () => {
                     <p className="text-xs font-bold text-zinc-800">Mã QR đã hết hạn</p>
                     <p className="text-[10px] text-zinc-500 mt-1">Vui lòng tải lại hoặc tạo đơn hàng mới</p>
                     <button
-                      onClick={() => window.location.reload()}
+                      onClick={() => navigate('/checkout')}
                       className="mt-3 px-3 py-1.5 bg-[#ea580c] text-white rounded-lg text-xs font-bold flex items-center gap-1"
                     >
-                      <RotateCcw size={13} /> Làm mới mã
+                      <RotateCcw size={13} /> Tạo đơn mới
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Countdown */}
               <div className="mt-4 flex items-center gap-2 text-xs font-bold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-full">
                 <Clock size={15} className="text-[#ea580c] animate-spin" />
                 <span>Thời gian giữ mã: <strong className="font-mono text-zinc-900 dark:text-white text-sm">{formatTime(timeLeft)}</strong></span>
               </div>
             </div>
 
-            {/* Transfer Details */}
             <div className="md:col-span-6 space-y-3 bg-zinc-50 dark:bg-[#181a24] p-6 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 text-xs">
               <h3 className="font-bold text-sm text-zinc-900 dark:text-white uppercase tracking-wider mb-2">
                 Thông tin chuyển khoản thủ công
               </h3>
 
-              {/* Bank */}
               <div className="flex justify-between items-center bg-white dark:bg-[#12131a] p-3 rounded-xl border border-zinc-200 dark:border-zinc-700">
                 <div>
                   <span className="text-zinc-400 dark:text-zinc-500 block text-[10px] uppercase">Ngân hàng</span>
@@ -201,7 +207,6 @@ const PaymentQRPage = () => {
                 </div>
               </div>
 
-              {/* STK */}
               <div className="flex justify-between items-center bg-white dark:bg-[#12131a] p-3 rounded-xl border border-zinc-200 dark:border-zinc-700">
                 <div>
                   <span className="text-zinc-400 dark:text-zinc-500 block text-[10px] uppercase">Số tài khoản</span>
@@ -216,7 +221,6 @@ const PaymentQRPage = () => {
                 </button>
               </div>
 
-              {/* Account Holder */}
               <div className="flex justify-between items-center bg-white dark:bg-[#12131a] p-3 rounded-xl border border-zinc-200 dark:border-zinc-700">
                 <div>
                   <span className="text-zinc-400 dark:text-zinc-500 block text-[10px] uppercase">Chủ tài khoản</span>
@@ -224,7 +228,6 @@ const PaymentQRPage = () => {
                 </div>
               </div>
 
-              {/* Amount */}
               <div className="flex justify-between items-center bg-white dark:bg-[#12131a] p-3 rounded-xl border border-zinc-200 dark:border-zinc-700">
                 <div>
                   <span className="text-zinc-400 dark:text-zinc-500 block text-[10px] uppercase">Số tiền</span>
@@ -238,7 +241,6 @@ const PaymentQRPage = () => {
                 </button>
               </div>
 
-              {/* Transfer Content */}
               <div className="flex justify-between items-center bg-orange-50/70 dark:bg-orange-950/40 p-3 rounded-xl border border-orange-200 dark:border-orange-900/50">
                 <div>
                   <span className="text-[#ea580c] block text-[10px] uppercase font-bold">Nội dung chuyển khoản (Bắt buộc)</span>
@@ -256,7 +258,6 @@ const PaymentQRPage = () => {
 
           </div>
 
-          {/* Polling Notice */}
           <div className="p-4 bg-zinc-900 dark:bg-[#181a24] text-zinc-300 rounded-2xl text-xs flex items-center justify-between border border-zinc-800">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-lime-400 animate-ping" />

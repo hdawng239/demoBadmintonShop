@@ -1,11 +1,11 @@
 const asyncHandler = require('../utils/asyncHandler');
 const VoucherService = require('../services/voucherService');
 const { sendSuccess } = require('../utils/response');
+const { parsePagination } = require('../utils/pagination');
 
 const applyVoucher = asyncHandler(async (req, res) => {
     const { code, cartTotal } = req.body;
     const result = await VoucherService.applyVoucher(code, cartTotal);
-    // FE đọc discountAmount/discountType ở top-level nên giữ qua legacy
     sendSuccess(res, { message: 'Áp dụng mã giảm giá thành công!', data: result, legacy: result });
 });
 
@@ -14,8 +14,7 @@ const getActiveVouchers = asyncHandler(async (req, res) => {
 });
 
 const getAllVouchers = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = parsePagination(req.query.page, req.query.limit, 10, 100);
     res.status(200).json(await VoucherService.getAllVouchers(page, limit));
 });
 

@@ -2,7 +2,6 @@ const asyncHandler = require('../utils/asyncHandler');
 const WishlistService = require('../services/wishlistService');
 const { sendSuccess } = require('../utils/response');
 
-// user_id luôn lấy từ token
 const getMyWishlist = asyncHandler(async (req, res) => {
     const items = await WishlistService.getMyWishlist(req.user.id);
     sendSuccess(res, { data: items, legacy: { items } });

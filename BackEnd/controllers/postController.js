@@ -1,17 +1,16 @@
 const asyncHandler = require('../utils/asyncHandler');
 const PostService = require('../services/postService');
+const { parsePagination } = require('../utils/pagination');
 
-// CONTROLLER = chỉ đọc request, gọi service, trả response.
 const getAllPosts = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = parsePagination(req.query.page, req.query.limit, 10, 50);
     const search = req.query.search || '';
-    const publishedOnly = req.query.publishedOnly === 'true';
+    const publishedOnly = req.user?.role !== 'admin';
     res.status(200).json(await PostService.getAllPosts(page, limit, search, publishedOnly));
 });
 
 const getPostById = asyncHandler(async (req, res) => {
-    const post = await PostService.getPostById(req.params.id);
+    const post = await PostService.getPostById(req.params.id, req.user?.role !== 'admin');
     res.status(200).json(post);
 });
 

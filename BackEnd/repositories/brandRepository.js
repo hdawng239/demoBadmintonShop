@@ -2,8 +2,6 @@ const pool = require('../config/db');
 const { generateDynamicUpdate } = require('../utils/queryBuilder');
 const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/brandModel');
 
-// REPOSITORY = tầng truy cập dữ liệu: CHỈ chứa SQL thuần cho bảng brands.
-// Không chứa business logic, không xử lý req/res.
 const BrandRepository = {
     findAll: async () => {
         const result = await pool.query(`SELECT * FROM ${TABLE} ORDER BY id ASC`);
@@ -25,7 +23,7 @@ const BrandRepository = {
 
     update: async (id, data) => {
         const { query, values } = generateDynamicUpdate(TABLE, data, id, UPDATABLE_FIELDS);
-        if (!query) return null; // không có cột hợp lệ để cập nhật
+        if (!query) return null;
         const result = await pool.query(query, values);
         return mapRow(result.rows[0]);
     },

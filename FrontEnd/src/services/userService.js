@@ -12,6 +12,8 @@ const getAuthHeaders = () => {
 };
 
 export const userService = {
+  requestEmailChange: (email, currentPassword) => axios.post(`${API_URL}/email-change/request`, { email, currentPassword }, getAuthHeaders()),
+  confirmEmailChange: (email, otp) => axios.post(`${API_URL}/email-change/confirm`, { email, otp }, getAuthHeaders()),
   getUserProfile: async (userId) => {
     try {
       const response = await axios.get(`${API_URL}/${userId}`, getAuthHeaders());

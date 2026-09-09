@@ -39,7 +39,6 @@ const AdminLayout = ({ children }) => {
 
   const currentUser = authService.getCurrentUser();
 
-  // Enforce Light Mode 100% inside Admin
   useEffect(() => {
     const root = document.documentElement;
     const prevTheme = localStorage.getItem('site_theme') || 'light';
@@ -65,7 +64,6 @@ const AdminLayout = ({ children }) => {
   return (
     <div className="h-screen w-full overflow-hidden bg-[#f4f5f7] text-zinc-800 flex flex-col md:flex-row antialiased relative">
       
-      {/* Mobile Topbar */}
       <div className="md:hidden bg-[#121318] text-white p-4 flex items-center justify-between shrink-0 z-50 shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-[#ea580c] flex items-center justify-center font-black text-white text-sm">
@@ -81,7 +79,6 @@ const AdminLayout = ({ children }) => {
         </button>
       </div>
 
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
           onClick={() => setIsMobileOpen(false)}
@@ -89,7 +86,6 @@ const AdminLayout = ({ children }) => {
         />
       )}
 
-      {/* Floating Toggle Arrow Tab (When Collapsed) */}
       {isCollapsed && (
         <button
           onClick={() => setSidebarCollapsedState(false)}
@@ -100,7 +96,6 @@ const AdminLayout = ({ children }) => {
         </button>
       )}
 
-      {/* Sidebar Navigation */}
       <aside className={`fixed md:relative top-0 left-0 h-full bg-[#121318] text-zinc-300 flex flex-col z-40 transition-all duration-300 ease-in-out border-r border-zinc-800/80 shadow-2xl shrink-0 ${
         isMobileOpen 
           ? 'translate-x-0 w-64' 
@@ -109,7 +104,6 @@ const AdminLayout = ({ children }) => {
         isCollapsed ? 'md:w-0 md:opacity-0 md:pointer-events-none' : 'w-64'
       }`}>
         
-        {/* Brand Header */}
         <div className="p-5 border-b border-zinc-800/80 flex items-center justify-between shrink-0">
           <Link to="/admin" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#ea580c] flex items-center justify-center font-black text-white text-base shadow-sm">
@@ -121,7 +115,6 @@ const AdminLayout = ({ children }) => {
             </div>
           </Link>
 
-          {/* Desktop Collapse Arrow Button */}
           <button
             onClick={() => setSidebarCollapsedState(true)}
             className="hidden md:flex p-1.5 rounded-lg bg-zinc-800 hover:bg-[#ea580c] text-zinc-400 hover:text-white transition-all cursor-pointer shadow-xs"
@@ -130,13 +123,11 @@ const AdminLayout = ({ children }) => {
             <ChevronLeft size={16} />
           </button>
 
-          {/* Mobile Close Button */}
           <button onClick={() => setIsMobileOpen(false)} className="md:hidden text-zinc-400 hover:text-white p-1">
             <X size={20} />
           </button>
         </div>
 
-        {/* Menu Items */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
           {ADMIN_MENU.map((item) => {
             const Icon = item.icon;
@@ -162,7 +153,6 @@ const AdminLayout = ({ children }) => {
           })}
         </nav>
 
-        {/* Bottom User Box */}
         <div className="p-3 border-t border-zinc-800/80 bg-zinc-950/40 space-y-2 shrink-0">
           <Link 
             to="/" 
@@ -199,7 +189,6 @@ const AdminLayout = ({ children }) => {
         </div>
       </aside>
 
-      {/* Main Content Area (Scrolls independently with full-height background) */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto bg-[#f4f5f7] transition-all duration-300">
         <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
           {children}

@@ -31,7 +31,6 @@ const AdminVoucherPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Modal State
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -224,7 +223,6 @@ const AdminVoucherPage = () => {
         </div>
       )}
 
-      {/* Filter & Search Bar */}
       <div className="bg-white dark:bg-[#12131a] p-4 rounded-2xl shadow-xs border border-zinc-200 dark:border-zinc-800 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 transition-colors">
         <div className="relative w-full md:w-80">
           <input
@@ -259,7 +257,6 @@ const AdminVoucherPage = () => {
         </div>
       </div>
 
-      {/* Vouchers Table */}
       {isLoading ? (
         <div className="flex justify-center p-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ea580c]"></div>
@@ -401,7 +398,6 @@ const AdminVoucherPage = () => {
         </div>
       )}
 
-      {/* Add / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
           <div className="bg-white dark:bg-[#12131a] rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 max-h-[90vh] overflow-y-auto">

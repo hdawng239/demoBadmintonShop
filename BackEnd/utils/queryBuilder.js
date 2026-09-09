@@ -1,8 +1,7 @@
-// Sinh câu UPDATE động theo các field client gửi lên.
-// allowedFields là danh sách cột được phép sửa (chống client sửa cột nhạy cảm).
+// Chỉ cho phép sửa các cột trong allowedFields.
 const generateDynamicUpdate = (tableName, updateData, id, allowedFields = null) => {
     const data = { ...updateData };
-    delete data.id; // không cho sửa khóa chính
+    delete data.id;
 
     let keys = Object.keys(data);
 
@@ -16,7 +15,7 @@ const generateDynamicUpdate = (tableName, updateData, id, allowedFields = null) 
 
     const setClause = keys.map((key, index) => `"${key}" = $${index + 1}`).join(', ');
     const values = keys.map((key) => data[key]);
-    values.push(id); // id là tham số cuối cho WHERE
+    values.push(id);
 
     const query = `UPDATE ${tableName} SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`;
 

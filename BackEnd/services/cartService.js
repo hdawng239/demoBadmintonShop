@@ -1,7 +1,18 @@
 const CartRepository = require('../repositories/cartRepository');
 const AppError = require('../utils/AppError');
 
-// SERVICE = tầng nghiệp vụ cho giỏ hàng.
+const validateCartInput = (variantId, quantity) => {
+    const parsedVariantId = Number(variantId);
+    const parsedQuantity = Number(quantity);
+    if (!Number.isInteger(parsedVariantId) || parsedVariantId <= 0) {
+        throw new AppError(400, 'Phân loại sản phẩm không hợp lệ.');
+    }
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1 || parsedQuantity > 99) {
+        throw new AppError(400, 'Số lượng phải là số nguyên từ 1 đến 99.');
+    }
+    return { variantId: parsedVariantId, quantity: parsedQuantity };
+};
+
 const CartService = {
     getMyCart: async (userId) => {
         const cart = await CartRepository.findByUserId(userId);
@@ -22,20 +33,22 @@ const CartService = {
     },
 
     addItemToCart: async (userId, { variant_id, quantity }) => {
+        const valid = validateCartInput(variant_id, quantity ?? 1);
         let cart = await CartRepository.findByUserId(userId);
         if (!cart) {
             cart = await CartRepository.createCart(userId);
         }
-        return CartRepository.upsertItem({ cart_id: cart.id, variant_id, quantity });
+        return CartRepository.upsertItem({ cart_id: cart.id, variant_id: valid.variantId, quantity: valid.quantity });
     },
 
     updateItemQuantity: async (id, quantity, currentUser) => {
+        const valid = validateCartInput(1, quantity);
         const item = await CartRepository.findItemById(id);
         if (!item) throw new AppError(404, 'Không tìm thấy sản phẩm trong giỏ');
         if (currentUser.role !== 'admin' && item.user_id !== currentUser.id) {
             throw new AppError(403, 'Bạn không có quyền chỉnh sửa sản phẩm này!');
         }
-        const updated = await CartRepository.updateItemQuantity(id, quantity);
+        const updated = await CartRepository.updateItemQuantity(id, valid.quantity);
         return updated;
     },
 

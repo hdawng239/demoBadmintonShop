@@ -25,8 +25,36 @@ const AdminOrderPage = () => {
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState(null);
+  const [receipt, setReceipt] = useState(null);
+  const [receiptReference, setReceiptReference] = useState('');
+  const [savingReceipt, setSavingReceipt] = useState(false);
+  const [rejectedPayments, setRejectedPayments] = useState(null);
+  const loadRejectedPayments = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/payment-events`);
+      setRejectedPayments(res.data.data);
+    } catch (err) { showToast(err.response?.data?.message || 'Không tải được giao dịch cần đối soát.', 'error'); }
+  };
+  const retryPayment = async (id) => {
+    try {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/payment-events/${id}/retry`, {});
+      showToast(res.data.processed ? 'Đã ghi nhận thanh toán.' : `Cần đối soát thủ công: ${res.data.message}`, res.data.processed ? 'success' : 'error');
+      await loadRejectedPayments(); await fetchOrders(currentPage);
+    } catch (err) { showToast(err.response?.data?.message || 'Không xử lý lại được giao dịch.', 'error'); }
+  };
+  const submitReceipt = async (e) => {
+    e.preventDefault(); setSavingReceipt(true);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${receipt.id}/receipt`, {
+        amount: Number(receipt.total_amount), reference: receiptReference.trim(),
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      setReceipt(null); setReceiptReference('');
+      showToast('Đã ghi nhận phiếu thu và người xác nhận.');
+      await fetchOrders(currentPage);
+    } catch (err) { showToast(err.response?.data?.message || 'Không ghi nhận được phiếu thu.', 'error'); }
+    finally { setSavingReceipt(false); }
+  };
 
-  // Modal Detail
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
@@ -59,9 +87,7 @@ const AdminOrderPage = () => {
     fetchOrders(currentPage);
   }, [currentPage]);
 
-  // Inline Update status with optimistic UI update
   const handleUpdateStatus = async (orderId, field, value) => {
-    // Optimistically update UI so dropdown & badge change instantly
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, [field]: value } : o));
 
     try {
@@ -71,13 +97,38 @@ const AdminOrderPage = () => {
       });
       const updated = res.data?.data || res.data;
       
-      // Update with full server response (e.g. tracking_code if shipping created)
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updated, [field]: value } : o));
       showToast(`Cập nhật đơn hàng #${orderId} thành công!`);
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'Lỗi cập nhật đơn hàng';
       showToast(errorMsg, 'error');
-      fetchOrders(currentPage); // revert on failure
+      fetchOrders(currentPage);
+    }
+  };
+
+  const handleReconcileShipping = async (order, releaseIfMissing = false) => {
+    if (releaseIfMissing && !window.confirm(
+      `Hệ thống sẽ hỏi lại GHN cho đơn #${order.id}. Chỉ khi GHN xác nhận không có vận đơn, trạng thái chờ mới được gỡ để bạn thử lại hoặc hủy đơn. Tiếp tục?`
+    )) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${order.id}/shipping/reconcile`,
+        { releaseIfMissing },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const result = res.data?.data;
+      const messages = {
+        linked: `Đã đồng bộ mã vận đơn GHN cho đơn #${order.id}.`,
+        already_linked: `Đơn #${order.id} đã có mã vận đơn GHN.`,
+        not_found: `GHN xác nhận chưa có vận đơn cho đơn #${order.id}. Bạn có thể chọn “Gỡ cờ an toàn”.`,
+        released: `Đã gỡ trạng thái chờ GHN của đơn #${order.id}. Bây giờ có thể thử tạo lại hoặc hủy.`,
+      };
+      showToast(messages[result?.action] || res.data?.message || 'Đối soát GHN hoàn tất.', result?.action === 'not_found' ? 'error' : 'success');
+      await fetchOrders(currentPage);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Không thể đối soát với GHN lúc này.', 'error');
     }
   };
 
@@ -136,6 +187,28 @@ const AdminOrderPage = () => {
 
   return (
     <AdminLayout>
+      <button className="mb-4 underline text-sm" onClick={loadRejectedPayments}>Xem giao dịch QR cần đối soát</button>
+      {rejectedPayments && <section className="mb-6 border rounded-xl p-4 space-y-3">
+        <h2 className="font-bold">Giao dịch QR chưa được ghi nhận vào đơn</h2>
+        <p className="text-sm">Tiền chuyển muộn cho đơn đã hủy cần kiểm tra ngân hàng và xử lý hoàn tiền; hệ thống không tự mở lại đơn đã hoàn kho.</p>
+        {!rejectedPayments.length && <p>Không có giao dịch chờ đối soát.</p>}
+        {rejectedPayments.map(event => <div key={event.id} className="border-t pt-2 text-sm flex flex-wrap gap-3">
+          <span>GD {event.provider_event_id} · Đơn #{event.order_id} · {Number(event.amount).toLocaleString('vi-VN')} ₫ · {event.rejection_reason}</span>
+          <button className="underline" onClick={() => retryPayment(event.id)}>Kiểm tra lại điều kiện thanh toán</button>
+        </div>)}
+      </section>}
+      {receipt && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <form onSubmit={submitReceipt} className="bg-white dark:bg-zinc-900 rounded-2xl p-6 space-y-4 max-w-md w-full" role="dialog" aria-modal="true" aria-label="Xác nhận thu tiền">
+          <h2 className="font-bold">Xác nhận thu tiền đơn #{receipt.id}</h2>
+          <p>Chỉ xác nhận khi đã nhận đủ {Number(receipt.total_amount).toLocaleString('vi-VN')} ₫{receipt.payment_method === 'cod' ? ' từ đối soát GHN' : ' tại cửa hàng'}.</p>
+          <label className="block">Mã đối soát / số phiếu thu
+            <input required minLength={3} maxLength={120} value={receiptReference}
+              onChange={e => setReceiptReference(e.target.value)} className="block w-full border rounded p-2 bg-transparent" />
+          </label>
+          <button disabled={savingReceipt} className="px-4 py-2 rounded bg-zinc-900 text-white dark:bg-zinc-700">Xác nhận đã nhận tiền</button>
+          <button type="button" disabled={savingReceipt} className="ml-3" onClick={() => setReceipt(null)}>Hủy</button>
+        </form>
+      </div>}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-zinc-200 dark:border-zinc-800 gap-4">
         <div>
           <h1 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
@@ -186,48 +259,39 @@ const AdminOrderPage = () => {
 
                     return (
                       <tr key={order.id} className="hover:bg-zinc-50/50 dark:hover:bg-[#181a24]/50 transition-colors">
-                        {/* Order ID */}
                         <td className="p-4 font-mono font-black text-zinc-900 dark:text-white">
                           #{order.id}
                         </td>
 
-                        {/* Customer */}
                         <td className="p-4">
                           <p className="font-bold text-zinc-900 dark:text-zinc-100">{recipient}</p>
                           <p className="text-[11px] text-zinc-400 font-mono">{phone}</p>
                         </td>
 
-                        {/* Date */}
                         <td className="p-4 text-zinc-500 dark:text-zinc-400">
                           {order.created_at ? new Date(order.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '---'}
                         </td>
 
-                        {/* Amount */}
                         <td className="p-4 text-right font-black text-[#ea580c] text-sm">
                           {parseFloat(order.total_amount || 0).toLocaleString('vi-VN')} ₫
                         </td>
 
-                        {/* Payment Method */}
                         <td className="p-4 text-center">
                           <span className="font-bold uppercase text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
                             {order.payment_method === 'store' ? 'Tại Showroom' : order.payment_method}
                           </span>
                         </td>
 
-                        {/* Payment Status Dropdown */}
+                        {/* Chỉ backend được cập nhật trạng thái thanh toán. */}
                         <td className="p-4 text-center">
-                          <select
-                            value={order.payment_status || 'unpaid'}
-                            onChange={(e) => handleUpdateStatus(order.id, 'payment_status', e.target.value)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer text-center ${getPaymentStatusBadgeClass(order.payment_status)}`}
-                          >
-                            {PAYMENT_STATUS_OPTIONS.map(opt => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                          </select>
+                          <span className={`inline-block px-3 py-1.5 rounded-xl text-xs font-bold border ${getPaymentStatusBadgeClass(order.payment_status)}`}>
+                            {PAYMENT_STATUS_OPTIONS.find(opt => opt.value === order.payment_status)?.label || order.payment_status}
+                          </span>
+                          {order.payment_status === 'unpaid' && order.status !== 'cancelled'
+                            && (order.payment_method === 'store' || (order.payment_method === 'cod' && ['shipping', 'completed'].includes(order.status)))
+                            && <button className="block mt-2 text-xs underline" onClick={() => { setReceipt(order); setReceiptReference(''); }}>Xác nhận thu tiền</button>}
                         </td>
 
-                        {/* Order Status Dropdown & GHN Tracking */}
                         <td className="p-4 text-center">
                           <div className="flex flex-col items-center gap-1.5">
                             <select
@@ -246,7 +310,13 @@ const AdminOrderPage = () => {
                               ))}
                             </select>
 
-                            {/* GHN Tracking Link Badge */}
+                            {order.shipping_requested && !order.tracking_code && (
+                              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                                <button className="text-xs underline" onClick={() => handleUpdateStatus(order.id, 'status', 'shipping')}>Thử tạo lại</button>
+                                <button className="text-xs underline" onClick={() => handleReconcileShipping(order)}>Đối soát GHN</button>
+                                <button className="text-xs underline text-rose-600" onClick={() => handleReconcileShipping(order, true)}>Gỡ cờ an toàn</button>
+                              </div>
+                            )}
                             {order.tracking_code && (
                               <a
                                 href={`https://tracking.ghn.dev/?order_code=${order.tracking_code}`}
@@ -262,7 +332,6 @@ const AdminOrderPage = () => {
                           </div>
                         </td>
 
-                        {/* Actions */}
                         <td className="p-4 text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button
@@ -282,7 +351,7 @@ const AdminOrderPage = () => {
                             <button
                               onClick={() => handleDelete(order.id)}
                               className="p-2 text-rose-600 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 rounded-xl transition-colors cursor-pointer"
-                              title="Xóa đơn hàng"
+                              title="Lưu trữ đơn đã hủy"
                             >
                               <Trash2 size={15} />
                             </button>
@@ -303,7 +372,6 @@ const AdminOrderPage = () => {
         </>
       )}
 
-      {/* Order Detail Modal */}
       {showDetailModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-[#12131a] rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 border border-zinc-200 dark:border-zinc-800">
@@ -319,7 +387,6 @@ const AdminOrderPage = () => {
                 <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#ea580c] border-t-transparent rounded-full animate-spin" /></div>
               ) : selectedOrderDetails && (
                 <>
-                  {/* Delivery & Customer Info */}
                   <div className="bg-zinc-50 dark:bg-[#181a24] p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-2">
                     <p className="text-sm font-bold text-zinc-900 dark:text-white">
                       Người nhận: {selectedOrderDetails.shipping_name || selectedOrderDetails.recipient_name} ({selectedOrderDetails.shipping_phone || selectedOrderDetails.recipient_phone})
@@ -336,7 +403,6 @@ const AdminOrderPage = () => {
                       </p>
                     )}
 
-                    {/* GHN Section in Modal */}
                     {selectedOrderDetails.tracking_code && (
                       <div className="mt-3 p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -359,7 +425,6 @@ const AdminOrderPage = () => {
                     )}
                   </div>
 
-                  {/* Items list */}
                   <div>
                     <h4 className="font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2 flex items-center gap-1.5">
                       <Package size={14} className="text-[#ea580c]" /> Danh sách sản phẩm đã đặt:
@@ -385,7 +450,6 @@ const AdminOrderPage = () => {
                     </div>
                   </div>
 
-                  {/* Pricing breakdown */}
                   <div className="text-right space-y-1 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     <p className="text-zinc-500 dark:text-zinc-400">
                       Tổng tiền hàng: <strong>{parseFloat(selectedOrderDetails.total_amount || 0).toLocaleString('vi-VN')} ₫</strong>

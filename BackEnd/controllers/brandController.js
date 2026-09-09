@@ -2,7 +2,6 @@ const asyncHandler = require('../utils/asyncHandler');
 const BrandService = require('../services/brandService');
 const { sendSuccess } = require('../utils/response');
 
-// getAll/getById giữ nguyên hình dạng cũ vì FE đọc trực tiếp
 const getAllBrands = asyncHandler(async (req, res) => {
     const brands = await BrandService.getAllBrands();
     res.status(200).json(brands);

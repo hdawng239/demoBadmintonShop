@@ -12,7 +12,6 @@ const SearchImagePage = () => {
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
-  // Tối ưu nén ảnh xuống kích thước chuẩn AI (max 800px) giúp giảm dung lượng 100 lần, gửi lên server siêu tốc
   const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.85) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -57,13 +56,11 @@ const SearchImagePage = () => {
     }
 
     try {
-      // Nén ảnh tức thì trên trình duyệt
       const compressedBase64 = await compressImage(file);
       setImagePreview(compressedBase64);
       performSearch(compressedBase64);
     } catch (err) {
       console.error('Lỗi nén ảnh:', err);
-      // Fallback nếu trình duyệt lỗi canvas
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result;
@@ -104,7 +101,6 @@ const SearchImagePage = () => {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
-        {/* Header */}
         <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-orange-500/10 dark:bg-orange-950/40 border border-orange-500/30 text-[#ea580c] dark:text-orange-400 rounded-full text-xs font-black uppercase tracking-wider">
             <Camera size={14} className="text-[#ea580c]" /> Công Nghệ Nhận Diện Hình Ảnh
@@ -117,7 +113,6 @@ const SearchImagePage = () => {
           </p>
         </div>
 
-        {/* Upload Stage */}
         <div className="max-w-2xl mx-auto mb-12">
           <div
             onDragOver={(e) => e.preventDefault()}
@@ -175,7 +170,6 @@ const SearchImagePage = () => {
           )}
         </div>
 
-        {/* Search Results */}
         {results.length > 0 && (
           <div className="space-y-6">
             <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
