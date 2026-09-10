@@ -2,8 +2,8 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
 import AdminRoute from './components/layout/AdminRoute';
+import HomePage from './pages/HomePage';
 
-const HomePage = lazy(() => import('./pages/HomePage'));
 const ProductListPage = lazy(() => import('./pages/ProductListPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const CartPage = lazy(() => import('./pages/CartPage'));

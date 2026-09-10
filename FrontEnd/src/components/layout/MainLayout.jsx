@@ -14,8 +14,9 @@ const MainLayout = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    let observer;
     const timeoutId = setTimeout(() => {
-      const observer = new IntersectionObserver(
+      observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -37,16 +38,22 @@ const MainLayout = ({ children }) => {
       );
 
       targets.forEach((el) => {
+        // Nội dung đang trong màn hình không cần ẩn để chạy hiệu ứng.
+        if (el.getBoundingClientRect().top < window.innerHeight) {
+          el.classList.remove('reveal-on-scroll');
+          return;
+        }
         if (!el.classList.contains('reveal-on-scroll')) {
           el.classList.add('reveal-on-scroll');
         }
         observer.observe(el);
       });
-
-      return () => observer.disconnect();
     }, 100);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      observer?.disconnect();
+    };
   }, [location.pathname, children]);
 
   return (

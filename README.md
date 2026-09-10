@@ -66,6 +66,10 @@ Mở [website](http://localhost:5173) hoặc [trang quản trị](http://localho
 | Resend | RESEND_API_KEY, EMAIL_FROM, EMAIL_ADMIN | — |
 | Turnstile | TURNSTILE_SECRET_KEY | VITE_TURNSTILE_SITE_KEY |
 
+Đồ án dùng GHN sandbox: đặt `GHN_API_URL=https://dev-online-gateway.ghn.vn/shiip/public-api` cả trên Render; giữ `NODE_ENV=production` khi deploy. Vận đơn sandbox không giao hàng thật. Cấu hình này không đổi SePay sang sandbox: quét QR và xác nhận chuyển khoản vẫn có thể chuyển tiền thật.
+
+SePay cần liên kết đúng tài khoản ngân hàng dùng tạo QR và gửi webhook về `<URL backend>/api/sepay/webhook`, xác thực API Key trùng `KEY_SEPAY`. Nội dung chuyển khoản của website là `NARO<mã đơn>`; chỉ tạo được QR chưa có nghĩa là đã nhận được thanh toán.
+
 Turnstile chống bot ở chức năng quên mật khẩu. Lấy cặp khóa trong Cloudflare → Turnstile, thêm hostname website; thêm `localhost` nếu dùng khi phát triển. Secret key chỉ đặt ở backend.
 
 Resend dùng địa chỉ gửi thử `onboarding@resend.dev` chỉ gửi tới email chủ tài khoản. Để gửi OTP cho khách khác, cần tên miền đã xác minh và `EMAIL_FROM` thuộc tên miền đó.
