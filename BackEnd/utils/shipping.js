@@ -1,4 +1,9 @@
 const AppError = require('./AppError');
+const getShippingClientCode = (orderId) => {
+    const prefix = String(process.env.GHN_CLIENT_PREFIX || 'NARO')
+        .replace(/[^A-Za-z0-9]/g, '').slice(0, 40) || 'NARO';
+    return `${prefix}${Number(orderId)}`;
+};
 const positive = (value, fallback) => {
     const n = Number(value);
     return Number.isFinite(n) && n > 0 ? Math.ceil(n) : fallback;
@@ -41,4 +46,4 @@ const shipmentPayment = (order) => {
     // Shop trả GHN; phí ship khách chịu đã nằm trong tổng tiền.
     return { payment_type_id: 1, cod_amount: order.payment_status === 'paid' ? 0 : amount };
 };
-module.exports = { getItemMetrics, getPackageMetrics, shipmentPayment };
+module.exports = { getShippingClientCode, getItemMetrics, getPackageMetrics, shipmentPayment };

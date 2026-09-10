@@ -13,7 +13,7 @@ const REQUIRED_IN_PRODUCTION = [
     'KEY_IDSHOP',
     'KEY_TOKEN_SHOP',
     'KEY_GEMINI',
-    'RESEND_API_KEY',
+    'BREVO_API_KEY',
     'EMAIL_FROM',
     'EMAIL_ADMIN',
 ];

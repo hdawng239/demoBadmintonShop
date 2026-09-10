@@ -4,6 +4,9 @@ const AppError = require('../utils/AppError');
 
 const { validateTransition } = require('../utils/orderState');
 
+const isGhnTimeout = (error) => error?.code === 'ECONNABORTED'
+    || /timeout|deadline exceeded|temporarily unavailable/i.test(String(error?.response?.data?.message || error?.message || ''));
+
 const OrderService = {
     getAllOrders: (page, limit) => OrderRepository.findPaginated(page, limit),
 
@@ -78,7 +81,10 @@ const OrderService = {
                 }
                 try {
                     changes.tracking_code = await ghnService.createShippingOrder(order);
-                } catch (_) {
+                } catch (error) {
+                    if (isGhnTimeout(error)) {
+                        throw new AppError(503, 'GHN đang phản hồi chậm. Đơn vẫn ở trạng thái chuẩn bị; vui lòng thử lại sau.');
+                    }
                     throw new AppError(502, 'Chưa xác nhận được vận đơn GHN. Thử lại thao tác giao hàng để đối soát cùng mã đơn.');
                 }
             }

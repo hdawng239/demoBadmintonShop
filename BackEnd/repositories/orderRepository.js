@@ -4,6 +4,7 @@ const { TABLE, UPDATABLE_FIELDS, mapRow } = require('../models/orderModel');
 const AppError = require('../utils/AppError');
 const { calculateDiscounts, calculateTotal } = require('../utils/pricing');
 const { validateTransition } = require('../utils/orderState');
+const { getShippingClientCode } = require('../utils/shipping');
 
 const OrderRepository = {
     withLockedOrder: async (id, operation) => {
@@ -27,7 +28,16 @@ const OrderRepository = {
     markShippingRequested: (id) => OrderRepository.withLockedOrder(id, async (order, client) => {
         validateTransition(order, 'shipping');
         if (order.payment_method !== 'store') {
-            await client.query('UPDATE orders SET shipping_requested = TRUE, shipping_client_code = COALESCE(shipping_client_code, $2) WHERE id = $1', [id, `${process.env.GHN_CLIENT_PREFIX || 'NARO'}-${id}`]);
+            const clientCode = getShippingClientCode(id);
+            const isSandbox = String(process.env.GHN_API_URL || '').includes('dev-online-gateway.ghn.vn');
+            await client.query(
+                `UPDATE orders SET shipping_requested = TRUE,
+                 shipping_client_code = CASE
+                    WHEN shipping_client_code IS NULL OR ($3 AND shipping_client_code !~ '^[A-Za-z0-9]+$') THEN $2
+                    ELSE shipping_client_code
+                 END WHERE id = $1`,
+                [id, clientCode, isSandbox]
+            );
         }
     }),
     findPaginated: async (page, limit) => {

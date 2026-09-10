@@ -6,7 +6,7 @@ const GHN_TOKEN = process.env.KEY_TOKEN_SHOP;
 const GHN_SHOP_ID = process.env.KEY_IDSHOP;
 const http = axios.create({ timeout: parseInt(process.env.OUTBOUND_HTTP_TIMEOUT_MS || '8000', 10) });
 
-const { getItemMetrics, getPackageMetrics, shipmentPayment } = require('../utils/shipping');
+const { getShippingClientCode, getItemMetrics, getPackageMetrics, shipmentPayment } = require('../utils/shipping');
 
 const getHeaders = () => ({
     Token: (GHN_TOKEN || '').trim(),
@@ -20,6 +20,8 @@ const requireShippingCredentials = () => {
 };
 
 const getGhnMessage = (body) => String(body?.message || body?.code_message_value || '').trim();
+const isRetryableError = (error) => !error.response || error.response.status >= 500
+    || /timeout|deadline exceeded|temporarily unavailable/i.test(getGhnMessage(error.response?.data));
 
 // Chỉ gỡ cờ khi GHN xác nhận không có đơn, không dựa vào lỗi kết nối.
 const isExplicitNotFound = (response) => {
@@ -102,7 +104,7 @@ const GHNService = {
 
         const payload = {
             ...shipmentPayment(orderData),
-            client_order_code: orderData.shipping_client_code || `${process.env.GHN_CLIENT_PREFIX || 'NARO'}-${orderData.id}`,
+            client_order_code: orderData.shipping_client_code || getShippingClientCode(orderData.id),
             note: `Đơn hàng #${orderData.id} từ Naro Shop`,
             required_note: 'KHONGCHOXEMHANG',
             to_name: orderData.shipping_name,
@@ -115,17 +117,25 @@ const GHNService = {
             items,
         };
 
-        const response = await http.post(
-            `${GHN_API_URL}/v2/shipping-order/create`,
-            payload,
-            {
-                headers: {
-                    Token: GHN_TOKEN,
-                    ShopId: GHN_SHOP_ID,
-                    'Content-Type': 'application/json',
-                },
+        let response;
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            try {
+                response = await http.post(
+                    `${GHN_API_URL}/v2/shipping-order/create`,
+                    payload,
+                    {
+                        headers: {
+                            Token: GHN_TOKEN,
+                            ShopId: GHN_SHOP_ID,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                break;
+            } catch (error) {
+                if (attempt === 1 || !isRetryableError(error)) throw error;
             }
-        );
+        }
 
         if (response.data && response.data.code === 200) {
             return response.data.data.order_code;

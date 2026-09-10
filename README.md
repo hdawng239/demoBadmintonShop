@@ -16,7 +16,7 @@
 - **Frontend:** React, Vite, React Router, Tailwind CSS.
 - **Backend:** Node.js, Express; PostgreSQL trên Supabase.
 - **Xác thực và bảo mật:** JWT, bcrypt, HttpOnly cookie, Helmet, CORS, express-rate-limit, Turnstile.
-- **Dịch vụ:** GHN, SePay/VietQR, Gemini, Resend.
+- **Dịch vụ:** GHN, SePay/VietQR, Gemini, Brevo.
 - **Thư viện giao diện:** Axios, Recharts, Swiper, Lucide React.
 
 ## Cài đặt và chạy
@@ -63,7 +63,7 @@ Mở [website](http://localhost:5173) hoặc [trang quản trị](http://localho
 | GHN | KEY_TOKEN_SHOP, KEY_IDSHOP, SHOP_DISTRICT_ID, SHOP_WARD_CODE | — |
 | SePay/VietQR | KEY_SEPAY | BANK_STK, BANK_NAME, BANK_ID |
 | Gemini | KEY_GEMINI | — |
-| Resend | RESEND_API_KEY, EMAIL_FROM, EMAIL_ADMIN | — |
+| Brevo | BREVO_API_KEY, EMAIL_FROM, EMAIL_ADMIN | — |
 | Turnstile | TURNSTILE_SECRET_KEY | VITE_TURNSTILE_SITE_KEY |
 
 Đồ án dùng GHN sandbox: đặt `GHN_API_URL=https://dev-online-gateway.ghn.vn/shiip/public-api` cả trên Render; giữ `NODE_ENV=production` khi deploy. Vận đơn sandbox không giao hàng thật. Cấu hình này không đổi SePay sang sandbox: quét QR và xác nhận chuyển khoản vẫn có thể chuyển tiền thật.
@@ -72,7 +72,7 @@ SePay cần liên kết đúng tài khoản ngân hàng dùng tạo QR và gửi
 
 Turnstile chống bot ở chức năng quên mật khẩu. Lấy cặp khóa trong Cloudflare → Turnstile, thêm hostname website; thêm `localhost` nếu dùng khi phát triển. Secret key chỉ đặt ở backend.
 
-Resend dùng địa chỉ gửi thử `onboarding@resend.dev` chỉ gửi tới email chủ tài khoản. Để gửi OTP cho khách khác, cần tên miền đã xác minh và `EMAIL_FROM` thuộc tên miền đó.
+Brevo gửi OTP và email liên hệ qua HTTP API. `EMAIL_FROM` phải là sender đã xác minh trong Brevo; dùng tên miền riêng sẽ giúp email ít vào thư rác hơn.
 
 ## Deploy
 

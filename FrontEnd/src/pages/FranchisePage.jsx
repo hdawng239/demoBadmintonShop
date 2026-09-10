@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
+import { validateEmail, validateFullName, validatePhone } from '../utils/validation';
 import { 
   TrendingUp, 
   Award, 
@@ -15,8 +17,18 @@ import {
   ArrowRight,
   PieChart,
   Layers,
-  Clock
+  Clock,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const BUDGET_LABELS = {
+  '300-500': 'Từ 300 - 500 Triệu (Standard Pro Shop)',
+  '500-1000': 'Từ 500 Triệu - 1 Tỷ (Flagship Showroom)',
+  '1000+': 'Trên 1 Tỷ (Badminton Complex Sân + Shop)',
+};
 
 const MODELS = [
   {
@@ -113,14 +125,44 @@ const STEPS = [
 const FranchisePage = () => {
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: '', budget: '300-500' });
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSent(true);
-    setTimeout(() => {
-      setSent(false);
+    setServerError('');
+
+    const validationError = validateFullName(form.name)
+      || validatePhone(form.phone)
+      || validateEmail(form.email)
+      || (!form.city.trim() ? 'Vui lòng nhập khu vực hoặc tỉnh thành dự kiến!' : '');
+
+    if (validationError) {
+      setServerError(validationError);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.post(`${API_BASE}/contact`, {
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        message: [
+          'Yêu cầu tư vấn nhượng quyền',
+          `Khu vực dự kiến: ${form.city.trim()}`,
+          `Vốn đầu tư dự kiến: ${BUDGET_LABELS[form.budget]}`,
+        ].join('\n'),
+      });
+
+      setSent(true);
       setForm({ name: '', phone: '', email: '', city: '', budget: '300-500' });
-    }, 4000);
+      setTimeout(() => setSent(false), 6000);
+    } catch (error) {
+      setServerError(error.response?.data?.message || 'Không thể gửi yêu cầu tư vấn. Vui lòng thử lại sau!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -325,8 +367,14 @@ const FranchisePage = () => {
                 <p className="text-xs text-lime-700 dark:text-lime-300">Cảm ơn bạn. Chúng tôi sẽ gửi hồ sơ chi tiết và liên hệ lại trong thời gian sớm nhất.</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                  {serverError && (
+                    <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-red-700 dark:text-red-300 flex items-center gap-2">
+                      <AlertCircle size={16} className="shrink-0" />
+                      <span>{serverError}</span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Họ và tên *</label>
                     <input
@@ -344,7 +392,7 @@ const FranchisePage = () => {
                       type="tel"
                       required
                       value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                       placeholder="0912 345 678"
                       className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-[#181a24] border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl outline-none focus:border-[#ea580c]"
                     />
@@ -353,9 +401,10 @@ const FranchisePage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Email</label>
+                    <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">Email *</label>
                     <input
                       type="email"
+                      required
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                       placeholder="email@example.com"
@@ -390,10 +439,11 @@ const FranchisePage = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                  disabled={loading}
+                  className="w-full py-3.5 bg-[#ea580c] hover:bg-[#c2410c] disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                 >
-                  <Send size={15} />
-                  <span>Gửi Yêu Cầu Tư Vấn Nhượng Quyền</span>
+                  {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  <span>{loading ? 'Đang gửi...' : 'Gửi Yêu Cầu Tư Vấn Nhượng Quyền'}</span>
                 </button>
               </form>
             )}

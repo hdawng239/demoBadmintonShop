@@ -1,9 +1,38 @@
-const { Resend } = require('resend');
-
-const resendApiKey = process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.trim() : null;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Naro Badminton <onboarding@resend.dev>';
+const BREVO_API_KEY = process.env.BREVO_API_KEY ? process.env.BREVO_API_KEY.trim() : null;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Naro Badminton <dohaidang239@gmail.com>';
 const EMAIL_ADMIN = process.env.EMAIL_ADMIN || 'dohaidang239@gmail.com';
+
+const senderMatch = EMAIL_FROM.match(/^\s*(.*?)\s*<\s*([^<>]+)\s*>\s*$/);
+const sender = senderMatch
+    ? { name: senderMatch[1].trim() || 'Naro Badminton', email: senderMatch[2].trim() }
+    : { name: 'Naro Badminton', email: EMAIL_FROM.trim() };
+
+const sendBrevoEmail = async ({ to, subject, htmlContent, replyTo }) => {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+            accept: 'application/json',
+            'api-key': BREVO_API_KEY,
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            sender,
+            to: [{ email: to }],
+            subject,
+            htmlContent,
+            ...(replyTo ? { replyTo: { email: replyTo } } : {}),
+        }),
+        signal: AbortSignal.timeout(Number(process.env.OUTBOUND_HTTP_TIMEOUT_MS || 8000)),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        const error = new Error(result.message || 'Brevo request failed');
+        error.statusCode = response.status;
+        error.providerCode = result.code;
+        throw error;
+    }
+    return result;
+};
 
 const escapeHtml = (value) => String(value || '')
     .replaceAll('&', '&amp;')
@@ -17,8 +46,8 @@ const sanitizeSubjectPart = (value) => String(value || '').replace(/[\r\n]+/g, '
 // Không trả nguyên văn lỗi nhà cung cấp cho client.
 const failureReason = (error) => {
     const message = String(error?.message || '');
-    if (/only send testing emails/i.test(message)) return 'test_recipient_restricted';
-    if (/domain.*not verified|verify your domain/i.test(message)) return 'sender_not_verified';
+    if (/sender.*not valid|sender.*not verified|invalid.*sender|authenticate.*domain/i.test(message)) return 'sender_not_verified';
+    if (/unauthorized|api.?key|authentication/i.test(message) || [401, 403].includes(error?.statusCode)) return 'provider_unauthorized';
     return 'provider_unavailable';
 };
 
@@ -26,17 +55,16 @@ const EmailService = {
     sendOtpEmail: async (toEmail, otp, purpose = 'password-reset') => {
         const title = purpose === 'email-change' ? 'Xác Nhận Đổi Email' : 'Yêu Cầu Đặt Lại Mật Khẩu';
         // Không ghi OTP ra log, kể cả khi chạy local.
-        if (!resend) {
-            console.warn('[Email] RESEND_API_KEY chưa được cấu hình; email OTP không được gửi.');
+        if (!BREVO_API_KEY) {
+            console.warn('[Email] BREVO_API_KEY chưa được cấu hình; email OTP không được gửi.');
             return { sent: false, devMode: true, reason: 'not_configured' };
         }
 
         try {
-            const { data, error } = await resend.emails.send({
-                from: EMAIL_FROM,
-                to: [toEmail],
+            const data = await sendBrevoEmail({
+                to: toEmail,
                 subject: `${title} - Naro Badminton`,
-                html: `
+                htmlContent: `
                     <!DOCTYPE html>
                     <html>
                     <head>
@@ -101,32 +129,26 @@ const EmailService = {
                 `,
             });
 
-            if (error) {
-                console.error('[Resend Error]:', { name: error.name, status: error.statusCode });
-                return { sent: false, reason: failureReason(error) };
-            }
-
-            console.log(`[Resend Success] Email OTP đã được gửi (ID: ${data?.id})`);
-            return { sent: true, messageId: data?.id };
+            console.log(`[Brevo Success] Email OTP đã được gửi (ID: ${data?.messageId})`);
+            return { sent: true, messageId: data?.messageId };
         } catch (err) {
-            console.error('[Resend Exception]:', { name: err.name, code: err.code });
+            console.error('[Brevo Error]:', { name: err.name, code: err.providerCode, status: err.statusCode });
             return { sent: false, reason: failureReason(err) };
         }
     },
 
     sendContactEmail: async ({ name, email, phone, message }) => {
-        if (!resend) {
-            console.warn('[Email] RESEND_API_KEY chưa được cấu hình; email liên hệ không được gửi.');
-            return { sent: false, devMode: true };
+        if (!BREVO_API_KEY) {
+            console.warn('[Email] BREVO_API_KEY chưa được cấu hình; email liên hệ không được gửi.');
+            return { sent: false, error: 'not_configured' };
         }
 
         try {
-            const { data, error } = await resend.emails.send({
-                from: EMAIL_FROM,
-                to: [EMAIL_ADMIN],
-                reply_to: email,
+            const data = await sendBrevoEmail({
+                to: EMAIL_ADMIN,
+                replyTo: email,
                 subject: `[Liên hệ mới từ Web] ${sanitizeSubjectPart(name)} - ${sanitizeSubjectPart(phone || 'Khách hàng')}`,
-                html: `
+                htmlContent: `
                     <div style="font-family: sans-serif; padding: 20px; color: #333;">
                         <h2 style="color: #ea580c;">Tin nhắn liên hệ mới từ Website Naro Badminton</h2>
                         <p><b>Họ và tên:</b> ${escapeHtml(name)}</p>
@@ -140,15 +162,10 @@ const EmailService = {
                 `,
             });
 
-            if (error) {
-                console.error('[Resend Contact Error]:', { name: error.name, status: error.statusCode });
-                return { sent: false, error: error.message };
-            }
-
-            return { sent: true, messageId: data?.id };
+            return { sent: true, messageId: data?.messageId };
         } catch (err) {
-            console.error('[Resend Contact Exception]:', { name: err.name, code: err.code });
-            return { sent: false, error: err.message };
+            console.error('[Brevo Contact Error]:', { name: err.name, code: err.providerCode, status: err.statusCode });
+            return { sent: false, error: failureReason(err) };
         }
     },
 };

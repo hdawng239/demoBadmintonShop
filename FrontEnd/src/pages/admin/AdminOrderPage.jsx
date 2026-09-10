@@ -22,6 +22,7 @@ const PAYMENT_STATUS_OPTIONS = [
 const AdminOrderPage = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState(null);
@@ -88,8 +89,7 @@ const AdminOrderPage = () => {
   }, [currentPage]);
 
   const handleUpdateStatus = async (orderId, field, value) => {
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, [field]: value } : o));
-
+    setUpdatingOrderId(orderId);
     try {
       const token = localStorage.getItem('token');
       const res = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, { [field]: value }, {
@@ -103,6 +103,8 @@ const AdminOrderPage = () => {
       const errorMsg = err.response?.data?.message || err.message || 'Lỗi cập nhật đơn hàng';
       showToast(errorMsg, 'error');
       fetchOrders(currentPage);
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -297,6 +299,7 @@ const AdminOrderPage = () => {
                             <select
                               value={order.status || 'pending'}
                               onChange={(e) => handleUpdateStatus(order.id, 'status', e.target.value)}
+                              disabled={updatingOrderId === order.id}
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold border outline-none cursor-pointer w-full text-center ${getOrderStatusBadgeClass(order.status)}`}
                             >
                               {ORDER_STATUS_OPTIONS.map(opt => (
@@ -309,6 +312,10 @@ const AdminOrderPage = () => {
                                 </option>
                               ))}
                             </select>
+
+                            {updatingOrderId === order.id && (
+                              <span className="text-[11px] text-zinc-500">Đang xác nhận với GHN...</span>
+                            )}
 
                             {order.shipping_requested && !order.tracking_code && (
                               <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">

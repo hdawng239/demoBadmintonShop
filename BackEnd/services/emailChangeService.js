@@ -35,11 +35,11 @@ module.exports = {
         const result = await EmailService.sendOtpEmail(normalized, code, 'email-change');
         if (!result?.sent) {
             await EmailChangeRepository.discard(actor.id, tokenHash);
-            if (result?.reason === 'test_recipient_restricted') {
-                throw new AppError(503, 'Dịch vụ email đang dùng chế độ thử của Resend, chỉ gửi được tới email của chủ tài khoản Resend. Cần xác minh tên miền gửi và cập nhật EMAIL_FROM để gửi tới email khác.');
-            }
             if (result?.reason === 'sender_not_verified') {
-                throw new AppError(503, 'Tên miền gửi email chưa được xác minh trên Resend. Vui lòng cấu hình lại dịch vụ email.');
+                throw new AppError(503, 'Địa chỉ gửi email chưa được xác minh trên Brevo.');
+            }
+            if (result?.reason === 'provider_unauthorized') {
+                throw new AppError(503, 'Brevo API key không hợp lệ hoặc chưa được kích hoạt.');
             }
             if (result?.reason === 'not_configured') {
                 throw new AppError(503, 'Dịch vụ gửi email chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
